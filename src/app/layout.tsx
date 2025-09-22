@@ -2,24 +2,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-  useSidebar
-} from '@/components/ui/sidebar';
-import { Icons } from '@/components/icons';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Header } from '@/components/layout/header';
 import { ThemeProvider } from '@/components/theme-provider';
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { LifeBuoy, LogOut } from 'lucide-react';
-import Link from 'next/link';
-import { SidebarNav } from '@/components/layout/sidebar-nav';
-import { Separator } from '@/components/ui/separator';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 
 export const metadata: Metadata = {
@@ -55,11 +40,13 @@ export default function RootLayout({
         >
           <SidebarProvider>
             <div className="flex">
-                <AppSidebar />
+              <AppSidebar />
+              <div className="flex-1">
                 <SidebarInset>
-                <Header />
-                <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+                  <Header />
+                  <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
                 </SidebarInset>
+              </div>
             </div>
           </SidebarProvider>
           <Toaster />
