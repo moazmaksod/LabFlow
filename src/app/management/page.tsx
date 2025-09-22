@@ -78,7 +78,7 @@ const users = [
   },
 ];
 
-const itemTypes = [
+const initialItemTypes = [
   {
     name: 'CBC Reagent Kit',
     category: 'Reagents',
@@ -108,11 +108,20 @@ const itemTypes = [
 export default function ManagementPage() {
   const [tests, setTests] = useState(initialTests);
   const [newTest, setNewTest] = useState({ name: '', price: '', range: '', kit: '' });
+  const [itemTypes, setItemTypes] = useState(initialItemTypes);
+  const [newItemType, setNewItemType] = useState({ name: '', category: '', supplier: '', minLevel: 0 });
 
   const handleAddTest = () => {
     if (newTest.name && newTest.price) {
       setTests([...tests, newTest]);
       setNewTest({ name: '', price: '', range: '', kit: '' });
+    }
+  };
+
+  const handleAddNewItemType = () => {
+    if (newItemType.name && newItemType.category && newItemType.minLevel > 0) {
+      setItemTypes([...itemTypes, newItemType]);
+      setNewItemType({ name: '', category: '', supplier: '', minLevel: 0 });
     }
   };
 
@@ -236,74 +245,112 @@ export default function ManagementPage() {
         <TabsContent value="inventory">
           <Card>
             <CardHeader>
-              <CardTitle>Inventory Item Management</CardTitle>
-              <CardDescription>
-                Define the types of items your lab uses. This is the catalog of
-                all reagents, consumables, etc.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">
-                    Add New Item Type
-                  </h3>
-                  <div className="grid gap-2">
-                    <Label htmlFor="item-name">Item Name</Label>
-                    <Input id="item-name" placeholder="e.g., Pipette Tips 1000uL" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="item-category">Category</Label>
-                    <Select>
-                      <SelectTrigger id="item-category">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Reagents">Reagents</SelectItem>
-                        <SelectItem value="Consumables">Consumables</SelectItem>
-                        <SelectItem value="Controls">Controls</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="item-supplier">Supplier (Optional)</Label>
-                    <Input id="item-supplier" placeholder="e.g., Supplier C" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="item-min-level">Minimum Stock Level</Label>
-                    <Input id="item-min-level" type="number" placeholder="e.g., 10" />
-                  </div>
-                  <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Item Type
-                  </Button>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>Inventory Item Management</CardTitle>
+                  <CardDescription>
+                    Define the types of items your lab uses. This is the catalog of
+                    all reagents, consumables, etc.
+                  </CardDescription>
                 </div>
+                 <Dialog>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Item Type
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add New Item Type</DialogTitle>
+                      <DialogDescription>
+                        Fill in the details of the new item type.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="item-name" className="text-right">
+                          Item Name
+                        </Label>
+                        <Input
+                          id="item-name"
+                          placeholder="e.g., Pipette Tips 1000uL"
+                          value={newItemType.name}
+                          onChange={(e) => setNewItemType({ ...newItemType, name: e.target.value })}
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="item-category" className="text-right">
+                          Category
+                        </Label>
+                        <Select onValueChange={(value) => setNewItemType({ ...newItemType, category: value })}>
+                          <SelectTrigger id="item-category" className="col-span-3">
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Reagents">Reagents</SelectItem>
+                            <SelectItem value="Consumables">Consumables</SelectItem>
+                            <SelectItem value="Controls">Controls</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="item-supplier" className="text-right">
+                          Supplier
+                        </Label>
+                        <Input
+                          id="item-supplier"
+                          placeholder="e.g., Supplier C"
+                          value={newItemType.supplier}
+                          onChange={(e) => setNewItemType({ ...newItemType, supplier: e.target.value })}
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="item-min-level" className="text-right">
+                          Min. Level
+                        </Label>
+                        <Input
+                          id="item-min-level"
+                          type="number"
+                          placeholder="e.g., 10"
+                          value={newItemType.minLevel || ''}
+                          onChange={(e) => setNewItemType({ ...newItemType, minLevel: parseInt(e.target.value, 10) || 0 })}
+                          className="col-span-3"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" onClick={handleAddNewItemType}>Add Item Type</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Existing Item Types</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Item Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Supplier</TableHead>
-                      <TableHead>Min. Stock Level</TableHead>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Supplier</TableHead>
+                    <TableHead>Min. Stock Level</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {itemTypes.map((item) => (
+                    <TableRow key={item.name}>
+                      <TableCell className="font-medium">
+                        {item.name}
+                      </TableCell>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell>{item.supplier}</TableCell>
+                      <TableCell>{item.minLevel}</TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {itemTypes.map((item) => (
-                      <TableRow key={item.name}>
-                        <TableCell className="font-medium">
-                          {item.name}
-                        </TableCell>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.supplier}</TableCell>
-                        <TableCell>{item.minLevel}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
