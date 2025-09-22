@@ -46,8 +46,8 @@ const links = [
     icon: Boxes,
   },
   {
-    title: 'Reports',
-    href: '/reports',
+    title: 'Results',
+    href: '/results',
     icon: FileText,
   },
   {

@@ -41,16 +41,16 @@ const completedOrders = [
   },
 ];
 
-export default function ReportsPage() {
+export default function ResultsPage() {
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="font-headline text-3xl font-semibold">Reports</h1>
+      <h1 className="font-headline text-3xl font-semibold">Results</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle>Generate Reports</CardTitle>
+          <CardTitle>Generate Results</CardTitle>
           <CardDescription>
-            Find completed orders and generate printable PDF reports.
+            Find completed orders and generate printable PDF results.
           </CardDescription>
           <div className="relative pt-4">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

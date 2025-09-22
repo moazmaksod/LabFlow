@@ -79,9 +79,9 @@ export default function SupportPage() {
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="item-3">
-                  <AccordionTrigger>Where can I find patient reports?</AccordionTrigger>
+                  <AccordionTrigger>Where can I find patient results?</AccordionTrigger>
                   <AccordionContent>
-                    Completed patient reports can be found in the "Reports" section. You can search for a specific order and download the PDF report from there.
+                    Completed patient results can be found in the "Results" section. You can search for a specific order and download the PDF report from there.
                   </AccordionContent>
                 </AccordionItem>
                  <AccordionItem value="item-4">
