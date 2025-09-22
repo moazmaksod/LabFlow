@@ -16,6 +16,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { LifeBuoy, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { SidebarNav } from '@/components/layout/sidebar-nav';
 
 export const metadata: Metadata = {
   title: 'LabFlow',
@@ -64,7 +65,9 @@ export default function RootLayout({
                     </div>
                     </div>
                 </SidebarHeader>
-                <SidebarContent className="p-2" />
+                <SidebarContent className="p-2">
+                  <SidebarNav />
+                </SidebarContent>
                 <SidebarFooter className="p-2">
                     <SidebarMenu>
                         <SidebarMenuItem>
@@ -96,5 +99,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    

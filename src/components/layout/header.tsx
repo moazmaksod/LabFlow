@@ -36,7 +36,7 @@ export function Header() {
       <SidebarTrigger className="md:hidden" />
 
       <div className="hidden md:flex">
-         <SidebarNav />
+         
       </div>
 
 
