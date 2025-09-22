@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -52,7 +53,7 @@ export default function RootLayout({
           <SidebarProvider>
             <Sidebar collapsible="icon">
               <SidebarHeader>
-                <div className="flex items-center gap-2 p-2">
+                <div className="flex items-center gap-2 p-2 group-data-[collapsible=icon]:justify-center">
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                     <Icons.logo className="size-5" />
                   </div>
