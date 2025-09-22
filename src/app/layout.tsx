@@ -55,6 +55,7 @@ export default function RootLayout({
             <div className="flex">
                 <Sidebar collapsible>
                 <SidebarHeader className="flex flex-col items-center gap-2 p-2 group-data-[collapsible=icon]:gap-4">
+                     <SidebarTrigger className="hidden group-data-[collapsible=icon]:block" />
                     <div className="flex w-full items-center justify-between">
                         <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
                             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
@@ -69,7 +70,6 @@ export default function RootLayout({
                         </div>
                          <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
                     </div>
-                     <SidebarTrigger className="hidden group-data-[collapsible=icon]:block" />
                 </SidebarHeader>
                 <SidebarContent className="p-2">
                   <SidebarNav />
