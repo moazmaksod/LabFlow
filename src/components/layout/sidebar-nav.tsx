@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -14,6 +15,7 @@ import {
   Boxes,
   FileText,
   Settings,
+  CreditCard
 } from 'lucide-react';
 
 const links = [
@@ -48,6 +50,11 @@ const links = [
     icon: FileText,
   },
   {
+    title: 'Billing',
+    href: '/billing',
+    icon: CreditCard,
+  },
+  {
     title: 'Management',
     href: '/management',
     icon: Settings,
@@ -73,6 +80,7 @@ export function SidebarNav() {
               <link.icon />
               <span>{link.title}</span>
             </a>
+
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
