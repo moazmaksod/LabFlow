@@ -9,6 +9,7 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarProvider,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Icons } from '@/components/icons';
 import { Header } from '@/components/layout/header';
@@ -17,6 +18,7 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui
 import { LifeBuoy, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
+import { Separator } from '@/components/ui/separator';
 
 export const metadata: Metadata = {
   title: 'LabFlow',
@@ -69,6 +71,11 @@ export default function RootLayout({
                   <SidebarNav />
                 </SidebarContent>
                 <SidebarFooter className="p-2">
+                    <Separator className="mb-2" />
+                     <div className="flex justify-center group-data-[collapsible=icon]:justify-center">
+                        <SidebarTrigger />
+                    </div>
+                    <Separator className="my-2" />
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton tooltip="Support" asChild>
