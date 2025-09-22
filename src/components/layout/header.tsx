@@ -15,17 +15,22 @@ import {
   Globe,
   LifeBuoy,
   LogOut,
+  Moon,
   Search,
   Settings,
+  Sun,
   User,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
+import { useTheme } from 'next-themes';
 
 export function Header() {
   const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar-1');
+  const { setTheme } = useTheme();
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
       <SidebarTrigger className="md:hidden" />
@@ -50,6 +55,27 @@ export function Header() {
           <DropdownMenuContent align="end">
             <DropdownMenuItem>English (EN)</DropdownMenuItem>
             <DropdownMenuItem>العربية (AR)</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all text-muted-foreground dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all text-muted-foreground dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setTheme('light')}>
+              Light
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('dark')}>
+              Dark
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('system')}>
+              System
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -96,5 +122,3 @@ export function Header() {
     </header>
   );
 }
-
-    

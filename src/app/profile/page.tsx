@@ -23,11 +23,13 @@ import {
 } from '@/components/ui/select';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Moon, Sun, SunMoon } from 'lucide-react';
+import { useTheme } from "next-themes"
 
 export default function ProfilePage() {
   const userAvatar = PlaceHolderImages.find(
     (img) => img.id === 'user-avatar-1'
   );
+   const { theme, setTheme } = useTheme()
 
   return (
     <div className="flex flex-col gap-8">
@@ -110,7 +112,7 @@ export default function ProfilePage() {
 
                 <div className="space-y-4">
                     <Label>Theme</Label>
-                    <RadioGroup defaultValue="system" className="grid grid-cols-3 gap-4 pt-2">
+                    <RadioGroup defaultValue={theme} onValueChange={setTheme} className="grid grid-cols-3 gap-4 pt-2">
                     <div>
                         <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                         <RadioGroupItem value="light" id="light" className="sr-only" />

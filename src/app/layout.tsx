@@ -11,6 +11,7 @@ import {
 import { Icons } from '@/components/icons';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { Header } from '@/components/layout/header';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: 'LabFlow',
@@ -37,31 +38,38 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <SidebarProvider>
-          <Sidebar collapsible="icon">
-            <SidebarHeader>
-              <div className="flex items-center gap-2 p-2">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                  <Icons.logo className="size-5" />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SidebarProvider>
+            <Sidebar collapsible="icon">
+              <SidebarHeader>
+                <div className="flex items-center gap-2 p-2">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                    <Icons.logo className="size-5" />
+                  </div>
+                  <div
+                    data-sidebar="group-label"
+                    className="text-lg font-semibold"
+                  >
+                    LabFlow
+                  </div>
                 </div>
-                <div
-                  data-sidebar="group-label"
-                  className="text-lg font-semibold"
-                >
-                  LabFlow
-                </div>
-              </div>
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarNav />
-            </SidebarContent>
-          </Sidebar>
-          <SidebarInset>
-            <Header />
-            <main className="p-4 sm:p-6 lg:p-8">{children}</main>
-          </SidebarInset>
-        </SidebarProvider>
-        <Toaster />
+              </SidebarHeader>
+              <SidebarContent>
+                <SidebarNav />
+              </SidebarContent>
+            </Sidebar>
+            <SidebarInset>
+              <Header />
+              <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+            </SidebarInset>
+          </SidebarProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
