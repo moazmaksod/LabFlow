@@ -32,8 +32,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import React, { useState } from 'react';
 
-const tests = [
+const initialTests = [
   {
     name: 'Complete Blood Count (CBC)',
     price: 'SAR 50.00',
@@ -87,9 +97,25 @@ const itemTypes = [
     supplier: 'Supplier A',
     minLevel: 10,
   },
+  {
+    name: 'TSH Immunoassay',
+    category: 'Reagents',
+    supplier: 'Supplier C',
+    minLevel: 20,
+  }
 ];
 
 export default function ManagementPage() {
+  const [tests, setTests] = useState(initialTests);
+  const [newTest, setNewTest] = useState({ name: '', price: '', range: '', kit: '' });
+
+  const handleAddTest = () => {
+    if (newTest.name && newTest.price) {
+      setTests([...tests, newTest]);
+      setNewTest({ name: '', price: '', range: '', kit: '' });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <h1 className="font-headline text-3xl font-semibold">Management</h1>
@@ -111,10 +137,76 @@ export default function ManagementPage() {
                     Manage lab tests, prices, normal ranges, and required kits.
                   </CardDescription>
                 </div>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add New Test
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add New Test
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add New Test</DialogTitle>
+                      <DialogDescription>
+                        Fill in the details of the new test.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="test-name" className="text-right">
+                          Name
+                        </Label>
+                        <Input
+                          id="test-name"
+                          value={newTest.name}
+                          onChange={(e) => setNewTest({ ...newTest, name: e.target.value })}
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="test-price" className="text-right">
+                          Price (SAR)
+                        </Label>
+                        <Input
+                          id="test-price"
+                           type="number"
+                          value={newTest.price.replace('SAR ','')}
+                          onChange={(e) => setNewTest({ ...newTest, price: `SAR ${e.target.value}` })}
+                          className="col-span-3"
+                        />
+                      </div>
+                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="test-range" className="text-right">
+                          Normal Range
+                        </Label>
+                        <Input
+                          id="test-range"
+                          value={newTest.range}
+                           onChange={(e) => setNewTest({ ...newTest, range: e.target.value })}
+                          className="col-span-3"
+                        />
+                      </div>
+                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="test-kit" className="text-right">
+                          Kit Used
+                        </Label>
+                         <Select onValueChange={(value) => setNewTest({ ...newTest, kit: value })}>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Select a kit" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {itemTypes.map((item) => (
+                                <SelectItem key={item.name} value={item.name}>{item.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" onClick={handleAddTest}>Add Test</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardHeader>
             <CardContent>
