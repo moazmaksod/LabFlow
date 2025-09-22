@@ -60,7 +60,40 @@ export default function SupportPage() {
               <Button>Send Message</Button>
             </CardContent>
           </Card>
-          <Card>
+           <Card>
+                <CardHeader>
+                    <CardTitle>Contact Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-start gap-4">
+                        <Phone className="mt-1 h-5 w-5 text-muted-foreground" />
+                        <div className="break-words">
+                            <h3 className="font-semibold">Phone Support</h3>
+                            <p className="text-muted-foreground text-sm">Our team is available from 9am to 5pm, Sunday to Thursday.</p>
+                            <a href="tel:+966112345678" className="text-primary hover:underline">+966 11 234 5678</a>
+                        </div>
+                    </div>
+                     <div className="flex items-start gap-4">
+                        <Mail className="mt-1 h-5 w-5 text-muted-foreground" />
+                        <div className="break-words">
+                            <h3 className="font-semibold">Email Support</h3>
+                            <p className="text-muted-foreground text-sm">We typically respond to emails within 24 hours.</p>
+                            <a href="mailto:support@labflow.med" className="text-primary hover:underline">support@labflow.med</a>
+                        </div>
+                    </div>
+                     <div className="flex items-start gap-4">
+                        <LifeBuoy className="mt-1 h-5 w-5 text-muted-foreground" />
+                        <div className="break-words">
+                            <h3 className="font-semibold">Help Center</h3>
+                            <p className="text-muted-foreground text-sm">Find answers to common questions and tutorials.</p>
+                            <a href="#" className="text-primary hover:underline">Visit Help Center</a>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+         <div className="md:col-span-1">
+             <Card>
             <CardHeader>
               <CardTitle>Frequently Asked Questions (FAQ)</CardTitle>
             </CardHeader>
@@ -93,39 +126,6 @@ export default function SupportPage() {
               </Accordion>
             </CardContent>
           </Card>
-        </div>
-         <div className="md:col-span-1">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Contact Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-start gap-4">
-                        <Phone className="mt-1 h-5 w-5 text-muted-foreground" />
-                        <div className="break-words">
-                            <h3 className="font-semibold">Phone Support</h3>
-                            <p className="text-muted-foreground text-sm">Our team is available from 9am to 5pm, Sunday to Thursday.</p>
-                            <a href="tel:+966112345678" className="text-primary hover:underline">+966 11 234 5678</a>
-                        </div>
-                    </div>
-                     <div className="flex items-start gap-4">
-                        <Mail className="mt-1 h-5 w-5 text-muted-foreground" />
-                        <div className="break-words">
-                            <h3 className="font-semibold">Email Support</h3>
-                            <p className="text-muted-foreground text-sm">We typically respond to emails within 24 hours.</p>
-                            <a href="mailto:support@labflow.med" className="text-primary hover:underline">support@labflow.med</a>
-                        </div>
-                    </div>
-                     <div className="flex items-start gap-4">
-                        <LifeBuoy className="mt-1 h-5 w-5 text-muted-foreground" />
-                        <div className="break-words">
-                            <h3 className="font-semibold">Help Center</h3>
-                            <p className="text-muted-foreground text-sm">Find answers to common questions and tutorials.</p>
-                            <a href="#" className="text-primary hover:underline">Visit Help Center</a>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
       </div>
     </div>
