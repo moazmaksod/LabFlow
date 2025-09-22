@@ -74,6 +74,10 @@ export default function ProfilePage() {
                         <Input id="phone" type="tel" defaultValue="+966 50 123 4567" />
                     </div>
                      <div className="space-y-2">
+                        <Label htmlFor="dob">Date of Birth</Label>
+                        <Input id="dob" type="date" defaultValue="1980-01-01" />
+                    </div>
+                     <div className="space-y-2">
                         <Label htmlFor="role">Role</Label>
                         <Input id="role" defaultValue="Administrator" disabled />
                     </div>
@@ -140,7 +144,7 @@ export default function ProfilePage() {
             <CardHeader>
                 <CardTitle>Change Password</CardTitle>
                 <CardDescription>Update your login password. It is recommended to use a strong, unique password.</CardDescription>
-            </CardHeader>
+            </Header>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="current-password">Current Password</Label>
