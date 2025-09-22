@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/table';
 import { PlusCircle, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 const orders = [
   {
@@ -75,9 +77,11 @@ export default function OrdersPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <h1 className="font-headline text-3xl font-semibold">Orders</h1>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create New Order
+        <Button asChild>
+          <Link href="/orders/new">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create New Order
+          </Link>
         </Button>
       </div>
 
@@ -107,7 +111,11 @@ export default function OrdersPage() {
             <TableBody>
               {orders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
+                  <TableCell className="font-medium">
+                     <Link href={`/orders/${order.id}`} className="text-primary hover:underline">
+                        {order.id}
+                    </Link>
+                  </TableCell>
                   <TableCell>{order.patient}</TableCell>
                   <TableCell>{order.doctor}</TableCell>
                   <TableCell>{order.date}</TableCell>

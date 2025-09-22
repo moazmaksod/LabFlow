@@ -1,3 +1,5 @@
+
+'use client';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -36,6 +38,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, PlusCircle, Search } from 'lucide-react';
+import Link from 'next/link';
 
 const patients = [
   {
@@ -184,7 +187,11 @@ export default function PatientsPage() {
             <TableBody>
               {patients.map((patient) => (
                 <TableRow key={patient.id}>
-                  <TableCell className="font-medium">{patient.id}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link href={`/patients/${patient.id}`} className="text-primary hover:underline">
+                        {patient.id}
+                    </Link>
+                  </TableCell>
                   <TableCell>{patient.name}</TableCell>
                   <TableCell>{patient.dob}</TableCell>
                   <TableCell>{patient.gender}</TableCell>
