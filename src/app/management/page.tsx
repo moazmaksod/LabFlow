@@ -24,7 +24,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { Edit, Facebook, Globe, Instagram, Linkedin, PlusCircle, Twitter } from 'lucide-react';
+import { Edit, Facebook, Globe, Instagram, Linkedin, Moon, PlusCircle, Sun, SunMoon, Twitter } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -42,6 +42,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import React, { useState } from 'react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const initialTests = [
   {
@@ -154,11 +155,12 @@ export default function ManagementPage() {
       <h1 className="font-headline text-3xl font-semibold">Management</h1>
 
       <Tabs defaultValue="tests" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="tests">Test Information</TabsTrigger>
           <TabsTrigger value="inventory">Inventory Items</TabsTrigger>
           <TabsTrigger value="users">Users & Roles</TabsTrigger>
           <TabsTrigger value="lab-info">Lab Info</TabsTrigger>
+          <TabsTrigger value="app-settings">Application Settings</TabsTrigger>
         </TabsList>
         <TabsContent value="tests">
           <Card>
@@ -552,10 +554,62 @@ export default function ManagementPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="app-settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>Application Settings</CardTitle>
+              <CardDescription>
+                Customize your experience. These settings are saved to your user profile.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              <div className="space-y-4">
+                <Label>Language</Label>
+                <Select defaultValue="en">
+                  <SelectTrigger className="w-[280px]">
+                    <SelectValue placeholder="Select a language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="ar">العربية (Arabic)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-4">
+                <Label>Theme</Label>
+                <RadioGroup defaultValue="system" className="grid max-w-md grid-cols-3 gap-8 pt-2">
+                  <div>
+                    <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                      <RadioGroupItem value="light" id="light" className="sr-only" />
+                      <Sun className="mb-3 h-6 w-6" />
+                      Light
+                    </Label>
+                  </div>
+                  <div>
+                    <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                      <RadioGroupItem value="dark" id="dark" className="sr-only" />
+                      <Moon className="mb-3 h-6 w-6" />
+                      Dark
+                    </Label>
+                  </div>
+                  <div>
+                    <Label className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                      <RadioGroupItem value="system" id="system" className="sr-only" />
+                      <SunMoon className="mb-3 h-6 w-6" />
+                      System
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <Button>Save Preferences</Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
-
-    
+}
 
     
