@@ -136,7 +136,7 @@ export default function ProfilePage() {
                 </div>
             </CardContent>
              <CardFooter>
-                <Button className="w-full">Save Preferences</Button>
+                <Button>Save Preferences</Button>
             </CardFooter>
         </Card>
 
