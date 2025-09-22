@@ -16,7 +16,6 @@ import {
   FileText,
   Settings,
   CreditCard,
-  LifeBuoy,
 } from 'lucide-react';
 
 const links = [
