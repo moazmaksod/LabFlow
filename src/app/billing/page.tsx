@@ -103,6 +103,30 @@ export default function BillingPage() {
             </p>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
+             <span className="text-muted-foreground">#</span>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">5</div>
+            <p className="text-xs text-muted-foreground">
+                in the current period
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Overdue Invoices</CardTitle>
+             <span className="text-muted-foreground">#</span>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">1</div>
+            <p className="text-xs text-muted-foreground">
+              past due date
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
