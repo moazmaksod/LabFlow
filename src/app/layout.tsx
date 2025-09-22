@@ -59,7 +59,7 @@ export default function RootLayout({
                   </div>
                   <div
                     data-sidebar="group-label"
-                    className="text-lg font-semibold"
+                    className="text-lg font-semibold group-data-[collapsible=icon]:hidden"
                   >
                     LabFlow
                   </div>
