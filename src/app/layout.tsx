@@ -42,7 +42,7 @@ export default function RootLayout({
             <div className="flex">
               <AppSidebar />
               <div className="flex-1">
-                <SidebarInset>
+                <SidebarInset className="flex">
                   <Header />
                   <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
                 </SidebarInset>
