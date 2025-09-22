@@ -60,11 +60,6 @@ const links = [
     href: '/management',
     icon: Settings,
   },
-   {
-    title: 'Support',
-    href: '/support',
-    icon: LifeBuoy,
-  },
 ];
 
 export function SidebarNav() {

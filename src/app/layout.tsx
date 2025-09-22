@@ -14,8 +14,9 @@ import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { Header } from '@/components/layout/header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { LogOut } from 'lucide-react';
+import { LifeBuoy, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'LabFlow',
@@ -68,6 +69,14 @@ export default function RootLayout({
               </SidebarContent>
               <SidebarFooter>
                  <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton tooltip="Support" asChild>
+                           <Link href="/support">
+                                <LifeBuoy />
+                                <span>Support</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton tooltip="Log out">
                             <LogOut />
