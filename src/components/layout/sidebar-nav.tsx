@@ -15,7 +15,8 @@ import {
   Boxes,
   FileText,
   Settings,
-  CreditCard
+  CreditCard,
+  LifeBuoy,
 } from 'lucide-react';
 
 const links = [
@@ -58,6 +59,11 @@ const links = [
     title: 'Management',
     href: '/management',
     icon: Settings,
+  },
+   {
+    title: 'Support',
+    href: '/support',
+    icon: LifeBuoy,
   },
 ];
 
