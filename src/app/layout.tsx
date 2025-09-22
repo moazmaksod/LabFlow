@@ -11,7 +11,6 @@ import {
   SidebarProvider,
 } from '@/components/ui/sidebar';
 import { Icons } from '@/components/icons';
-import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { Header } from '@/components/layout/header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
@@ -65,10 +64,8 @@ export default function RootLayout({
                     </div>
                     </div>
                 </SidebarHeader>
-                <SidebarContent>
-                    <SidebarNav />
-                </SidebarContent>
-                <SidebarFooter>
+                <SidebarContent className="p-2" />
+                <SidebarFooter className="p-2">
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton tooltip="Support" asChild>

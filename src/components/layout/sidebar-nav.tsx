@@ -71,7 +71,6 @@ export function SidebarNav() {
         <SidebarMenuItem key={link.href}>
           <SidebarMenuButton
             asChild
-            // For the dashboard, we need exact match. For others, we check if the path starts with the href.
             isActive={
               link.href === '/' ? pathname === '/' : pathname.startsWith(link.href)
             }

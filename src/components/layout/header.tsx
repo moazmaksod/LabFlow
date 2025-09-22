@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
+import { SidebarNav } from './sidebar-nav';
 
 export function Header() {
   const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar-1');
@@ -34,9 +35,13 @@ export function Header() {
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
       <SidebarTrigger className="md:hidden" />
 
-      <div className="flex items-center gap-2">
-        <SidebarTrigger className="hidden md:flex" />
-         <div className="relative flex-1">
+      <div className="hidden md:flex">
+         <SidebarNav />
+      </div>
+
+
+      <div className="ml-auto flex items-center gap-4">
+        <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -44,10 +49,6 @@ export function Header() {
             className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
           />
         </div>
-      </div>
-
-
-      <div className="ml-auto flex items-center gap-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
