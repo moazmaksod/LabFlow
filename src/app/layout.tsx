@@ -51,7 +51,7 @@ export default function RootLayout({
         >
           <SidebarProvider>
             <div className="flex">
-                <Sidebar>
+                <Sidebar collapsible>
                 <SidebarHeader>
                     <div className="flex items-center gap-2 p-2 group-data-[collapsible=icon]:justify-center">
                     <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
@@ -99,3 +99,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    
