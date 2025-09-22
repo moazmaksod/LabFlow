@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarInset,
   SidebarProvider,
@@ -12,6 +13,9 @@ import { Icons } from '@/components/icons';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { Header } from '@/components/layout/header';
 import { ThemeProvider } from '@/components/theme-provider';
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
   title: 'LabFlow',
@@ -62,6 +66,16 @@ export default function RootLayout({
               <SidebarContent>
                 <SidebarNav />
               </SidebarContent>
+              <SidebarFooter>
+                 <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton tooltip="Log out">
+                            <LogOut />
+                            <span>Log out</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                 </SidebarMenu>
+              </SidebarFooter>
             </Sidebar>
             <SidebarInset>
               <Header />
