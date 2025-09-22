@@ -19,7 +19,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, FileDown } from 'lucide-react';
+import { Search, FileDown, Download, Calendar as CalendarIcon } from 'lucide-react';
+import { useState } from 'react';
+import type { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 const billingData = [
   {
@@ -72,6 +89,8 @@ const statusVariant: {
 };
 
 export default function BillingPage() {
+    const [date, setDate] = useState<DateRange | undefined>();
+
   return (
     <div className="flex flex-col gap-8">
       <h1 className="font-headline text-3xl font-semibold">Billing</h1>
@@ -135,12 +154,67 @@ export default function BillingPage() {
           <CardDescription>
             View and manage all financial transactions.
           </CardDescription>
-          <div className="relative pt-4">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by patient, order ID, or invoice ID..."
-              className="pl-8"
-            />
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-center pt-4">
+              <div className="relative flex-grow w-full md:w-auto">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                placeholder="Search by patient, order ID, or invoice ID..."
+                className="pl-8 w-full"
+                />
+              </div>
+            <div className="flex gap-2 w-full md:w-auto flex-col sm:flex-row">
+                 <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn(
+                        "w-full sm:w-[300px] justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date?.from ? (
+                        date.to ? (
+                            <>
+                            {format(date.from, "LLL dd, y")} -{" "}
+                            {format(date.to, "LLL dd, y")}
+                            </>
+                        ) : (
+                            format(date.from, "LLL dd, y")
+                        )
+                        ) : (
+                        <span>Pick a date range</span>
+                        )}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={date?.from}
+                        selected={date}
+                        onSelect={setDate}
+                        numberOfMonths={2}
+                    />
+                    </PopoverContent>
+                </Popover>
+                 <Select>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="unpaid">Unpaid</SelectItem>
+                     <SelectItem value="overdue">Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
+                 <Button variant="outline">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export
+                </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
