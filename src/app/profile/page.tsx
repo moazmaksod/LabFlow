@@ -144,7 +144,7 @@ export default function ProfilePage() {
             <CardHeader>
                 <CardTitle>Change Password</CardTitle>
                 <CardDescription>Update your login password. It is recommended to use a strong, unique password.</CardDescription>
-            </Header>
+            </CardHeader>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="current-password">Current Password</Label>
