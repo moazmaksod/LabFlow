@@ -57,10 +57,10 @@ export default function RootLayout({
                 <SidebarHeader className="flex flex-col items-center gap-2 p-2">
                     <div className="flex w-full items-center justify-between">
                         <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-                            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                                 <Icons.logo className="size-5" />
                             </div>
-                             <div
+                            <div
                                 data-sidebar="group-label"
                                 className="text-lg font-semibold group-data-[collapsible=icon]:hidden"
                             >
