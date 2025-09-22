@@ -16,7 +16,6 @@ import { Header } from '@/components/layout/header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { LifeBuoy, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -51,46 +50,48 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SidebarProvider>
-            <Sidebar collapsible="icon">
-              <SidebarHeader>
-                <div className="flex items-center gap-2 p-2 group-data-[collapsible=icon]:justify-center">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                    <Icons.logo className="size-5" />
-                  </div>
-                  <div
-                    data-sidebar="group-label"
-                    className="text-lg font-semibold group-data-[collapsible=icon]:hidden"
-                  >
-                    LabFlow
-                  </div>
-                </div>
-              </SidebarHeader>
-              <SidebarContent>
-                <SidebarNav />
-              </SidebarContent>
-              <SidebarFooter>
-                 <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton tooltip="Support" asChild>
-                           <Link href="/support">
+            <div className="flex">
+                <Sidebar collapsible="icon">
+                <SidebarHeader>
+                    <div className="flex items-center gap-2 p-2 group-data-[collapsible=icon]:justify-center">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                        <Icons.logo className="size-5" />
+                    </div>
+                    <div
+                        data-sidebar="group-label"
+                        className="text-lg font-semibold group-data-[collapsible=icon]:hidden"
+                    >
+                        LabFlow
+                    </div>
+                    </div>
+                </SidebarHeader>
+                <SidebarContent>
+                    <SidebarNav />
+                </SidebarContent>
+                <SidebarFooter>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton tooltip="Support" asChild>
+                            <Link href="/support">
                                 <LifeBuoy />
                                 <span>Support</span>
                             </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton tooltip="Log out">
-                            <LogOut />
-                            <span>Log out</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                 </SidebarMenu>
-              </SidebarFooter>
-            </Sidebar>
-            <SidebarInset>
-              <Header />
-              <main className="p-4 sm:p-6 lg:p-8">{children}</main>
-            </SidebarInset>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton tooltip="Log out">
+                                <LogOut />
+                                <span>Log out</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarFooter>
+                </Sidebar>
+                <SidebarInset>
+                <Header />
+                <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+                </SidebarInset>
+            </div>
           </SidebarProvider>
           <Toaster />
         </ThemeProvider>
