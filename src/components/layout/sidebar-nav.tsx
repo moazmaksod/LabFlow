@@ -17,6 +17,7 @@ import {
   Settings,
   CreditCard,
 } from 'lucide-react';
+import Link from 'next/link';
 
 const links = [
   {
@@ -76,10 +77,10 @@ export function SidebarNav() {
             }
             tooltip={link.title}
           >
-            <a href={link.href}>
+            <Link href={link.href}>
               <link.icon />
               <span>{link.title}</span>
-            </a>
+            </Link>
 
           </SidebarMenuButton>
         </SidebarMenuItem>
