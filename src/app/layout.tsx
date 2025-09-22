@@ -54,27 +54,27 @@ export default function RootLayout({
           <SidebarProvider>
             <div className="flex">
                 <Sidebar collapsible>
-                <SidebarHeader>
-                    <div className="flex items-center gap-2 p-2 group-data-[collapsible=icon]:justify-center">
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                        <Icons.logo className="size-5" />
+                <SidebarHeader className="flex flex-col items-center gap-2 p-2 group-data-[collapsible=icon]:gap-4">
+                    <div className="flex w-full items-center justify-between">
+                        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                                <Icons.logo className="size-5" />
+                            </div>
+                             <div
+                                data-sidebar="group-label"
+                                className="text-lg font-semibold group-data-[collapsible=icon]:hidden"
+                            >
+                                LabFlow
+                            </div>
+                        </div>
+                         <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
                     </div>
-                    <div
-                        data-sidebar="group-label"
-                        className="text-lg font-semibold group-data-[collapsible=icon]:hidden"
-                    >
-                        LabFlow
-                    </div>
-                    </div>
+                     <SidebarTrigger className="hidden group-data-[collapsible=icon]:block" />
                 </SidebarHeader>
                 <SidebarContent className="p-2">
                   <SidebarNav />
                 </SidebarContent>
                 <SidebarFooter className="p-2">
-                    <Separator className="mb-2" />
-                     <div className="flex justify-center group-data-[collapsible=icon]:justify-center">
-                        <SidebarTrigger />
-                    </div>
                     <Separator className="my-2" />
                     <SidebarMenu>
                         <SidebarMenuItem>
