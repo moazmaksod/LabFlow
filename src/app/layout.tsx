@@ -57,12 +57,7 @@ export default function RootLayout({
                 <SidebarHeader className="flex flex-col items-center gap-2 p-2">
                     <div className="flex w-full items-center justify-between">
                         <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-                            <SidebarTrigger className="group-data-[collapsible=icon]:block hidden" asChild>
-                                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                                    <Icons.logo className="size-5" />
-                                </div>
-                            </SidebarTrigger>
-                             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground group-data-[collapsible=icon]:hidden">
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                                 <Icons.logo className="size-5" />
                             </div>
                              <div
