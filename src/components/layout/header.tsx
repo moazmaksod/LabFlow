@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -21,6 +22,7 @@ import {
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Link from 'next/link';
 
 export function Header() {
   const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar-1');
@@ -71,9 +73,11 @@ export function Header() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Dr. Jane Doe</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+            <DropdownMenuItem asChild>
+              <Link href="/profile">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
@@ -94,3 +98,5 @@ export function Header() {
     </header>
   );
 }
+
+    
