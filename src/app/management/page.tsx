@@ -24,7 +24,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { Edit, PlusCircle } from 'lucide-react';
+import { Edit, Facebook, Globe, Instagram, Linkedin, PlusCircle, Twitter } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -158,7 +158,7 @@ export default function ManagementPage() {
           <TabsTrigger value="tests">Test Information</TabsTrigger>
           <TabsTrigger value="inventory">Inventory Items</TabsTrigger>
           <TabsTrigger value="users">Users & Roles</TabsTrigger>
-          <TabsTrigger value="general">General Settings</TabsTrigger>
+          <TabsTrigger value="lab-info">Lab Info</TabsTrigger>
         </TabsList>
         <TabsContent value="tests">
           <Card>
@@ -492,41 +492,70 @@ export default function ManagementPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="general">
+        <TabsContent value="lab-info">
           <Card>
             <CardHeader>
-              <CardTitle>General Settings</CardTitle>
+              <CardTitle>Lab Information</CardTitle>
               <CardDescription>
-                Update your lab's information and branding.
+                Update your lab's public information and branding.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="lab-name">Lab Name</Label>
-                <Input
-                  type="text"
-                  id="lab-name"
-                  defaultValue="Global Diagnostics Lab"
-                />
+            <CardContent className="space-y-8">
+              <div className="space-y-4">
+                  <div className="grid w-full max-w-lg items-center gap-1.5">
+                    <Label htmlFor="lab-name">Lab Name</Label>
+                    <Input
+                      type="text"
+                      id="lab-name"
+                      defaultValue="Global Diagnostics Lab"
+                    />
+                  </div>
+                  <div className="grid w-full max-w-lg items-center gap-1.5">
+                    <Label htmlFor="contact-info">Contact Information</Label>
+                    <Input
+                      type="text"
+                      id="contact-info"
+                      defaultValue="123 Health St, Riyadh | +966 11 234 5678"
+                    />
+                  </div>
+                  <div className="grid w-full max-w-sm items-center gap-1.5">
+                    <Label htmlFor="picture">Lab Logo</Label>
+                    <Input id="picture" type="file" />
+                  </div>
               </div>
-              <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="contact-info">Contact Information</Label>
-                <Input
-                  type="text"
-                  id="contact-info"
-                  defaultValue="123 Health St, Riyadh | +966 11 234 5678"
-                />
+              <div className="space-y-4">
+                <Label>Social Media</Label>
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <Twitter className="h-5 w-5 text-muted-foreground" />
+                        <Input placeholder="https://twitter.com/labflow" className="max-w-md" />
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <Facebook className="h-5 w-5 text-muted-foreground" />
+                        <Input placeholder="https://facebook.com/labflow" className="max-w-md" />
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <Instagram className="h-5 w-5 text-muted-foreground" />
+                        <Input placeholder="https://instagram.com/labflow" className="max-w-md" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Linkedin className="h-5 w-5 text-muted-foreground" />
+                        <Input placeholder="https://linkedin.com/company/labflow" className="max-w-md" />
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <Globe className="h-5 w-5 text-muted-foreground" />
+                        <Input placeholder="https://labflow.med" className="max-w-md" />
+                    </div>
+                </div>
               </div>
-              <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="picture">Lab Logo</Label>
-                <Input id="picture" type="file" />
-              </div>
-              <Button>Save Settings</Button>
+              <Button>Save Lab Info</Button>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
+
+    
 
     
