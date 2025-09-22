@@ -37,7 +37,7 @@ export default function ProfilePage() {
         Profile & Settings
       </h1>
 
-      <div className="grid max-w-2xl gap-8">
+      <div className="grid gap-8">
         <Card>
             <CardHeader>
                 <CardTitle>Profile Information</CardTitle>

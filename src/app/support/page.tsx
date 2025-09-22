@@ -25,7 +25,7 @@ export default function SupportPage() {
     <div className="flex flex-col gap-8">
       <h1 className="font-headline text-3xl font-semibold">Support</h1>
 
-      <div className="mx-auto w-full max-w-4xl space-y-8">
+      <div className="mx-auto w-full space-y-8">
         <Card>
           <CardHeader>
             <CardTitle>Contact Support</CardTitle>
