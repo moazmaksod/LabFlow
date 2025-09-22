@@ -60,14 +60,25 @@ export default function ProfilePage() {
                         <Input id="picture" type="file" />
                     </div>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" defaultValue="Dr. Jane Doe" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Full Name</Label>
+                        <Input id="name" defaultValue="Dr. Jane Doe" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input id="email" type="email" defaultValue="jane.doe@labflow.med" />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input id="phone" type="tel" defaultValue="+966 50 123 4567" />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="role">Role</Label>
+                        <Input id="role" defaultValue="Administrator" disabled />
+                    </div>
                 </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" defaultValue="jane.doe@labflow.med" />
-                </div>
+
             </CardContent>
             <CardFooter>
                 <Button>Save Profile</Button>
