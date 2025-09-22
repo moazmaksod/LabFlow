@@ -24,7 +24,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { PlusCircle } from 'lucide-react';
+import { Edit, PlusCircle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -64,7 +64,7 @@ const initialTests = [
   },
 ];
 
-const users = [
+const initialUsers = [
   {
     name: 'Dr. Jane Doe',
     role: 'Administrator',
@@ -105,11 +105,20 @@ const initialItemTypes = [
   }
 ];
 
+type User = {
+  name: string;
+  role: string;
+  email: string;
+};
+
 export default function ManagementPage() {
   const [tests, setTests] = useState(initialTests);
   const [newTest, setNewTest] = useState({ name: '', price: '', range: '', kit: '' });
   const [itemTypes, setItemTypes] = useState(initialItemTypes);
   const [newItemType, setNewItemType] = useState({ name: '', category: '', supplier: '', minLevel: 0 });
+  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [newUser, setNewUser] = useState<Omit<User, 'email'> & { email?: string }>({ name: '', role: ''});
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const handleAddTest = () => {
     if (newTest.name && newTest.price) {
@@ -124,6 +133,21 @@ export default function ManagementPage() {
       setNewItemType({ name: '', category: '', supplier: '', minLevel: 0 });
     }
   };
+
+  const handleAddUser = () => {
+    if (newUser.name && newUser.email && newUser.role) {
+        setUsers([...users, newUser as User]);
+        setNewUser({ name: '', email: '', role: '' });
+    }
+  };
+
+  const handleUpdateUser = () => {
+    if (editingUser) {
+        setUsers(users.map(u => u.email === editingUser.email ? editingUser : u));
+        setEditingUser(null);
+    }
+  };
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -364,10 +388,48 @@ export default function ManagementPage() {
                     Manage user accounts and permissions.
                   </CardDescription>
                 </div>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Invite User
-                </Button>
+                 <Dialog>
+                    <DialogTrigger asChild>
+                        <Button>
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Add New User
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                        <DialogTitle>Add New User</DialogTitle>
+                        <DialogDescription>
+                            Enter the user's details and assign a role.
+                        </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="new-user-name" className="text-right">Name</Label>
+                                <Input id="new-user-name" value={newUser.name} onChange={(e) => setNewUser({...newUser, name: e.target.value})} className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="new-user-email" className="text-right">Email</Label>
+                                <Input id="new-user-email" type="email" value={newUser.email || ''} onChange={(e) => setNewUser({...newUser, email: e.target.value})} className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="new-user-role" className="text-right">Role</Label>
+                                <Select onValueChange={(value) => setNewUser({...newUser, role: value})}>
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Administrator">Administrator</SelectItem>
+                                        <SelectItem value="Technician">Technician</SelectItem>
+                                        <SelectItem value="Receptionist">Receptionist</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="submit" onClick={handleAddUser}>Add User</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                 </Dialog>
               </div>
             </CardHeader>
             <CardContent>
@@ -377,16 +439,52 @@ export default function ManagementPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {users.map((user) => (
-                    <TableRow key={user.name}>
+                    <TableRow key={user.email}>
                       <TableCell className="font-medium">
                         {user.name}
                       </TableCell>
                       <TableCell>{user.role}</TableCell>
                       <TableCell>{user.email}</TableCell>
+                      <TableCell className="text-right">
+                         <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => setEditingUser({...user})}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                <DialogTitle>Edit User Role</DialogTitle>
+                                <DialogDescription>
+                                    Update the role for {editingUser?.name}.
+                                </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="edit-user-role" className="text-right">Role</Label>
+                                        <Select value={editingUser?.role} onValueChange={(value) => setEditingUser(current => current ? {...current, role: value} : null)}>
+                                            <SelectTrigger className="col-span-3">
+                                                <SelectValue placeholder="Select a role" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Administrator">Administrator</SelectItem>
+                                                <SelectItem value="Technician">Technician</SelectItem>
+                                                <SelectItem value="Receptionist">Receptionist</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit" onClick={handleUpdateUser}>Save Changes</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -430,4 +528,5 @@ export default function ManagementPage() {
       </Tabs>
     </div>
   );
-}
+
+    
