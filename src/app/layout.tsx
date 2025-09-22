@@ -39,7 +39,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SidebarProvider>
-            <div className="flex">
+            <div className="flex min-h-screen">
               <AppSidebar />
               <div className="flex-1">
                 <SidebarInset className="flex flex-col">
