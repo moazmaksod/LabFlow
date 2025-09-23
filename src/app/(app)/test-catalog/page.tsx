@@ -105,6 +105,7 @@ export default function TestCatalogPage() {
     };
     setTests([...tests, newTest]);
     setDialogOpen(false);
+    event.currentTarget.reset();
   };
 
   return (
