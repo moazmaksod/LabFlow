@@ -1,19 +1,18 @@
 
 import { NextResponse } from 'next/server';
-import { mockTests, protectRoute } from '@/lib/api/utils';
+import { mockTests, getAuthenticatedUser } from '@/lib/api/utils';
 import { TestCatalogSchema } from '@/lib/schemas/test-catalog';
 
 // GET /api/v1/test-catalog/[id]
 // Retrieves a single test (Manager only)
 export async function GET(request: Request, { params }: { params: { id: string } }) {
-   const user = await protectRoute(['manager']);
+   const user = await getAuthenticatedUser();
    if (!user) {
-    const currentUser = new Headers(request.headers).get('Authorization');
-     if (!currentUser) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-  }
+   }
+   if (user.role !== 'manager') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+   }
 
   const foundTest = mockTests.find(t => t._id === params.id);
   if (foundTest) {
@@ -25,13 +24,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
 // PUT /api/v1/test-catalog/[id]
 // Updates a test (Manager only)
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const user = await protectRoute(['manager']);
-   if (!user) {
-    const currentUser = new Headers(request.headers).get('Authorization');
-     if (!currentUser) {
+  const user = await getAuthenticatedUser();
+  if (!user) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  }
+  if (user.role !== 'manager') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
   const testIndex = mockTests.findIndex(t => t._id === params.id);
@@ -55,13 +53,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 // DELETE /api/v1/test-catalog/[id]
 // Deletes a test (Manager only)
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const user = await protectRoute(['manager']);
+  const user = await getAuthenticatedUser();
   if (!user) {
-    const currentUser = new Headers(request.headers).get('Authorization');
-     if (!currentUser) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  }
+  if (user.role !== 'manager') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
   const testIndex = mockTests.findIndex(t => t._id === params.id);
@@ -71,5 +68,5 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
   mockTests.splice(testIndex, 1);
 
-  return NextResponse.json(null, { status: 204 }); // No Content
+  return new NextResponse(null, { status: 204 }); // No Content
 }

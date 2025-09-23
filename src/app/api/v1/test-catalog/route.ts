@@ -1,18 +1,17 @@
 
 import { NextResponse } from 'next/server';
-import { mockTests, protectRoute } from '@/lib/api/utils';
+import { mockTests, getAuthenticatedUser } from '@/lib/api/utils';
 import { TestCatalogSchema } from '@/lib/schemas/test-catalog';
 
 // GET /api/v1/test-catalog
 // Lists all tests (Manager only for management purposes)
 export async function GET(request: Request) {
-  const user = await protectRoute(['manager']);
+  const user = await getAuthenticatedUser();
   if (!user) {
-    const currentUser = new Headers(request.headers).get('Authorization');
-     if (!currentUser) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  }
+  if (user.role !== 'manager') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
   return NextResponse.json(mockTests);
@@ -21,13 +20,12 @@ export async function GET(request: Request) {
 // POST /api/v1/test-catalog
 // Creates a new test (Manager only)
 export async function POST(request: Request) {
-  const user = await protectRoute(['manager']);
+  const user = await getAuthenticatedUser();
   if (!user) {
-    const currentUser = new Headers(request.headers).get('Authorization');
-     if (!currentUser) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  }
+  if (user.role !== 'manager') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
   const body = await request.json();
@@ -41,7 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: `Test with code ${validation.data.testCode} already exists.`}, { status: 409 });
   }
 
-  const newTest = {
+  const newTest: TestCatalog = {
     _id: `test-${Date.now()}`,
     ...validation.data,
   };

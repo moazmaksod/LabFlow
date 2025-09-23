@@ -1,18 +1,18 @@
+
 import { NextResponse } from 'next/server';
-import { mockUsers, protectRoute } from '@/lib/api/utils';
+import { mockUsers, getAuthenticatedUser } from '@/lib/api/utils';
 import { User, UserSchema } from '@/lib/schemas/auth';
 
 // GET /api/v1/users/[id]
 // Retrieves a single user (Manager only)
 export async function GET(request: Request, { params }: { params: { id: string } }) {
-   const user = await protectRoute(['manager']);
+   const user = await getAuthenticatedUser();
    if (!user) {
-    const currentUser = new Headers(request.headers).get('Authorization');
-     if (!currentUser) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-  }
+   }
+   if (user.role !== 'manager') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+   }
 
   const foundUser = mockUsers.find(u => u.id === params.id);
   if (foundUser) {
@@ -24,13 +24,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
 // PUT /api/v1/users/[id]
 // Updates a user (Manager only)
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const user = await protectRoute(['manager']);
-   if (!user) {
-    const currentUser = new Headers(request.headers).get('Authorization');
-     if (!currentUser) {
+  const user = await getAuthenticatedUser();
+  if (!user) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  }
+  if (user.role !== 'manager') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
   const userIndex = mockUsers.findIndex(u => u.id === params.id);
@@ -40,7 +39,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
   const body = await request.json();
   // For this prototype, we only allow role updates via this endpoint
-  const validation = UserSchema.pick({ role: true }).safeParse(body);
+  const validation = UserSchema.pick({ role: true, firstName: true, lastName: true, email: true }).partial().safeParse(body);
 
   if (!validation.success) {
     return NextResponse.json(validation.error.errors, { status: 400 });
@@ -54,14 +53,14 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
 // DELETE /api/v1/users/[id]
 // Deletes a user (Manager only)
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const user = await protectRoute(['manager']);
+export async function DELETE(request: Request, { params }: { params: { id: string } })
+{
+  const user = await getAuthenticatedUser();
   if (!user) {
-    const currentUser = new Headers(request.headers).get('Authorization');
-     if (!currentUser) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  }
+  if (user.role !== 'manager') {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
   const userIndex = mockUsers.findIndex(u => u.id === params.id);
@@ -71,5 +70,5 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
   mockUsers.splice(userIndex, 1);
 
-  return NextResponse.json(null, { status: 204 }); // No Content
+  return new NextResponse(null, { status: 204 }); // No Content
 }

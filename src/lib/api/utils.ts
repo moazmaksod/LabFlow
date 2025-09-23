@@ -132,22 +132,3 @@ export async function getAuthenticatedUser(): Promise<User | null> {
 
   return null;
 }
-
-/**
- * A middleware-like function to protect routes by role.
- * @param allowedRoles - An array of roles that are allowed to access the route.
- * @returns The user if authenticated and authorized, otherwise null.
- */
-export async function protectRoute(allowedRoles: User['role'][]): Promise<User | null> {
-    const user = await getAuthenticatedUser();
-
-    if (!user) {
-        return null; // Triggers a 401 Unauthorized response
-    }
-
-    if (!allowedRoles.includes(user.role)) {
-        return null; // Triggers a 403 Forbidden response
-    }
-
-    return user;
-}
