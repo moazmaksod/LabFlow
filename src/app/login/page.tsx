@@ -16,7 +16,7 @@ import Link from 'next/link';
 import {useRouter} from 'next/navigation';
 import {useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
-import { login } from '@/ai/flows/auth-flow';
+import { login as apiLogin } from '@/ai/flows/auth-flow';
 import {
   Form,
   FormControl,
@@ -27,10 +27,12 @@ import {
 } from '@/components/ui/form';
 import {useToast} from '@/hooks/use-toast';
 import { AuthLoginInput, AuthLoginInputSchema } from '@/lib/schemas/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const {toast} = useToast();
+  const { login } = useAuth();
 
   const form = useForm<AuthLoginInput>({
     resolver: zodResolver(AuthLoginInputSchema),
@@ -42,10 +44,9 @@ export default function LoginPage() {
 
   async function onSubmit(values: AuthLoginInput) {
     try {
-      const user = await login(values);
+      const user = await apiLogin(values);
       if (user) {
-        // In a real app, we would store the JWT in a cookie or local storage
-        // and set up an auth context. For now, just redirect.
+        login(user);
         toast({
           title: 'Login Successful',
           description: `Welcome back, ${user.firstName}!`,

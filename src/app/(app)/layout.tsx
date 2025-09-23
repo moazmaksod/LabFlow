@@ -40,14 +40,21 @@ import {
   FileBox,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { PlaceHolderImages } from '@/lib/images';
+import { AuthProvider, useAuth } from '@/hooks/use-auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function AppSidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
   const userAvatar = PlaceHolderImages.find(
     (img) => img.id === 'user-avatar-1'
   );
+  
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  }
 
   return (
     <Sidebar
@@ -162,26 +169,42 @@ function AppSidebar() {
                         data-ai-hint={userAvatar.imageHint}
                       />
                     )}
-                    <AvatarFallback>JD</AvatarFallback>
+                    <AvatarFallback>{user ? getInitials(user.firstName, user.lastName) : '...'}</AvatarFallback>
                   </Avatar>
                   <div className="flex w-full min-w-0 flex-col items-start justify-start">
-                    <span className="max-w-full truncate">Jane Doe</span>
-                    <span className="max-w-full truncate text-xs text-sidebar-foreground/70">
-                      Administrator
-                    </span>
+                    {user ? (
+                      <>
+                        <span className="max-w-full truncate">{user.firstName} {user.lastName}</span>
+                        <span className="max-w-full truncate text-xs text-sidebar-foreground/70 capitalize">
+                          {user.role}
+                        </span>
+                      </>
+                    ) : (
+                      <div className="w-full space-y-1">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    )}
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      Jane Doe
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      jane.doe@labflow.med
-                    </p>
-                  </div>
+                  {user ? (
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user.firstName} {user.lastName}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  )}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
@@ -195,11 +218,9 @@ function AppSidebar() {
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                   <Link href="/login">
-                    <LogOut className="mr-2" />
-                    <span>Log out</span>
-                  </Link>
+                <DropdownMenuItem onClick={logout}>
+                  <LogOut className="mr-2" />
+                  <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -226,7 +247,29 @@ function Header() {
   );
 }
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+
+function ProtectedAppLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    // You can render a loading spinner here
+    return (
+       <div className="flex min-h-screen items-center justify-center">
+         <div className="flex items-center gap-2">
+           <Icons.logo className="size-8 animate-spin" />
+           <span className="text-lg font-semibold">Loading LabFlow...</span>
+         </div>
+       </div>
+    )
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -237,5 +280,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </SidebarInset>
     </SidebarProvider>
+  );
+}
+
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <ProtectedAppLayout>{children}</ProtectedAppLayout>
+    </AuthProvider>
   );
 }
