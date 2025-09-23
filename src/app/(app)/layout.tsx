@@ -47,6 +47,7 @@ import {
   Package,
   History,
   UserCog,
+  Beaker,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -145,6 +146,11 @@ function AppSidebar() {
       <SidebarMenuItem>
         <SidebarMenuButton asChild isActive={pathname.startsWith('/users')} tooltip="User Management">
           <Link href="/users"><UserCog /><span>User Management</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+       <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/test-catalog')} tooltip="Test Catalog">
+          <Link href="/test-catalog"><Beaker /><span>Test Catalog</span></Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
