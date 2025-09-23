@@ -78,7 +78,10 @@ export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>(initialUsers);
   
   const [isAddUserOpen, setAddUserOpen] = useState(false);
+  const [isEditUserOpen, setEditUserOpen] = useState(false);
+
   const [newUser, setNewUser] = useState({ firstName: '', lastName: '', email: '', role: '' });
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   React.useEffect(() => {
     if (user && user.role !== 'manager') {
@@ -100,6 +103,14 @@ export default function UserManagementPage() {
       setUsers([...users, { ...newUser, id: `user-${users.length + 1}` } as User]);
       setNewUser({ firstName: '', lastName: '', email: '', role: '' });
       setAddUserOpen(false);
+    }
+  };
+
+  const handleUpdateUser = () => {
+    if (editingUser) {
+      setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
+      setEditingUser(null);
+      setEditUserOpen(false);
     }
   };
 
@@ -184,35 +195,72 @@ export default function UserManagementPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Full Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">
-                    {user.firstName} {user.lastName}
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell className="capitalize">{user.role}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
-                      <Edit className="h-4 w-4" />
-                      <span className="sr-only">Edit User</span>
-                    </Button>
-                  </TableCell>
+          <Dialog open={isEditUserOpen} onOpenChange={setEditUserOpen}>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Full Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">
+                      {user.firstName} {user.lastName}
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell className="capitalize">{user.role}</TableCell>
+                    <TableCell className="text-right">
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => setEditingUser(user)}>
+                            <Edit className="h-4 w-4" />
+                            <span className="sr-only">Edit User</span>
+                          </Button>
+                        </DialogTrigger>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+             <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Edit User</DialogTitle>
+                  <DialogDescription>
+                    Update the role for {editingUser?.firstName} {editingUser?.lastName}.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                   <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="edit-role" className="text-right">
+                        Role
+                      </Label>
+                      <Select value={editingUser?.role} onValueChange={(value) => setEditingUser(current => current ? {...current, role: value as User['role']} : null)}>
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="technician">Technician</SelectItem>
+                          <SelectItem value="receptionist">Receptionist</SelectItem>
+                          <SelectItem value="physician">Physician</SelectItem>
+                          <SelectItem value="patient">Patient</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setEditUserOpen(false)}>Cancel</Button>
+                  <Button type="button" onClick={handleUpdateUser}>Save Changes</Button>
+                </DialogFooter>
+              </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    
