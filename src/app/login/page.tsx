@@ -44,12 +44,12 @@ export default function LoginPage() {
 
   async function onSubmit(values: AuthLoginInput) {
     try {
-      const user = await apiLogin(values);
-      if (user) {
-        login(user);
+      const token = await apiLogin(values);
+      if (token) {
+        const user = login(token);
         toast({
           title: 'Login Successful',
-          description: `Welcome back, ${user.firstName}!`,
+          description: `Welcome back, ${user?.firstName}!`,
         });
         router.push('/dashboard');
       } else {
