@@ -42,7 +42,7 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { PlaceHolderImages } from '@/lib/images';
-import { AuthProvider, useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function AppSidebar() {
@@ -248,7 +248,7 @@ function Header() {
 }
 
 
-function ProtectedAppLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -280,14 +280,5 @@ function ProtectedAppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </SidebarInset>
     </SidebarProvider>
-  );
-}
-
-
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <ProtectedAppLayout>{children}</ProtectedAppLayout>
-    </AuthProvider>
   );
 }
