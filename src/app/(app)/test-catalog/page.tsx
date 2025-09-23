@@ -15,7 +15,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -193,7 +192,7 @@ export default function TestCatalogPage() {
                 Define the test, its requirements, and billing information.
             </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-6 py-4 max-h-[70vh] overflow-y-auto pr-6">
+            <div className="grid gap-6 py-4 max-h-[70vh] overflow-y-auto pr-6 pl-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="testCode">Test Code</Label>
