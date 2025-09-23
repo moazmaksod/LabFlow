@@ -18,7 +18,7 @@ const TurnaroundTimeSchema = z.object({
   stat: TurnaroundTimeDetailSchema,
 });
 
-const ReferenceRangeSchema = z.object({
+export const ReferenceRangeSchema = z.object({
     ageMin: z.number(),
     ageMax: z.number(),
     gender: z.string(),

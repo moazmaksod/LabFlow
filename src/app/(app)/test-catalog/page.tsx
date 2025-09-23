@@ -27,7 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
-import { Edit, PlusCircle, Search, Trash2 } from 'lucide-react';
+import { Edit, PlusCircle, Search, Trash2, X } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
@@ -62,6 +62,8 @@ const emptyTest: Omit<TestCatalog, '_id'> = {
     price: 0,
     isPanel: false,
     isActive: true,
+    referenceRanges: [],
+    reflexRules: [],
 }
 
 export default function TestCatalogPage() {
@@ -76,17 +78,14 @@ export default function TestCatalogPage() {
 
   const fetchTests = async () => {
     if (!token) return;
-    console.log("Attempting to fetch tests with token...");
     try {
       setIsLoading(true);
       const response = await fetch('/api/v1/test-catalog', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("API Response Status:", response.status);
 
       if (response.ok) {
         const result = await response.json();
-        console.log("API Response JSON:", result);
         setTests(result.data);
       } else {
         const errorText = await response.text();
@@ -106,7 +105,6 @@ export default function TestCatalogPage() {
       });
     } finally {
       setIsLoading(false);
-      console.log("Finished fetching tests.");
     }
   };
 
@@ -194,6 +192,23 @@ export default function TestCatalogPage() {
         e.preventDefault();
         onSave(currentTest);
     }
+    
+    const handleReferenceRangeChange = (index: number, field: string, value: string | number) => {
+      const updatedRanges = [...(currentTest.referenceRanges || [])];
+      (updatedRanges[index] as any)[field] = value;
+      setCurrentTest({ ...currentTest, referenceRanges: updatedRanges });
+    };
+
+    const addReferenceRange = () => {
+      const newRange = { ageMin: 0, ageMax: 99, gender: 'Any', rangeLow: 0, rangeHigh: 0, units: '' };
+      setCurrentTest({ ...currentTest, referenceRanges: [...(currentTest.referenceRanges || []), newRange] });
+    };
+
+    const removeReferenceRange = (index: number) => {
+      const updatedRanges = [...(currentTest.referenceRanges || [])];
+      updatedRanges.splice(index, 1);
+      setCurrentTest({ ...currentTest, referenceRanges: updatedRanges });
+    };
 
     return (
         <form onSubmit={handleSubmit}>
@@ -309,10 +324,56 @@ export default function TestCatalogPage() {
 
                 <Separator />
 
-                {/* Placeholder for future complex fields */}
-                <div className="p-4 border-dashed border-2 rounded-lg text-center bg-muted/50">
-                    <p className="text-sm text-muted-foreground">Demographic-specific reference ranges will be managed here.</p>
+                <div>
+                  <h4 className="font-medium">Demographic-Specific Reference Ranges</h4>
+                  <div className="space-y-2 mt-2">
+                    {(currentTest.referenceRanges || []).map((range, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-2 items-center p-2 rounded-md border">
+                        <div className="col-span-3 space-y-1">
+                          <Label className="text-xs">Age Range</Label>
+                          <div className="flex items-center gap-1">
+                            <Input type="number" placeholder="Min" value={range.ageMin} onChange={(e) => handleReferenceRangeChange(index, 'ageMin', parseInt(e.target.value) || 0)} />
+                            <span className="text-muted-foreground">-</span>
+                            <Input type="number" placeholder="Max" value={range.ageMax} onChange={(e) => handleReferenceRangeChange(index, 'ageMax', parseInt(e.target.value) || 0)} />
+                          </div>
+                        </div>
+                        <div className="col-span-2 space-y-1">
+                           <Label className="text-xs">Gender</Label>
+                           <Select value={range.gender} onValueChange={(value) => handleReferenceRangeChange(index, 'gender', value)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Any">Any</SelectItem>
+                              <SelectItem value="Male">Male</SelectItem>
+                              <SelectItem value="Female">Female</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                         <div className="col-span-4 space-y-1">
+                          <Label className="text-xs">Reference Range</Label>
+                          <div className="flex items-center gap-1">
+                            <Input type="number" step="any" placeholder="Low" value={range.rangeLow} onChange={(e) => handleReferenceRangeChange(index, 'rangeLow', parseFloat(e.target.value) || 0)} />
+                             <span className="text-muted-foreground">-</span>
+                            <Input type="number" step="any" placeholder="High" value={range.rangeHigh} onChange={(e) => handleReferenceRangeChange(index, 'rangeHigh', parseFloat(e.target.value) || 0)} />
+                          </div>
+                        </div>
+                        <div className="col-span-2 space-y-1">
+                           <Label className="text-xs">Units</Label>
+                          <Input placeholder="e.g. mg/dL" value={range.units} onChange={(e) => handleReferenceRangeChange(index, 'units', e.target.value)} />
+                        </div>
+                        <div className="col-span-1 flex justify-end">
+                           <Button variant="ghost" size="icon" onClick={() => removeReferenceRange(index)} className="mt-4">
+                            <X className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" size="sm" onClick={addReferenceRange}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Reference Range
+                    </Button>
+                  </div>
                 </div>
+
                  <div className="p-4 border-dashed border-2 rounded-lg text-center bg-muted/50">
                     <p className="text-sm text-muted-foreground">Automated reflex testing rules will be managed here.</p>
                 </div>
@@ -334,7 +395,7 @@ export default function TestCatalogPage() {
               <PlusCircle className="mr-2 h-4 w-4" />
               Add New Test
             </Button>
-          <DialogContent className="sm:max-w-3xl">
+          <DialogContent className="sm:max-w-4xl">
              {editingTest && <TestForm test={editingTest} onSave={handleSaveTest} />}
           </DialogContent>
         </Dialog>
@@ -420,5 +481,3 @@ export default function TestCatalogPage() {
     </div>
   );
 }
-
-    
