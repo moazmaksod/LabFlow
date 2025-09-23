@@ -15,7 +15,7 @@ import Link from 'next/link';
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="flex min-h-screen items-center justify-center bg-muted/40">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
             <div className="flex justify-center items-center mb-4">
@@ -23,7 +23,7 @@ export default function LoginPage() {
                     <Icons.logo className="size-8" />
                 </div>
             </div>
-          <CardTitle>LabFlow Login</CardTitle>
+          <CardTitle>LabFlow Employee Login</CardTitle>
           <CardDescription>Enter your credentials to access your account.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -39,9 +39,8 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col gap-4">
           <Button className="w-full">Sign in</Button>
            <div className="text-sm text-muted-foreground">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-primary hover:underline">
-              Sign up
+            <Link href="/doctor/login" className="text-primary hover:underline">
+              Are you a referring doctor?
             </Link>
           </div>
         </CardFooter>

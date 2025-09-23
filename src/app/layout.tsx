@@ -2,10 +2,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { Header } from '@/components/layout/header';
 import { ThemeProvider } from '@/components/theme-provider';
-import { AppSidebar } from '@/components/layout/app-sidebar';
 
 export const metadata: Metadata = {
   title: 'LabFlow',
@@ -38,15 +35,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>
-              <AppSidebar />
-              <div className="flex-1">
-                <SidebarInset className="flex flex-col">
-                  <Header />
-                  <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
-                </SidebarInset>
-              </div>
-          </SidebarProvider>
+          {children}
           <Toaster />
         </ThemeProvider>
       </body>
