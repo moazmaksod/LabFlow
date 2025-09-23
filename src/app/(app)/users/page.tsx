@@ -39,6 +39,7 @@ import type { User } from '@/lib/schemas/auth';
 import { Edit, PlusCircle, Search } from 'lucide-react';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const initialUsers: User[] = [
   {
@@ -76,12 +77,9 @@ export default function UserManagementPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>(initialUsers);
   
-  // In a real app, you'd have more robust state management for forms.
-  // For this prototype, simple state is sufficient.
-  const [newUser, setNewUser] = useState({ firstName: '', lastName: '', email: '', role: '' });
   const [isAddUserOpen, setAddUserOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ firstName: '', lastName: '', email: '', role: '' });
 
-  // Redirect if not a manager
   React.useEffect(() => {
     if (user && user.role !== 'manager') {
       router.push('/dashboard');
@@ -89,10 +87,15 @@ export default function UserManagementPage() {
   }, [user, router]);
   
   if (user?.role !== 'manager') {
-    return null; // or a loading/unauthorized component
+    return (
+       <div className="flex min-h-screen items-center justify-center">
+         <Skeleton className="h-32 w-full" />
+       </div>
+    );
   }
 
-  const handleAddUser = () => {
+  const handleAddUser = (event: React.FormEvent) => {
+    event.preventDefault();
     if (newUser.firstName && newUser.lastName && newUser.email && newUser.role) {
       setUsers([...users, { ...newUser, id: `user-${users.length + 1}` } as User]);
       setNewUser({ firstName: '', lastName: '', email: '', role: '' });
@@ -113,52 +116,55 @@ export default function UserManagementPage() {
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
-              <DialogDescription>
-                Enter the user's details and assign a role.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="firstName" className="text-right">
-                  First Name
-                </Label>
-                <Input id="firstName" value={newUser.firstName} onChange={(e) => setNewUser({...newUser, firstName: e.target.value})} className="col-span-3" />
+            <form onSubmit={handleAddUser}>
+              <DialogHeader>
+                <DialogTitle>Add New User</DialogTitle>
+                <DialogDescription>
+                  Enter the user's details and assign a role. An invitation will be sent to their email.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="firstName" className="text-right">
+                    First Name
+                  </Label>
+                  <Input id="firstName" value={newUser.firstName} onChange={(e) => setNewUser({...newUser, firstName: e.target.value})} className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="lastName" className="text-right">
+                    Last Name
+                  </Label>
+                  <Input id="lastName" value={newUser.lastName} onChange={(e) => setNewUser({...newUser, lastName: e.target.value})} className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">
+                    Email
+                  </Label>
+                  <Input id="email" type="email" value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})} className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="role" className="text-right">
+                    Role
+                  </Label>
+                  <Select onValueChange={(value) => setNewUser({...newUser, role: value})} required>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="technician">Technician</SelectItem>
+                      <SelectItem value="receptionist">Receptionist</SelectItem>
+                      <SelectItem value="physician">Physician</SelectItem>
+                      <SelectItem value="patient">Patient</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="lastName" className="text-right">
-                  Last Name
-                </Label>
-                <Input id="lastName" value={newUser.lastName} onChange={(e) => setNewUser({...newUser, lastName: e.target.value})} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input id="email" type="email" value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="role" className="text-right">
-                  Role
-                </Label>
-                <Select onValueChange={(value) => setNewUser({...newUser, role: value})}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="technician">Technician</SelectItem>
-                    <SelectItem value="receptionist">Receptionist</SelectItem>
-                    <SelectItem value="physician">Physician</SelectItem>
-                    <SelectItem value="patient">Patient</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" onClick={handleAddUser}>Add User</Button>
-            </DialogFooter>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setAddUserOpen(false)}>Cancel</Button>
+                <Button type="submit">Add User</Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
