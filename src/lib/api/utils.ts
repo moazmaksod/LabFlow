@@ -2,7 +2,7 @@
 'use server';
 
 import { User, UserSchema } from '@/lib/schemas/auth';
-import { TestCatalog } from '@/lib/schemas/test-catalog';
+import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import { headers } from 'next/headers';
 
 /**
@@ -64,6 +64,7 @@ export const mockTests: TestCatalog[] = [
     },
     price: 50.0,
     isPanel: false,
+    isActive: true,
   },
   {
     _id: 'test-2',
@@ -82,6 +83,7 @@ export const mockTests: TestCatalog[] = [
     },
     price: 100.0,
     isPanel: true,
+    isActive: true,
   },
   {
     _id: 'test-3',
@@ -99,6 +101,7 @@ export const mockTests: TestCatalog[] = [
     },
     price: 120.0,
     isPanel: false,
+    isActive: true,
   },
 ];
 

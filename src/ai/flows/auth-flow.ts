@@ -7,37 +7,8 @@
  */
 import type {AuthLoginInput, User} from '@/lib/schemas/auth';
 import {AuthLoginInputSchema} from '@/lib/schemas/auth';
+import { mockUsers } from '@/lib/api/utils';
 
-const mockUsers: User[] = [
-  {
-    id: '1',
-    firstName: 'Jane',
-    lastName: 'Doe',
-    email: 'jane.doe@labflow.med',
-    role: 'manager',
-  },
-  {
-    id: '2',
-    firstName: 'Sam',
-    lastName: 'Wilson',
-    email: 'sam.wilson@labflow.med',
-    role: 'receptionist',
-  },
-  {
-    id: '3',
-    firstName: 'Bruce',
-    lastName: 'Banner',
-    email: 'bruce.banner@labflow.med',
-    role: 'technician',
-  },
-  {
-    id: '4',
-    firstName: 'Dr. Stephen',
-    lastName: 'Strange',
-    email: 'dr.strange@clinic.com',
-    role: 'physician',
-  },
-];
 
 /**
  * Handles user login. In a real app, this would use jsonwebtoken to sign a token.
