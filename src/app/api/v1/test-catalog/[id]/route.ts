@@ -45,8 +45,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ errors: validation.error.errors }, { status: 400 });
   }
 
-  const updatedTest = { ...mockTests[testIndex], ...validation.data };
-  mockTests[testIndex] = updatedTest as TestCatalog;
+  // Correctly merge the existing test with the validated update data
+  const updatedTest: TestCatalog = { 
+    ...mockTests[testIndex], 
+    ...validation.data 
+  };
+  mockTests[testIndex] = updatedTest;
 
   return NextResponse.json({ data: updatedTest });
 }
