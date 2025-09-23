@@ -85,8 +85,8 @@ export default function UserManagementPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
-        const data = await response.json();
-        setUsers(data);
+        const result = await response.json();
+        setUsers(result.data); // Correctly access the data property
       } else {
         const errorData = await response.json();
         toast({
@@ -99,6 +99,7 @@ export default function UserManagementPage() {
       toast({
         variant: 'destructive',
         title: 'An error occurred while fetching users.',
+        description: 'Please check the console for more details.'
       });
     } finally {
       setIsLoading(false);
@@ -114,7 +115,7 @@ export default function UserManagementPage() {
     if (user && user.role === 'manager' && token) {
       fetchUsers();
     }
-  }, [user, token]);
+  }, [user, token, router]);
 
   
   if (!user || user.role !== 'manager') {

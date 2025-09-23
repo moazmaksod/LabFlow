@@ -14,7 +14,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  return NextResponse.json(mockUsers);
+  // Return data in a structured object
+  return NextResponse.json({ data: mockUsers });
 }
 
 // POST /api/v1/users
