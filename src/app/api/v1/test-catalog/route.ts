@@ -1,20 +1,23 @@
 
 import { NextResponse } from 'next/server';
 import { mockTests, getAuthenticatedUser } from '@/lib/api/utils';
-import { TestCatalogSchema } from '@/lib/schemas/test-catalog';
+import { TestCatalogSchema, type TestCatalog } from '@/lib/schemas/test-catalog';
 
 // GET /api/v1/test-catalog
-// Lists all tests (Manager only for management purposes)
+// Lists all tests (Any authenticated user can view, only manager can manage)
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
   if (!user) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
-  if (user.role !== 'manager') {
+  
+  // In a real app, you might allow other roles to read the catalog
+  // For now, we keep it manager-only for management purposes as per the sprint plan
+   if (user.role !== 'manager') {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  return NextResponse.json(mockTests);
+  return NextResponse.json({ data: mockTests });
 }
 
 // POST /api/v1/test-catalog
@@ -32,7 +35,7 @@ export async function POST(request: Request) {
   const validation = TestCatalogSchema.omit({ _id: true }).safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(validation.error.errors, { status: 400 });
+    return NextResponse.json({ errors: validation.error.errors }, { status: 400 });
   }
   
   if (mockTests.some(t => t.testCode === validation.data.testCode)) {
@@ -46,5 +49,5 @@ export async function POST(request: Request) {
 
   mockTests.push(newTest);
 
-  return NextResponse.json(newTest, { status: 201 });
+  return NextResponse.json({ data: newTest }, { status: 201 });
 }

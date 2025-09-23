@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { mockTests, getAuthenticatedUser } from '@/lib/api/utils';
 import { TestCatalogSchema } from '@/lib/schemas/test-catalog';
+import type { TestCatalog } from '@/lib/schemas/test-catalog';
 
 // GET /api/v1/test-catalog/[id]
 // Retrieves a single test (Manager only)
@@ -16,7 +17,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   const foundTest = mockTests.find(t => t._id === params.id);
   if (foundTest) {
-    return NextResponse.json(foundTest);
+    return NextResponse.json({ data: foundTest });
   }
   return NextResponse.json({ message: 'Test not found' }, { status: 404 });
 }
@@ -38,15 +39,16 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 
   const body = await request.json();
-  const validation = TestCatalogSchema.omit({ _id: true }).safeParse(body);
+  const validation = TestCatalogSchema.omit({ _id: true }).partial().safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(validation.error.errors, { status: 400 });
+    return NextResponse.json({ errors: validation.error.errors }, { status: 400 });
   }
 
-  mockTests[testIndex] = { ...mockTests[testIndex], ...validation.data };
+  const updatedTest = { ...mockTests[testIndex], ...validation.data };
+  mockTests[testIndex] = updatedTest as TestCatalog;
 
-  return NextResponse.json(mockTests[testIndex]);
+  return NextResponse.json({ data: updatedTest });
 }
 
 

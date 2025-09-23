@@ -27,8 +27,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
-import { Edit, PlusCircle, Search } from 'lucide-react';
-import React, { useState } from 'react';
+import { Edit, PlusCircle, Search, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -41,82 +41,12 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
+import type { TestCatalog } from '@/lib/schemas/test-catalog';
+import { useToast } from '@/hooks/use-toast';
+import { Icons } from '@/components/icons';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-type Test = {
-  id: string;
-  testCode: string;
-  name: string;
-  description: string;
-  specimenRequirements: {
-    tubeType: string;
-    minVolume: number;
-    units: string;
-  };
-  turnaroundTime: {
-    routine: { value: number; units: string };
-    stat: { value: number; units: string };
-  };
-  price: number;
-  isPanel: boolean;
-};
-
-const initialTests: Test[] = [
-  {
-    id: 'test-1',
-    testCode: 'CBC',
-    name: 'Complete Blood Count',
-    description: 'A test that measures the cells that make up your blood.',
-    specimenRequirements: {
-      tubeType: 'Lavender Top',
-      minVolume: 3,
-      units: 'mL',
-    },
-    turnaroundTime: {
-      routine: { value: 4, units: 'hours' },
-      stat: { value: 1, units: 'hours' },
-    },
-    price: 50.0,
-    isPanel: false,
-  },
-  {
-    id: 'test-2',
-    testCode: 'LP',
-    name: 'Lipid Panel',
-    description:
-      'Measures fats and fatty substances used as a source of energy by your body.',
-    specimenRequirements: {
-      tubeType: 'Gold Top',
-      minVolume: 5,
-      units: 'mL',
-    },
-    turnaroundTime: {
-      routine: { value: 8, units: 'hours' },
-      stat: { value: 2, units: 'hours' },
-    },
-    price: 100.0,
-    isPanel: true,
-  },
-  {
-    id: 'test-3',
-    testCode: 'TSH',
-    name: 'Thyroid Stimulating Hormone',
-    description: 'Checks your thyroid gland function.',
-    specimenRequirements: {
-      tubeType: 'Gold Top',
-      minVolume: 5,
-      units: 'mL',
-    },
-    turnaroundTime: {
-      routine: { value: 6, units: 'hours' },
-      stat: { value: 1, units: 'hours' },
-    },
-    price: 120.0,
-    isPanel: false,
-  },
-];
-
-const emptyTest: Test = {
-    id: '',
+const emptyTest: Omit<TestCatalog, '_id'> = {
     testCode: '',
     name: '',
     description: '',
@@ -131,20 +61,53 @@ const emptyTest: Test = {
     },
     price: 0,
     isPanel: false,
+    isActive: true,
 }
 
 export default function TestCatalogPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const router = useRouter();
-  const [tests, setTests] = useState<Test[]>(initialTests);
-  const [isDialogOpen, setDialogOpen] = useState(false);
-  const [editingTest, setEditingTest] = useState<Test | null>(null);
+  const { toast } = useToast();
 
-  React.useEffect(() => {
+  const [tests, setTests] = useState<TestCatalog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setDialogOpen] = useState(false);
+  const [editingTest, setEditingTest] = useState<Partial<TestCatalog> | null>(null);
+
+  const fetchTests = async () => {
+    if (!token) return;
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/v1/test-catalog', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const result = await response.json();
+        setTests(result.data);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to fetch tests',
+        });
+      }
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'An error occurred while fetching tests.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (user && user.role !== 'manager') {
       router.push('/dashboard');
     }
-  }, [user, router]);
+    if (user && user.role === 'manager' && token) {
+      fetchTests();
+    }
+  }, [user, token, router]);
 
   if (user?.role !== 'manager') {
     return (
@@ -154,30 +117,68 @@ export default function TestCatalogPage() {
     );
   }
 
-  const handleSaveTest = (testToSave: Test) => {
-    if (editingTest && editingTest.id) {
-        // Update existing test
-        setTests(tests.map(t => t.id === editingTest.id ? testToSave : t));
-    } else {
-        // Add new test
-        setTests([...tests, { ...testToSave, id: `test-${Date.now()}` }]);
+  const handleSaveTest = async (testToSave: Partial<TestCatalog>) => {
+    const isNew = !testToSave._id;
+    const url = isNew ? '/api/v1/test-catalog' : `/api/v1/test-catalog/${testToSave._id}`;
+    const method = isNew ? 'POST' : 'PUT';
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(testToSave),
+      });
+
+      if (response.ok) {
+        toast({ title: `Test ${isNew ? 'created' : 'updated'} successfully!` });
+        fetchTests();
+        setDialogOpen(false);
+        setEditingTest(null);
+      } else {
+        const errorData = await response.json();
+        toast({
+          variant: 'destructive',
+          title: `Failed to ${isNew ? 'create' : 'update'} test`,
+          description: errorData.message || 'Please check your input and try again.',
+        });
+      }
+    } catch (error) {
+        toast({ variant: 'destructive', title: 'An error occurred.' });
     }
-    setEditingTest(null);
-    setDialogOpen(false);
   };
+
+  const handleDeleteTest = async (testId: string) => {
+    try {
+      const response = await fetch(`/api/v1/test-catalog/${testId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        toast({ title: 'Test deleted successfully.' });
+        fetchTests();
+      } else {
+        toast({ variant: 'destructive', title: 'Failed to delete test.' });
+      }
+    } catch (error) {
+       toast({ variant: 'destructive', title: 'An error occurred.' });
+    }
+  }
   
   const openAddDialog = () => {
-    setEditingTest({ ...emptyTest, id: '' });
+    setEditingTest(emptyTest);
     setDialogOpen(true);
   }
   
-  const openEditDialog = (test: Test) => {
+  const openEditDialog = (test: TestCatalog) => {
     setEditingTest(test);
     setDialogOpen(true);
   }
 
-  const TestForm = ({ test, onSave, onCancel } : {test: Test, onSave: (test: Test) => void, onCancel: () => void}) => {
-    const [currentTest, setCurrentTest] = useState<Test>(test);
+  const TestForm = ({ test, onSave } : {test: Partial<TestCatalog>, onSave: (test: Partial<TestCatalog>) => void}) => {
+    const [currentTest, setCurrentTest] = useState(test);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -187,12 +188,12 @@ export default function TestCatalogPage() {
     return (
         <form onSubmit={handleSubmit}>
             <DialogHeader>
-            <DialogTitle>{test.id ? 'Edit Test' : 'Add New Test'}</DialogTitle>
+            <DialogTitle>{currentTest._id ? 'Edit Test' : 'Add New Test'}</DialogTitle>
             <DialogDescription>
                 Define the test, its requirements, and billing information.
             </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-6 py-4 max-h-[70vh] overflow-y-auto pr-6 pl-6">
+            <div className="grid gap-6 py-4 max-h-[70vh] overflow-y-auto pr-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="testCode">Test Code</Label>
@@ -219,7 +220,7 @@ export default function TestCatalogPage() {
                 {currentTest.isPanel && (
                      <div className="pl-6 space-y-2">
                         <Label>Panel Components</Label>
-                        <Input placeholder="Enter test codes, comma separated (e.g. NA, K, CL)" />
+                        <Input placeholder="Enter test codes, comma separated (e.g. NA, K, CL)" value={currentTest.panelComponents?.join(', ')} onChange={(e) => setCurrentTest({...currentTest, panelComponents: e.target.value.split(',').map(s => s.trim())})} />
                     </div>
                 )}
                 
@@ -229,7 +230,7 @@ export default function TestCatalogPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-2">
                     <div className="space-y-2">
                         <Label htmlFor="tubeType">Tube Type</Label>
-                        <Select name="tubeType" required value={currentTest.specimenRequirements.tubeType} onValueChange={(value) => setCurrentTest({...currentTest, specimenRequirements: {...currentTest.specimenRequirements, tubeType: value}})}>
+                        <Select name="tubeType" required value={currentTest.specimenRequirements?.tubeType} onValueChange={(value) => setCurrentTest({...currentTest, specimenRequirements: {...currentTest.specimenRequirements, tubeType: value}})}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select tube type" />
                         </SelectTrigger>
@@ -243,11 +244,11 @@ export default function TestCatalogPage() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="minVolume">Min. Volume</Label>
-                        <Input id="minVolume" name="minVolume" type="number" placeholder="e.g. 3" value={currentTest.specimenRequirements.minVolume} onChange={(e) => setCurrentTest({...currentTest, specimenRequirements: {...currentTest.specimenRequirements, minVolume: parseFloat(e.target.value) || 0 }})} />
+                        <Input id="minVolume" name="minVolume" type="number" placeholder="e.g. 3" value={currentTest.specimenRequirements?.minVolume} onChange={(e) => setCurrentTest({...currentTest, specimenRequirements: {...currentTest.specimenRequirements, minVolume: parseFloat(e.target.value) || 0 }})} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="volumeUnits">Units</Label>
-                        <Input id="volumeUnits" name="volumeUnits" value={currentTest.specimenRequirements.units} onChange={(e) => setCurrentTest({...currentTest, specimenRequirements: {...currentTest.specimenRequirements, units: e.target.value}})} />
+                        <Input id="volumeUnits" name="volumeUnits" value={currentTest.specimenRequirements?.units} onChange={(e) => setCurrentTest({...currentTest, specimenRequirements: {...currentTest.specimenRequirements, units: e.target.value}})} />
                     </div>
                 </div>
 
@@ -258,8 +259,8 @@ export default function TestCatalogPage() {
                     <div className="space-y-4 border p-4 rounded-md">
                         <Label className="font-semibold">Routine</Label>
                          <div className="flex items-center gap-2">
-                            <Input id="routineTime" type="number" placeholder="e.g., 24" value={currentTest.turnaroundTime.routine.value} onChange={(e) => setCurrentTest({...currentTest, turnaroundTime: {...currentTest.turnaroundTime, routine: {...currentTest.turnaroundTime.routine, value: parseInt(e.target.value) || 0 }}})} />
-                            <Select value={currentTest.turnaroundTime.routine.units} onValueChange={(value) => setCurrentTest({...currentTest, turnaroundTime: {...currentTest.turnaroundTime, routine: {...currentTest.turnaroundTime.routine, units: value}}})}>
+                            <Input id="routineTime" type="number" placeholder="e.g., 24" value={currentTest.turnaroundTime?.routine.value} onChange={(e) => setCurrentTest({...currentTest, turnaroundTime: {...currentTest.turnaroundTime, routine: {...currentTest.turnaroundTime?.routine, value: parseInt(e.target.value) || 0 }}})} />
+                            <Select value={currentTest.turnaroundTime?.routine.units} onValueChange={(value) => setCurrentTest({...currentTest, turnaroundTime: {...currentTest.turnaroundTime, routine: {...currentTest.turnaroundTime?.routine, units: value as any}}})}>
                                 <SelectTrigger className="w-48">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -274,8 +275,8 @@ export default function TestCatalogPage() {
                      <div className="space-y-4 border p-4 rounded-md">
                         <Label className="font-semibold">STAT</Label>
                          <div className="flex items-center gap-2">
-                            <Input id="statTime" type="number" placeholder="e.g., 1" value={currentTest.turnaroundTime.stat.value} onChange={(e) => setCurrentTest({...currentTest, turnaroundTime: {...currentTest.turnaroundTime, stat: {...currentTest.turnaroundTime.stat, value: parseInt(e.target.value) || 0 }}})} />
-                            <Select value={currentTest.turnaroundTime.stat.units} onValueChange={(value) => setCurrentTest({...currentTest, turnaroundTime: {...currentTest.turnaroundTime, stat: {...currentTest.turnaroundTime.stat, units: value}}})}>
+                            <Input id="statTime" type="number" placeholder="e.g., 1" value={currentTest.turnaroundTime?.stat.value} onChange={(e) => setCurrentTest({...currentTest, turnaroundTime: {...currentTest.turnaroundTime, stat: {...currentTest.turnaroundTime?.stat, value: parseInt(e.target.value) || 0 }}})} />
+                            <Select value={currentTest.turnaroundTime?.stat.units} onValueChange={(value) => setCurrentTest({...currentTest, turnaroundTime: {...currentTest.turnaroundTime, stat: {...currentTest.turnaroundTime?.stat, units: value as any}}})}>
                                 <SelectTrigger className="w-48">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -307,7 +308,7 @@ export default function TestCatalogPage() {
                 </div>
             </div>
             <DialogFooter className="pt-4">
-                <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
                 <Button type="submit">Save Test</Button>
             </DialogFooter>
         </form>
@@ -318,64 +319,94 @@ export default function TestCatalogPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <h1 className="font-headline text-3xl font-semibold">Test Catalog Management</h1>
-        
+        <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
             <Button onClick={openAddDialog}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add New Test
             </Button>
+          <DialogContent className="sm:max-w-3xl">
+             {editingTest && <TestForm test={editingTest} onSave={handleSaveTest} />}
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
-        <Card>
-            <CardHeader>
-            <CardTitle>Laboratory Test Catalog</CardTitle>
-            <CardDescription>
-                The master dictionary of all tests offered by the laboratory.
-            </CardDescription>
-            <div className="relative pt-4">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                placeholder="Search tests by name or code..."
-                className="pl-8"
-                />
-            </div>
-            </CardHeader>
-            <CardContent>
-            <Table>
-                <TableHeader>
-                <TableRow>
-                    <TableHead>Test Code</TableHead>
-                    <TableHead>Test Name</TableHead>
-                    <TableHead>Specimen</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-                </TableHeader>
-                <TableBody>
-                {tests.map((test) => (
-                    <TableRow key={test.id}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Laboratory Test Catalog</CardTitle>
+          <CardDescription>
+            The master dictionary of all tests offered by the laboratory.
+          </CardDescription>
+          <div className="relative pt-4">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search tests by name or code..."
+              className="pl-8"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Test Code</TableHead>
+                <TableHead>Test Name</TableHead>
+                <TableHead>Specimen</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      <div className="flex justify-center items-center gap-2">
+                        <Icons.logo className="h-5 w-5 animate-spin" />
+                        <span>Loading tests...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                tests.map((test) => (
+                  <TableRow key={test._id}>
                     <TableCell className="font-medium font-code">
-                        {test.testCode}
+                      {test.testCode}
                     </TableCell>
                     <TableCell>{test.name}</TableCell>
                     <TableCell>{test.specimenRequirements.tubeType}</TableCell>
                     <TableCell>{`$${test.price.toFixed(2)}`}</TableCell>
                     <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(test)}>
+                       <Button variant="ghost" size="icon" onClick={() => openEditDialog(test)}>
                         <Edit className="h-4 w-4" />
                         <span className="sr-only">Edit Test</span>
-                        </Button>
+                      </Button>
+                      <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <span className="sr-only">Delete Test</span>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action will permanently delete the test "{test.name}". This cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteTest(test._id)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                     </TableCell>
-                    </TableRow>
-                ))}
-                </TableBody>
-            </Table>
-            </CardContent>
-        </Card>
-        <DialogContent className="sm:max-w-3xl">
-            {editingTest && <TestForm test={editingTest} onSave={handleSaveTest} onCancel={() => setDialogOpen(false)} />}
-        </DialogContent>
-      </Dialog>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
