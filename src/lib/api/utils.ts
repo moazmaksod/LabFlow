@@ -1,6 +1,8 @@
+
 'use server';
 
 import { User, UserSchema } from '@/lib/schemas/auth';
+import { TestCatalog } from '@/lib/schemas/test-catalog';
 import { headers } from 'next/headers';
 
 /**
@@ -38,10 +40,66 @@ export const mockUsers: User[] = [
   },
   {
     id: '5',
-    name: 'Peter Parker',
+    firstName: 'Peter',
+    lastName: 'Parker',
     email: 'peter.parker@labflow.med',
     role: 'patient',
   }
+];
+
+export const mockTests: TestCatalog[] = [
+  {
+    _id: 'test-1',
+    testCode: 'CBC',
+    name: 'Complete Blood Count',
+    description: 'A test that measures the cells that make up your blood.',
+    specimenRequirements: {
+      tubeType: 'Lavender Top',
+      minVolume: 3,
+      units: 'mL',
+    },
+    turnaroundTime: {
+      routine: { value: 4, units: 'hours' },
+      stat: { value: 1, units: 'hours' },
+    },
+    price: 50.0,
+    isPanel: false,
+  },
+  {
+    _id: 'test-2',
+    testCode: 'LP',
+    name: 'Lipid Panel',
+    description:
+      'Measures fats and fatty substances used as a source of energy by your body.',
+    specimenRequirements: {
+      tubeType: 'Gold Top',
+      minVolume: 5,
+      units: 'mL',
+    },
+    turnaroundTime: {
+      routine: { value: 8, units: 'hours' },
+      stat: { value: 2, units: 'hours' },
+    },
+    price: 100.0,
+    isPanel: true,
+  },
+  {
+    _id: 'test-3',
+    testCode: 'TSH',
+    name: 'Thyroid Stimulating Hormone',
+    description: 'Checks your thyroid gland function.',
+    specimenRequirements: {
+      tubeType: 'Gold Top',
+      minVolume: 5,
+      units: 'mL',
+    },
+    turnaroundTime: {
+      routine: { value: 6, units: 'hours' },
+      stat: { value: 1, units: 'hours' },
+    },
+    price: 120.0,
+    isPanel: false,
+  },
 ];
 
 
