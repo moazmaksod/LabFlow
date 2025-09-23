@@ -76,27 +76,37 @@ export default function TestCatalogPage() {
 
   const fetchTests = async () => {
     if (!token) return;
+    console.log("Attempting to fetch tests with token...");
     try {
       setIsLoading(true);
       const response = await fetch('/api/v1/test-catalog', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("API Response Status:", response.status);
+
       if (response.ok) {
         const result = await response.json();
+        console.log("API Response JSON:", result);
         setTests(result.data);
       } else {
+        const errorText = await response.text();
+        console.error("Failed to fetch tests. API response:", errorText);
         toast({
           variant: 'destructive',
           title: 'Failed to fetch tests',
+          description: `Server responded with status ${response.status}`,
         });
       }
     } catch (error) {
+       console.error("An error occurred while fetching tests:", error);
        toast({
         variant: 'destructive',
         title: 'An error occurred while fetching tests.',
+        description: 'Check the browser console for more details.',
       });
     } finally {
       setIsLoading(false);
+      console.log("Finished fetching tests.");
     }
   };
 
@@ -107,9 +117,9 @@ export default function TestCatalogPage() {
     if (user && user.role === 'manager' && token) {
       fetchTests();
     }
-  }, [user, token, router]);
+  }, [user, token]);
 
-  if (user?.role !== 'manager') {
+  if (user?.role !== 'manager' && !isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Skeleton className="h-32 w-full" />
@@ -410,3 +420,5 @@ export default function TestCatalogPage() {
     </div>
   );
 }
+
+    
