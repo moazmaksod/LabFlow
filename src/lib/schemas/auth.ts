@@ -3,7 +3,8 @@ import {z} from 'zod';
 
 export const AuthLoginInputSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(1, 'Password is required'),
+  // Password can be anything in the prototype, so we just check for string.
+  password: z.string(),
 });
 export type AuthLoginInput = z.infer<typeof AuthLoginInputSchema>;
 
