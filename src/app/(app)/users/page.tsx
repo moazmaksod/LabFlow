@@ -36,52 +36,70 @@ import {
 } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
 import type { User } from '@/lib/schemas/auth';
-import { Edit, PlusCircle, Search } from 'lucide-react';
-import React, { useState } from 'react';
+import { Edit, PlusCircle, Search, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
-const initialUsers: User[] = [
-  {
-    id: '1',
-    firstName: 'Jane',
-    lastName: 'Doe',
-    email: 'jane.doe@labflow.med',
-    role: 'manager',
-  },
-  {
-    id: '2',
-    firstName: 'Sam',
-    lastName: 'Wilson',
-    email: 'sam.wilson@labflow.med',
-    role: 'receptionist',
-  },
-  {
-    id: '3',
-    firstName: 'Bruce',
-    lastName: 'Banner',
-    email: 'bruce.banner@labflow.med',
-    role: 'technician',
-  },
-  {
-    id: '4',
-    firstName: 'Dr. Stephen',
-    lastName: 'Strange',
-    email: 'dr.strange@clinic.com',
-    role: 'physician',
-  },
-];
 
 export default function UserManagementPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const { toast } = useToast();
+
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [isAddUserOpen, setAddUserOpen] = useState(false);
   const [isEditUserOpen, setEditUserOpen] = useState(false);
 
-  const [newUser, setNewUser] = useState({ firstName: '', lastName: '', email: '', role: '' });
+  const [newUser, setNewUser] = useState<Omit<User, 'id'>>({ firstName: '', lastName: '', email: '', role: 'receptionist' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const fetchUsers = async () => {
+    if (!token) return;
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/v1/users', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to fetch users',
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'An error occurred while fetching users.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && user.role === 'manager') {
+      fetchUsers();
+    }
+  }, [user, token]);
+
 
   React.useEffect(() => {
     if (user && user.role !== 'manager') {
@@ -89,7 +107,7 @@ export default function UserManagementPage() {
     }
   }, [user, router]);
   
-  if (user?.role !== 'manager') {
+  if (!user || user.role !== 'manager') {
     return (
        <div className="flex min-h-screen items-center justify-center">
          <Skeleton className="h-32 w-full" />
@@ -97,23 +115,95 @@ export default function UserManagementPage() {
     );
   }
 
-  const handleAddUser = (event: React.FormEvent) => {
+  const handleAddUser = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (newUser.firstName && newUser.lastName && newUser.email && newUser.role) {
-      setUsers([...users, { ...newUser, id: `user-${users.length + 1}` } as User]);
-      setNewUser({ firstName: '', lastName: '', email: '', role: '' });
-      setAddUserOpen(false);
+    try {
+      const response = await fetch('/api/v1/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newUser),
+      });
+
+      if (response.ok) {
+        toast({ title: 'User created successfully!' });
+        setNewUser({ firstName: '', lastName: '', email: '', role: 'receptionist' });
+        setAddUserOpen(false);
+        fetchUsers(); // Refresh list
+      } else {
+        const errorData = await response.json();
+        toast({
+          variant: 'destructive',
+          title: 'Failed to create user',
+          description: errorData.message || 'Please try again.',
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'An error occurred.',
+      });
     }
   };
 
-  const handleUpdateUser = () => {
-    if (editingUser) {
-      setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
-      setEditingUser(null);
-      setEditUserOpen(false);
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
+    try {
+      const response = await fetch(`/api/v1/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role: editingUser.role }),
+      });
+
+      if (response.ok) {
+        toast({ title: 'User updated successfully!' });
+        setEditingUser(null);
+        setEditUserOpen(false);
+        fetchUsers(); // Refresh list
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to update user',
+        });
+      }
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'An error occurred.',
+      });
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/v1/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        toast({ title: 'User deleted successfully!' });
+        fetchUsers(); // Refresh list
+      } else {
+         toast({
+          variant: 'destructive',
+          title: 'Failed to delete user',
+        });
+      }
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'An error occurred.',
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -157,7 +247,7 @@ export default function UserManagementPage() {
                   <Label htmlFor="role" className="text-right">
                     Role
                   </Label>
-                  <Select onValueChange={(value) => setNewUser({...newUser, role: value})} required>
+                  <Select onValueChange={(value) => setNewUser({...newUser, role: value as User['role']})} defaultValue={newUser.role} required>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
@@ -206,55 +296,87 @@ export default function UserManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      {user.firstName} {user.lastName}
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell className="capitalize">{user.role}</TableCell>
-                    <TableCell className="text-right">
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => setEditingUser(user)}>
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit User</span>
-                          </Button>
-                        </DialogTrigger>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      Loading users...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  users.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell className="font-medium">
+                        {u.firstName} {u.lastName}
+                      </TableCell>
+                      <TableCell>{u.email}</TableCell>
+                      <TableCell className="capitalize">{u.role}</TableCell>
+                      <TableCell className="text-right space-x-1">
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => setEditingUser(u)}>
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit User</span>
+                            </Button>
+                          </DialogTrigger>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                               <Button variant="ghost" size="icon" disabled={u.id === user.id}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <span className="sr-only">Deactivate User</span>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action will permanently delete the user {u.firstName} {u.lastName}. This cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteUser(u.id)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Edit User</DialogTitle>
-                  <DialogDescription>
-                    Update the role for {editingUser?.firstName} {editingUser?.lastName}.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                   <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-role" className="text-right">
-                        Role
-                      </Label>
-                      <Select value={editingUser?.role} onValueChange={(value) => setEditingUser(current => current ? {...current, role: value as User['role']} : null)}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="manager">Manager</SelectItem>
-                          <SelectItem value="technician">Technician</SelectItem>
-                          <SelectItem value="receptionist">Receptionist</SelectItem>
-                          <SelectItem value="physician">Physician</SelectItem>
-                          <SelectItem value="patient">Patient</SelectItem>
-                        </SelectContent>
-                      </Select>
+                {editingUser && (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle>Edit User</DialogTitle>
+                      <DialogDescription>
+                        Update the role for {editingUser?.firstName} {editingUser?.lastName}.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="edit-role" className="text-right">
+                            Role
+                          </Label>
+                          <Select value={editingUser?.role} onValueChange={(value) => setEditingUser(current => current ? {...current, role: value as User['role']} : null)}>
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="manager">Manager</SelectItem>
+                              <SelectItem value="technician">Technician</SelectItem>
+                              <SelectItem value="receptionist">Receptionist</SelectItem>
+                              <SelectItem value="physician">Physician</SelectItem>
+                              <SelectItem value="patient">Patient</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                     </div>
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setEditUserOpen(false)}>Cancel</Button>
-                  <Button type="button" onClick={handleUpdateUser}>Save Changes</Button>
-                </DialogFooter>
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setEditUserOpen(false)}>Cancel</Button>
+                      <Button type="button" onClick={handleUpdateUser}>Save Changes</Button>
+                    </DialogFooter>
+                  </>
+                )}
               </DialogContent>
           </Dialog>
         </CardContent>
@@ -262,5 +384,3 @@ export default function UserManagementPage() {
     </div>
   );
 }
-
-    

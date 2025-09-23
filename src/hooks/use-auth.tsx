@@ -10,6 +10,7 @@ const AUTH_STORAGE_KEY = 'labflow.auth.token';
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   login: (token: string) => User | null;
   logout: () => void;
   loading: boolean;
@@ -19,19 +20,21 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     try {
-      const token = sessionStorage.getItem(AUTH_STORAGE_KEY);
-      if (token) {
+      const storedToken = sessionStorage.getItem(AUTH_STORAGE_KEY);
+      if (storedToken) {
         // In a real app, you'd verify the token with a backend.
         // For this prototype, we decode it.
-        const decodedUser = JSON.parse(Buffer.from(token, 'base64').toString('utf-8'));
+        const decodedUser = JSON.parse(Buffer.from(storedToken, 'base64').toString('utf-8'));
         const validatedUser = UserSchema.safeParse(decodedUser);
         if (validatedUser.success) {
             setUser(validatedUser.data);
+            setToken(storedToken);
         } else {
             // Token is invalid or malformed
             sessionStorage.removeItem(AUTH_STORAGE_KEY);
@@ -44,13 +47,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(false);
   }, []);
 
-  const login = (token: string): User | null => {
+  const login = (newToken: string): User | null => {
     try {
-      sessionStorage.setItem(AUTH_STORAGE_KEY, token);
-      const decodedUser = JSON.parse(Buffer.from(token, 'base64').toString('utf-8'));
+      sessionStorage.setItem(AUTH_STORAGE_KEY, newToken);
+      const decodedUser = JSON.parse(Buffer.from(newToken, 'base64').toString('utf-8'));
       const validatedUser = UserSchema.safeParse(decodedUser);
       if (validatedUser.success) {
         setUser(validatedUser.data);
+        setToken(newToken);
         return validatedUser.data;
       }
     } catch (error) {
@@ -64,11 +68,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
     setUser(null);
+    setToken(null);
     router.push('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
