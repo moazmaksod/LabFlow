@@ -38,8 +38,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 
   const body = await request.json();
-  // For this prototype, we only allow role updates via this endpoint
-  const validation = UserSchema.pick({ role: true, firstName: true, lastName: true, email: true }).partial().safeParse(body);
+  // Allow partial updates for fields like 'role'
+  const validation = UserSchema.partial().safeParse(body);
 
   if (!validation.success) {
     return NextResponse.json(validation.error.errors, { status: 400 });
