@@ -50,8 +50,6 @@ export default function ProfilePage() {
                             <AvatarImage
                                 src={userAvatar.imageUrl}
                                 alt="User avatar"
-                                width={80}
-                                height={80}
                                 data-ai-hint={userAvatar.imageHint}
                             />
                             )}
