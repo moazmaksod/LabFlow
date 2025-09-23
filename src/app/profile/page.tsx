@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { PlaceHolderImages } from '@/lib/images';
 import { Moon, Sun, SunMoon } from 'lucide-react';
 import { useTheme } from "next-themes"
 

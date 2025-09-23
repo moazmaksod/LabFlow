@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { PlaceHolderImages } from '@/lib/images';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { SidebarNav } from './sidebar-nav';
