@@ -52,6 +52,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Icons } from '@/components/icons';
 
 
 export default function UserManagementPage() {
@@ -113,7 +114,7 @@ export default function UserManagementPage() {
     if (user && user.role === 'manager' && token) {
       fetchUsers();
     }
-  }, [user, token, router]);
+  }, [user, token]);
 
   
   if (!user || user.role !== 'manager') {
@@ -396,5 +397,3 @@ export default function UserManagementPage() {
     </div>
   );
 }
-
-    
