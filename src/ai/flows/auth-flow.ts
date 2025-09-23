@@ -40,12 +40,3 @@ export async function login(input: AuthLoginInput): Promise<User | null> {
   }
   return null;
 }
-
-ai.defineFlow(
-  {
-    name: 'loginFlow',
-    inputSchema: AuthLoginInputSchema,
-    outputSchema: UserSchema.nullable(),
-  },
-  login
-);
