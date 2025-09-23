@@ -69,7 +69,15 @@ export default function UserManagementPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const fetchUsers = async () => {
-    if (!token) return;
+    if (!token) {
+       toast({
+          variant: 'destructive',
+          title: 'Authentication Error',
+          description: 'No token found. Please log in again.',
+        });
+      setIsLoading(false);
+      return;
+    };
     try {
       setIsLoading(true);
       const response = await fetch('/api/v1/users', {
@@ -79,9 +87,11 @@ export default function UserManagementPage() {
         const data = await response.json();
         setUsers(data);
       } else {
+        const errorData = await response.json();
         toast({
           variant: 'destructive',
           title: 'Failed to fetch users',
+          description: errorData.message || 'Could not retrieve user data from the server.'
         });
       }
     } catch (error) {
@@ -95,17 +105,16 @@ export default function UserManagementPage() {
   };
 
   useEffect(() => {
-    if (user && user.role === 'manager') {
-      fetchUsers();
-    }
-  }, [user, token]);
-
-
-  React.useEffect(() => {
+    // This is the client-side equivalent of RBAC middleware.
     if (user && user.role !== 'manager') {
       router.push('/dashboard');
     }
-  }, [user, router]);
+    // Only fetch users if the user is a manager and the token is present.
+    if (user && user.role === 'manager' && token) {
+      fetchUsers();
+    }
+  }, [user, token, router]);
+
   
   if (!user || user.role !== 'manager') {
     return (
@@ -299,7 +308,10 @@ export default function UserManagementPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center">
-                      Loading users...
+                      <div className="flex justify-center items-center gap-2">
+                        <Icons.logo className="h-5 w-5 animate-spin" />
+                        <span>Loading users...</span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -384,3 +396,5 @@ export default function UserManagementPage() {
     </div>
   );
 }
+
+    
