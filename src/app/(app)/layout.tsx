@@ -38,6 +38,15 @@ import {
   LogOut,
   Warehouse,
   FileBox,
+  LayoutDashboard,
+  CalendarClock,
+  Scan,
+  TestTube,
+  FileCheck,
+  ShieldCheck,
+  Package,
+  History,
+  UserCog,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -56,6 +65,116 @@ function AppSidebar() {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   }
 
+  const receptionistNav = (
+    <>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip="Dashboard">
+          <Link href="/dashboard"><LayoutDashboard /><span>Dashboard</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/patients')} tooltip="Patient Registration">
+          <Link href="/patients"><Users /><span>Patient Registration</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/orders')} tooltip="Order Entry">
+          <Link href="/orders"><ClipboardList /><span>Order Entry</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/scheduling')} tooltip="Scheduling">
+          <Link href="/scheduling"><CalendarClock /><span>Scheduling</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </>
+  );
+
+  const technicianNav = (
+     <>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip="Worklist">
+          <Link href="/dashboard"><LayoutDashboard /><span>Worklist</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/accessioning')} tooltip="Accessioning">
+          <Link href="/accessioning"><Scan /><span>Accessioning</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/testing')} tooltip="Testing">
+          <Link href="/testing"><TestTube /><span>Testing</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/quality-control')} tooltip="Quality Control">
+          <Link href="/quality-control"><ShieldCheck /><span>Quality Control</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory/search')} tooltip="Inventory Search">
+          <Link href="/inventory/search"><Package /><span>Inventory Search</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </>
+  );
+
+  const managerNav = (
+     <>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip="KPI Dashboard">
+          <Link href="/dashboard"><LayoutDashboard /><span>KPI Dashboard</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+       <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/reports')} tooltip="Reports & Analytics">
+          <Link href="/reports"><BarChart3 /><span>Reports & Analytics</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory')} tooltip="Inventory Management">
+          <Link href="/inventory"><Warehouse /><span>Inventory Management</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/quality')} tooltip="Quality Assurance">
+          <Link href="/quality"><ShieldCheck /><span>Quality Assurance</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/users')} tooltip="User Management">
+          <Link href="/users"><UserCog /><span>User Management</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/audit-trail')} tooltip="Audit Trail">
+          <Link href="/audit-trail"><History /><span>Audit Trail</span></Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </>
+  );
+
+  const renderNav = () => {
+    switch (user?.role) {
+      case 'receptionist':
+        return receptionistNav;
+      case 'technician':
+        return technicianNav;
+      case 'manager':
+        return managerNav;
+      default:
+        // Default or loading state
+        return (
+          <>
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </>
+        );
+    }
+  };
+
   return (
     <Sidebar
       collapsible
@@ -73,74 +192,13 @@ function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === '/dashboard'}
-              tooltip="Dashboard"
-            >
-              <Link href="/dashboard">
-                <BarChart3 />
-                <span>Dashboard</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/patients')} tooltip="Patients">
-              <Link href="/patients">
-                <Users />
-                <span>Patients</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/orders')} tooltip="Orders">
-              <Link href="/orders">
-                <ClipboardList />
-                <span>Orders</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/lab')} tooltip="Lab Workflow">
-              <Link href="/lab">
-                <FlaskConical />
-                <span>Lab Workflow</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/results')} tooltip="Results">
-              <Link href="/results">
-                <FileText />
-                <span>Results</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory')} tooltip="Inventory">
-              <Link href="/inventory">
-                <Warehouse />
-                <span>Inventory</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/billing')} tooltip="Billing">
-              <Link href="/billing">
-                <FileBox />
-                <span>Billing</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname.startsWith('/management')} tooltip="Management">
-              <Link href="/management">
-                <Settings />
-                <span>Management</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {user ? renderNav() : (
+             <>
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </>
+          )}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2">
