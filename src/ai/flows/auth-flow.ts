@@ -1,29 +1,14 @@
+
 'use server';
 /**
  * @fileOverview Authentication flows for LabFlow.
  *
  * - login - A function to handle user login.
- * - AuthLoginInput - The Zod schema for login input.
- * - User - The Zod schema for a user.
  */
 
-import {ai} from '@/ai/genkit';
 import {z} from 'zod';
+import type { AuthLoginInput, User } from '@/lib/schemas/auth';
 
-export const AuthLoginInputSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1, 'Password is required'),
-});
-export type AuthLoginInput = z.infer<typeof AuthLoginInputSchema>;
-
-export const UserSchema = z.object({
-  id: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  email: z.string().email(),
-  role: z.enum(['receptionist', 'technician', 'manager', 'physician', 'patient']),
-});
-export type User = z.infer<typeof UserSchema>;
 
 const mockUsers: User[] = [
     { id: '1', firstName: 'Jane', lastName: 'Doe', email: 'jane.doe@labflow.med', role: 'manager' },
