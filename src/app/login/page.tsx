@@ -1,5 +1,6 @@
+'use client';
 
-import { Button } from '@/components/ui/button';
+import {Button} from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -8,42 +9,134 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Icons } from '@/components/icons';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Icons} from '@/components/icons';
 import Link from 'next/link';
+import {useRouter} from 'next/navigation';
+import {useForm} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
+import {
+  AuthLoginInput,
+  AuthLoginInputSchema,
+  login,
+} from '@/ai/flows/auth-flow';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {useToast} from '@/hooks/use-toast';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const {toast} = useToast();
+
+  const form = useForm<AuthLoginInput>({
+    resolver: zodResolver(AuthLoginInputSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  async function onSubmit(values: AuthLoginInput) {
+    try {
+      const user = await login(values);
+      if (user) {
+        // In a real app, we would store the JWT in a cookie or local storage
+        // and set up an auth context. For now, just redirect.
+        toast({
+          title: 'Login Successful',
+          description: `Welcome back, ${user.firstName}!`,
+        });
+        router.push('/dashboard');
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: 'Invalid email or password.',
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'An Error Occurred',
+        description: 'Something went wrong. Please try again.',
+      });
+    }
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-            <div className="flex justify-center items-center mb-4">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Icons.logo className="size-8" />
-                </div>
+          <div className="mb-4 flex items-center justify-center">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Icons.logo className="size-8" />
             </div>
+          </div>
           <CardTitle>LabFlow Employee Login</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardDescription>
+            Enter your credentials to access your account.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" required />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required />
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full">Sign in</Button>
-           <div className="text-sm text-muted-foreground">
-            <Link href="/doctor/login" className="text-primary hover:underline">
-              Are you a referring doctor?
-            </Link>
-          </div>
-        </CardFooter>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="grid gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({field}) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="jane.doe@labflow.med"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({field}) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? 'Signing in...' : 'Sign in'}
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                <Link
+                  href="/doctor/login"
+                  className="text-primary hover:underline"
+                >
+                  Are you a referring doctor?
+                </Link>
+              </div>
+            </CardFooter>
+          </form>
+        </Form>
       </Card>
     </div>
   );
