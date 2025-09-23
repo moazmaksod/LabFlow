@@ -39,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Test = {
   testCode: string;
@@ -85,7 +86,11 @@ export default function TestCatalogPage() {
   }, [user, router]);
 
   if (user?.role !== 'manager') {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
   }
 
   const handleAddTest = (event: React.FormEvent<HTMLFormElement>) => {
@@ -200,7 +205,7 @@ export default function TestCatalogPage() {
                   </TableCell>
                   <TableCell>{test.name}</TableCell>
                   <TableCell>{test.tubeType}</TableCell>
-                   <TableCell>{test.price.toFixed(2)}</TableCell>
+                   <TableCell>{`$${test.price.toFixed(2)}`}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon">
                       <Edit className="h-4 w-4" />
