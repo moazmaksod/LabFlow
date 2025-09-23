@@ -1,6 +1,4 @@
 
-'use server';
-
 import { User, UserSchema } from '@/lib/schemas/auth';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import { headers } from 'next/headers';
