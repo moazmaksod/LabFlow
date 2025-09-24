@@ -32,6 +32,7 @@ import { PatientFormSchema } from '@/lib/schemas/patient';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, useFormField } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) => void, closeDialog: () => void }) => {
     const form = useForm<PatientFormData>({
@@ -99,6 +100,10 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                 </DialogHeader>
                 <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-6">
                     <Button type="button" variant="outline" onClick={handleSimulateScan}>Simulate ID/Insurance Card Scan</Button>
+                    
+                    <Separator />
+                    <h4 className="font-medium text-sm">Patient Demographics</h4>
+
                     <FormField control={form.control} name="mrn" render={({ field }) => (
                         <FormItem><FormLabel>Medical Record Number (MRN)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
@@ -161,12 +166,49 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                             </Select><FormMessage /></FormItem>
                         )} />
                     </div>
+
+                    <Separator />
+                    <h4 className="font-medium text-sm">Contact Information</h4>
+
                     <FormField control={form.control} name="contactInfo.phone" render={({ field }) => (
                         <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="contactInfo.email" render={({ field }) => (
                         <FormItem><FormLabel>Email Address (Optional)</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
+                    <FormField control={form.control} name="contactInfo.address.street" render={({ field }) => (
+                        <FormItem><FormLabel>Street Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="contactInfo.address.city" render={({ field }) => (
+                            <FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="contactInfo.address.state" render={({ field }) => (
+                            <FormItem><FormLabel>State/Province</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="contactInfo.address.zipCode" render={({ field }) => (
+                            <FormItem><FormLabel>Zip Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="contactInfo.address.country" render={({ field }) => (
+                            <FormItem><FormLabel>Country</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
+
+                    <Separator />
+                    <h4 className="font-medium text-sm">Primary Insurance</h4>
+                    
+                     <FormField control={form.control} name="insuranceInfo.0.providerName" render={({ field }) => (
+                        <FormItem><FormLabel>Provider Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField control={form.control} name="insuranceInfo.0.policyNumber" render={({ field }) => (
+                        <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField control={form.control} name="insuranceInfo.0.groupNumber" render={({ field }) => (
+                        <FormItem><FormLabel>Group Number (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
