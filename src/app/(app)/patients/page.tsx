@@ -26,11 +26,11 @@ import type { Patient, PatientFormData } from '@/lib/schemas/patient';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PatientFormSchema } from '@/lib/schemas/patient';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, useFormField } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) => void, closeDialog: () => void }) => {
@@ -50,6 +50,14 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
             insuranceInfo: [{ providerName: '', policyNumber: '', groupNumber: '', isPrimary: true }]
         }
     });
+    
+    const DateOfBirthErrorMessage = () => {
+        const { formState } = useFormContext();
+        const errorMessage = formState.errors.dateOfBirth?.message;
+        if (!errorMessage) return null;
+        return <FormMessage>{errorMessage as React.ReactNode}</FormMessage>;
+    }
+
 
     const handleSimulateScan = () => {
         form.reset({
@@ -90,7 +98,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                         )} />
                     </div>
                      <div className="grid grid-cols-2 gap-4">
-                       <FormField
+                        <FormField
                             control={form.control}
                             name="dateOfBirth"
                             render={() => (
@@ -103,8 +111,9 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" placeholder="DD" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
+                                                        <Input type="number" min="1" placeholder="DD" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
                                                     </FormControl>
+                                                    <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
@@ -114,8 +123,9 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" placeholder="MM" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
+                                                        <Input type="number" min="1" placeholder="MM" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
                                                     </FormControl>
+                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
@@ -125,13 +135,14 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" placeholder="YYYY" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
+                                                        <Input type="number" min="1900" placeholder="YYYY" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
                                                     </FormControl>
+                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
                                     </div>
-                                    <FormMessage />
+                                    <DateOfBirthErrorMessage />
                                 </FormItem>
                             )}
                         />
@@ -331,5 +342,3 @@ export default function PatientsPage() {
     </div>
   );
 }
-
-    
