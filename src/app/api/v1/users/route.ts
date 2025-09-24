@@ -47,5 +47,7 @@ export async function POST(request: Request) {
 
   mockUsers.push(newUser);
 
-  return NextResponse.json({ data: newUser }, { status: 201 });
+  return NextResponse.json(newUser, { status: 201 });
 }
+
+    

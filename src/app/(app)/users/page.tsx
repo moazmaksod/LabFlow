@@ -137,7 +137,7 @@ export default function UserManagementPage() {
 
       if (response.ok) {
         const createdUser = await response.json();
-        setUsers(currentUsers => [...currentUsers, createdUser.data]);
+        setUsers(currentUsers => [...currentUsers, createdUser]);
         toast({ title: 'User created successfully!' });
         setNewUser({ firstName: '', lastName: '', email: '', role: 'receptionist' });
         setAddUserOpen(false);
@@ -180,7 +180,6 @@ export default function UserManagementPage() {
         setEditingUser(null);
       } else {
         const errorText = await response.text();
-        console.error("[DEBUG] Frontend: Update failed. Status:", response.status, "Body:", errorText);
         toast({
           variant: 'destructive',
           title: 'Failed to update user',
@@ -188,7 +187,6 @@ export default function UserManagementPage() {
         });
       }
     } catch (error) {
-       console.error("[DEBUG] Frontend: Catch block error on update:", error);
        toast({
         variant: 'destructive',
         title: 'An error occurred during update.',
@@ -405,3 +403,5 @@ export default function UserManagementPage() {
     </div>
   );
 }
+
+    
