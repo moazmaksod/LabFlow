@@ -68,6 +68,11 @@ function Calendar({
         Dropdown: (props: DropdownProps) => {
             const { fromDate, fromMonth, fromYear, toDate, toMonth, toYear } = props;
             const { goToMonth, month } = props;
+
+            if (!month) {
+              return null;
+            }
+
             if (props.name === "months") {
               const months: { value: number; label: string }[] = [];
               for(let i=0; i<12; i++){
