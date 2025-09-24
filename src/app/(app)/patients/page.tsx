@@ -26,7 +26,7 @@ import type { Patient, PatientFormData } from '@/lib/schemas/patient';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PatientFormSchema } from '@/lib/schemas/patient';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -167,14 +167,16 @@ export default function PatientsPage() {
         if (token) {
             fetchPatients();
         }
-    }, [user, token]);
+    }, [user, token, router]);
 
     useEffect(() => {
         const handler = setTimeout(() => {
-            fetchPatients(searchTerm);
+            if (token) {
+              fetchPatients(searchTerm);
+            }
         }, 500); // Debounce search
         return () => clearTimeout(handler);
-    }, [searchTerm]);
+    }, [searchTerm, token]);
 
     const handleRegisterPatient = async (data: PatientFormData) => {
         try {
@@ -273,7 +275,7 @@ export default function PatientsPage() {
               ) : (
                 <TableRow>
                     <TableCell colSpan={5} className="text-center h-24">
-                        {searchTerm ? `No patients found for "${searchTerm}"` : 'No patients found.'}
+                        {searchTerm ? `No patients found for "${searchTerm}"` : 'No patients found. Register a new patient to get started.'}
                     </TableCell>
                 </TableRow>
               )}
