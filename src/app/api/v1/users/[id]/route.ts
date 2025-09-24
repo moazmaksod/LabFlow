@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   const foundUser = mockUsers.find(u => u.id === params.id);
   if (foundUser) {
-    return NextResponse.json(foundUser);
+    return NextResponse.json({ data: foundUser });
   }
   return NextResponse.json({ message: 'User not found' }, { status: 404 });
 }
@@ -38,16 +38,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 
   const body = await request.json();
-  // Allow partial updates for fields like 'role'
-  const validation = UserSchema.partial().safeParse(body);
+  // We only allow updating a small subset of fields, like 'role'.
+  const validation = UserSchema.pick({ role: true }).partial().safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(validation.error.errors, { status: 400 });
+    return NextResponse.json({ errors: validation.error.errors }, { status: 400 });
   }
+  
+  const updatedUser = { ...mockUsers[userIndex], ...validation.data };
+  mockUsers[userIndex] = updatedUser;
 
-  mockUsers[userIndex] = { ...mockUsers[userIndex], ...validation.data };
-
-  return NextResponse.json(mockUsers[userIndex]);
+  return NextResponse.json({ data: updatedUser });
 }
 
 
