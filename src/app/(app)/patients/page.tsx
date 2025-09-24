@@ -96,20 +96,20 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                                 <Controller
                                     name="dateOfBirth.day"
                                     control={form.control}
-                                    render={({ field }) => <Input type="number" placeholder="DD" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
+                                    render={({ field }) => <Input type="number" placeholder="DD" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
                                 />
                                 <Controller
                                     name="dateOfBirth.month"
                                     control={form.control}
-                                    render={({ field }) => <Input type="number" placeholder="MM" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
+                                    render={({ field }) => <Input type="number" placeholder="MM" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
                                 />
                                 <Controller
                                     name="dateOfBirth.year"
                                     control={form.control}
-                                    render={({ field }) => <Input type="number" placeholder="YYYY" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
+                                    render={({ field }) => <Input type="number" placeholder="YYYY" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
                                 />
                             </div>
-                            <FormMessage>{form.formState.errors.dateOfBirth?.message}</FormMessage>
+                            <FormMessage>{form.formState.errors.dateOfBirth?.root?.message}</FormMessage>
                         </FormItem>
                          <FormField control={form.control} name="gender" render={({ field }) => (
                             <FormItem><FormLabel>Gender</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -307,5 +307,3 @@ export default function PatientsPage() {
     </div>
   );
 }
-
-    

@@ -28,14 +28,12 @@ const DateOfBirthSchema = z.object({
   year: z.number().int().min(1900).max(new Date().getFullYear()).optional(),
 }).refine(data => data.day && data.month && data.year, {
     message: "Day, Month, and Year are required.",
-    path: [],
 }).refine(data => {
     if(!data.day || !data.month || !data.year) return false;
     const date = new Date(data.year, data.month - 1, data.day);
     return date.getFullYear() === data.year && date.getMonth() === data.month - 1 && date.getDate() === data.day;
 }, {
     message: "Invalid date provided.",
-    path: [],
 });
 
 export const PatientSchema = z.object({
@@ -64,5 +62,3 @@ export const PatientFormSchema = PatientSchema.omit({
 });
 
 export type PatientFormData = z.infer<typeof PatientFormSchema>;
-
-    
