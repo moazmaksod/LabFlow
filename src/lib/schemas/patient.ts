@@ -50,8 +50,7 @@ const DateOfBirthSchema = z.object({
 export const PatientSchema = z.object({
   _id: z.string(), // ObjectId will be a string
   mrn: z.string().min(1, { message: "MRN is required." }).describe("The patient's unique Medical Record Number."),
-  firstName: z.string().min(1, { message: "First name is required." }),
-  lastName: z.string().min(1, { message: "Last name is required." }),
+  fullName: z.string().min(1, { message: "Full name is required." }),
   dateOfBirth: z.union([z.date(), DateOfBirthSchema]),
   gender: z.enum(['Male', 'Female', 'Other', 'Prefer not to say']),
   contactInfo: ContactInfoSchema,

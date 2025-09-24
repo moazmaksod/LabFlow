@@ -26,7 +26,7 @@ import type { Patient, PatientFormData } from '@/lib/schemas/patient';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { useForm, Controller, useFormContext } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PatientFormSchema } from '@/lib/schemas/patient';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -38,8 +38,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
         resolver: zodResolver(PatientFormSchema),
         defaultValues: {
             mrn: '',
-            firstName: '',
-            lastName: '',
+            fullName: '',
             dateOfBirth: { day: undefined, month: undefined, year: undefined },
             gender: 'Male',
             contactInfo: {
@@ -60,18 +59,24 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
     const currentDay = today.getDate();
 
     const DateOfBirthErrorMessage = () => {
-        const { formState } = useFormContext();
-        const errorMessage = formState.errors.dateOfBirth?.message as string | undefined ?? (formState.errors.dateOfBirth as any)?.root?.message;
+        const { error } = useFormField();
+        const errorMessage = error ? String(error?.message) : null;
+
         if (!errorMessage) return null;
-        return <FormMessage>{errorMessage}</FormMessage>;
+
+        const isRootError = !form.formState.errors.dateOfBirth?.day && !form.formState.errors.dateOfBirth?.month && !form.formState.errors.dateOfBirth?.year;
+
+        if (isRootError) {
+          return <FormMessage>{errorMessage}</FormMessage>;
+        }
+        return null;
     }
 
 
     const handleSimulateScan = () => {
         form.reset({
             mrn: `MRN${Math.floor(1000 + Math.random() * 9000)}`,
-            firstName: 'John',
-            lastName: 'Doe',
+            fullName: 'John Doe',
             dateOfBirth: { day: 15, month: 5, year: 1990 },
             gender: 'Male',
             contactInfo: {
@@ -97,14 +102,9 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                     <FormField control={form.control} name="mrn" render={({ field }) => (
                         <FormItem><FormLabel>Medical Record Number (MRN)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                     <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="firstName" render={({ field }) => (
-                            <FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="lastName" render={({ field }) => (
-                            <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                    </div>
+                    <FormField control={form.control} name="fullName" render={({ field }) => (
+                        <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                      <div className="grid grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
@@ -330,7 +330,7 @@ export default function PatientsPage() {
                             {patient.mrn}
                         </Link>
                     </TableCell>
-                    <TableCell>{patient.firstName} {patient.lastName}</TableCell>
+                    <TableCell>{patient.fullName}</TableCell>
                     <TableCell>{formatDateOfBirth(patient.dateOfBirth)}</TableCell>
                     <TableCell>{patient.gender}</TableCell>
                     <TableCell>{patient.contactInfo.phone}</TableCell>

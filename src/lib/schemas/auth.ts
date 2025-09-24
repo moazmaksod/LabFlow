@@ -10,8 +10,7 @@ export type AuthLoginInput = z.infer<typeof AuthLoginInputSchema>;
 
 export const UserSchema = z.object({
   _id: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
+  fullName: z.string().min(1, "Full name is required."),
   email: z.string().email(),
   role: z.enum(['receptionist', 'technician', 'manager', 'physician', 'patient']),
 });

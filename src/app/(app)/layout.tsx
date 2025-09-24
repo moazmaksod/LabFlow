@@ -62,8 +62,11 @@ function AppSidebar() {
     (img) => img.id === 'user-avatar-1'
   );
   
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  const getInitials = (fullName: string) => {
+    if (!fullName) return '';
+    const names = fullName.split(' ');
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
   }
 
   const receptionistNav = (
@@ -233,12 +236,12 @@ function AppSidebar() {
                         data-ai-hint={userAvatar.imageHint}
                       />
                     )}
-                    <AvatarFallback>{user ? getInitials(user.firstName, user.lastName) : '...'}</AvatarFallback>
+                    <AvatarFallback>{user ? getInitials(user.fullName) : '...'}</AvatarFallback>
                   </Avatar>
                   <div className="flex w-full min-w-0 flex-col items-start justify-start">
                     {user ? (
                       <>
-                        <span className="max-w-full truncate">{user.firstName} {user.lastName}</span>
+                        <span className="max-w-full truncate">{user.fullName}</span>
                         <span className="max-w-full truncate text-xs text-sidebar-foreground/70 capitalize">
                           {user.role}
                         </span>
@@ -257,7 +260,7 @@ function AppSidebar() {
                   {user ? (
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {user.firstName} {user.lastName}
+                        {user.fullName}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user.email}

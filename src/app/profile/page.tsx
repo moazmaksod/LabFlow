@@ -24,12 +24,14 @@ import {
 import { PlaceHolderImages } from '@/lib/images';
 import { Moon, Sun, SunMoon } from 'lucide-react';
 import { useTheme } from "next-themes"
+import { useAuth } from '@/hooks/use-auth';
 
 export default function ProfilePage() {
   const userAvatar = PlaceHolderImages.find(
     (img) => img.id === 'user-avatar-1'
   );
-   const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
 
   return (
     <div className="flex flex-col gap-8">
@@ -63,11 +65,11 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="name">Full Name</Label>
-                        <Input id="name" defaultValue="Dr. Jane Doe" />
+                        <Input id="name" defaultValue={user?.fullName} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" type="email" defaultValue="jane.doe@labflow.med" />
+                        <Input id="email" type="email" defaultValue={user?.email} />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
@@ -79,7 +81,7 @@ export default function ProfilePage() {
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="role">Role</Label>
-                        <Input id="role" defaultValue="Administrator" disabled />
+                        <Input id="role" defaultValue={user?.role} disabled />
                     </div>
                 </div>
 

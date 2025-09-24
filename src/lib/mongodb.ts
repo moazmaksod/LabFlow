@@ -19,20 +19,17 @@ let cachedDb: Db | null = null;
 
 const initialUsers: Omit<User, '_id'>[] = [
     {
-        firstName: 'Jane',
-        lastName: 'Doe',
+        fullName: 'Jane Doe',
         email: 'jane.doe@labflow.med',
         role: 'manager',
     },
     {
-        firstName: 'Sam',
-        lastName: 'Wilson',
+        fullName: 'Sam Wilson',
         email: 'sam.wilson@labflow.med',
         role: 'receptionist',
     },
     {
-        firstName: 'Bruce',
-        lastName: 'Banner',
+        fullName: 'Bruce Banner',
         email: 'bruce.banner@labflow.med',
         role: 'technician',
     },

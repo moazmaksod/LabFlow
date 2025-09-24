@@ -65,7 +65,7 @@ export default function UserManagementPage() {
   const [isAddUserOpen, setAddUserOpen] = useState(false);
   const [isEditUserOpen, setEditUserOpen] = useState(false);
 
-  const [newUser, setNewUser] = useState<Omit<User, '_id'>>({ firstName: '', lastName: '', email: '', role: 'receptionist' });
+  const [newUser, setNewUser] = useState<Omit<User, '_id'>>({ fullName: '', email: '', role: 'receptionist' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const fetchUsers = async () => {
@@ -136,7 +136,7 @@ export default function UserManagementPage() {
 
       if (response.ok) {
         toast({ title: 'User created successfully!' });
-        setNewUser({ firstName: '', lastName: '', email: '', role: 'receptionist' });
+        setNewUser({ fullName: '', email: '', role: 'receptionist' });
         setAddUserOpen(false);
         fetchUsers();
       } else {
@@ -240,16 +240,10 @@ export default function UserManagementPage() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="firstName" className="text-right">
-                    First Name
+                  <Label htmlFor="fullName" className="text-right">
+                    Full Name
                   </Label>
-                  <Input id="firstName" value={newUser.firstName} onChange={(e) => setNewUser({...newUser, firstName: e.target.value})} className="col-span-3" required />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="lastName" className="text-right">
-                    Last Name
-                  </Label>
-                  <Input id="lastName" value={newUser.lastName} onChange={(e) => setNewUser({...newUser, lastName: e.target.value})} className="col-span-3" required />
+                  <Input id="fullName" value={newUser.fullName} onChange={(e) => setNewUser({...newUser, fullName: e.target.value})} className="col-span-3" required />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="email" className="text-right">
@@ -323,7 +317,7 @@ export default function UserManagementPage() {
                   users.map((u) => (
                     <TableRow key={u._id}>
                       <TableCell className="font-medium">
-                        {u.firstName} {u.lastName}
+                        {u.fullName}
                       </TableCell>
                       <TableCell>{u.email}</TableCell>
                       <TableCell className="capitalize">{u.role}</TableCell>
@@ -345,7 +339,7 @@ export default function UserManagementPage() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action will permanently delete the user {u.firstName} {u.lastName}. This cannot be undone.
+                                  This action will permanently delete the user {u.fullName}. This cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -366,7 +360,7 @@ export default function UserManagementPage() {
                     <DialogHeader>
                       <DialogTitle>Edit User</DialogTitle>
                       <DialogDescription>
-                        Update the role for {editingUser?.firstName} {editingUser?.lastName}.
+                        Update the role for {editingUser?.fullName}.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">

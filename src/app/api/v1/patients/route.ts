@@ -21,8 +21,7 @@ export async function GET(request: Request) {
     query = {
       $or: [
         { mrn: searchRegex },
-        { firstName: searchRegex },
-        { lastName: searchRegex },
+        { fullName: searchRegex },
       ],
     };
   }
