@@ -5,7 +5,7 @@
  *
  * - login - A function to handle user login.
  */
-import type {AuthLoginInput} from '@/lib/schemas/auth';
+import type {AuthLoginInput, User} from '@/lib/schemas/auth';
 import {AuthLoginInputSchema} from '@/lib/schemas/auth';
 import { findUserByEmail } from '@/lib/api/utils';
 
@@ -24,15 +24,21 @@ export async function login(input: AuthLoginInput): Promise<string | null> {
   }
 
   // Use the findUserByEmail function to get the user from the database
-  const user = await findUserByEmail(validatedInput.data.email);
-  
-  // DEBUG: Log the user object fetched from the database
-  console.log('[DEBUG: auth-flow.ts] User from DB:', user);
+  const userFromDb: any = await findUserByEmail(validatedInput.data.email);
 
   // In a real app, you'd also check the password hash here.
-  if (user) {
-    // Simulate JWT signing by base64 encoding the user object.
-    const token = Buffer.from(JSON.stringify(user)).toString('base64');
+  if (userFromDb) {
+    // Construct the final user object for the token, ensuring fullName exists.
+    // This handles both new users (with fullName) and legacy users (with firstName/lastName).
+    const userForToken: User = {
+        _id: userFromDb._id.toString(),
+        fullName: userFromDb.fullName || `${userFromDb.firstName} ${userFromDb.lastName}`,
+        email: userFromDb.email,
+        role: userFromDb.role,
+    }
+    
+    // Simulate JWT signing by base64 encoding the final user object.
+    const token = Buffer.from(JSON.stringify(userForToken)).toString('base64');
     return token;
   }
   return null;

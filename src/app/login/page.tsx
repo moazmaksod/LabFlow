@@ -52,9 +52,6 @@ export default function LoginPage() {
         // Decode the user object from the token just for the toast message
         const decodedUser = JSON.parse(Buffer.from(token, 'base64').toString('utf-8')) as User;
         
-        // DEBUG: Log the user object on the login page
-        console.log('[DEBUG: login/page.tsx] Decoded user for toast:', decodedUser);
-
         toast({
           title: 'Login Successful',
           description: `Welcome back, ${decodedUser?.fullName}!`,

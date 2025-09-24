@@ -33,8 +33,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const decodedUser = JSON.parse(Buffer.from(storedToken, 'base64').toString('utf-8'));
         const validatedUser = UserSchema.safeParse(decodedUser);
         if (validatedUser.success) {
-            // DEBUG: Log the user object being restored from session storage
-            console.log('[DEBUG: use-auth.tsx useEffect] User restored from session:', validatedUser.data);
             setUser(validatedUser.data);
             setToken(storedToken);
         } else {
