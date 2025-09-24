@@ -1,8 +1,9 @@
 
 import { User, UserSchema } from '@/lib/schemas/auth';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
+import type { Patient } from '@/lib/schemas/patient';
 import { headers } from 'next/headers';
-import { getUsersCollection, getTestsCollection } from '@/lib/mongodb';
+import { getPatientsCollection, getUsersCollection, getTestsCollection } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 
@@ -93,4 +94,24 @@ export const removeTest = async (id: string): Promise<boolean> => {
     const collection = await getTestsCollection();
     const result = await collection.deleteOne({ _id: new ObjectId(id) as any });
     return result.deletedCount > 0;
+};
+
+
+// --- Patient Data Access ---
+export const getPatients = async (query: any = {}): Promise<Patient[]> => {
+    const collection = await getPatientsCollection();
+    return await collection.find(query).toArray() as Patient[];
+};
+export const findPatientById = async (id: string): Promise<Patient | null> => {
+    const collection = await getPatientsCollection();
+    return await collection.findOne({ _id: new ObjectId(id) as any }) as Patient | null;
+};
+export const findPatientByMrn = async (mrn: string): Promise<Patient | null> => {
+    const collection = await getPatientsCollection();
+    return await collection.findOne({ mrn: mrn }) as Patient | null;
+};
+export const addPatient = async (patient: Omit<Patient, '_id'>): Promise<Patient> => {
+    const collection = await getPatientsCollection();
+    const result = await collection.insertOne(patient as any);
+    return { ...patient, _id: result.insertedId.toHexString() };
 };
