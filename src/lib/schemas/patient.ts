@@ -23,19 +23,28 @@ const InsuranceInfoSchema = z.object({
 });
 
 const DateOfBirthSchema = z.object({
-  day: z.coerce.number({invalid_type_error: "Day must be a number."}).int().min(1, {message: "Day must be at least 1."}).max(31, {message: "Day must be at most 31."}).optional(),
-  month: z.coerce.number({invalid_type_error: "Month must be a number."}).int().min(1, {message: "Month must be at least 1."}).max(12, {message: "Month must be at most 12."}).optional(),
+  day: z.coerce.number({invalid_type_error: "Day must be a number."}).int().min(1, {message: "Day must be between 1 and 31."}).max(31, {message: "Day must be between 1 and 31."}).optional(),
+  month: z.coerce.number({invalid_type_error: "Month must be a number."}).int().min(1, {message: "Month must be between 1 and 12."}).max(12, {message: "Month must be between 1 and 12."}).optional(),
   year: z.coerce.number({invalid_type_error: "Year must be a number."}).int().min(1900, {message: "Year must be after 1900."}).max(new Date().getFullYear(), {message: "Year cannot be in the future."}).optional(),
 }).refine(data => data.day !== undefined && data.month !== undefined && data.year !== undefined, {
     message: "Day, Month, and Year are required.",
-    path: ["day"] // Show error on one field to avoid triple messages
+    path: ["root"]
 }).refine(data => {
     if(!data.day || !data.month || !data.year) return true; // Let previous refine handle it
     const date = new Date(data.year, data.month - 1, data.day);
     return date.getFullYear() === data.year && date.getMonth() === data.month - 1 && date.getDate() === data.day;
 }, {
     message: "Invalid date provided.",
-    path: ["day"], // Show error on the day field
+    path: ["root"],
+}).refine(data => {
+    if(!data.day || !data.month || !data.year) return true;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day for comparison
+    const dob = new Date(data.year, data.month - 1, data.day);
+    return dob <= today;
+}, {
+    message: "Date of birth cannot be in the future.",
+    path: ["root"],
 });
 
 export const PatientSchema = z.object({
