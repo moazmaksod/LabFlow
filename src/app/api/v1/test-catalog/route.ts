@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, getTests, findTestByCode, addTest } from '@/lib/api/utils';
-import { TestCatalogSchema, type TestCatalog } from '@/lib/schemas/test-catalog';
+import { TestCatalogSchema } from '@/lib/schemas/test-catalog';
 
 // GET /api/v1/test-catalog
 // Lists all tests (Manager can manage)
@@ -11,13 +11,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
   
-  // In a real app, you might allow other roles to read the catalog
-  // For now, we keep it manager-only for management purposes as per the sprint plan
    if (user.role !== 'manager') {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
-
-  return NextResponse.json({ data: getTests() });
+  
+  const tests = await getTests();
+  return NextResponse.json({ data: tests });
 }
 
 // POST /api/v1/test-catalog
@@ -38,16 +37,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ errors: validation.error.errors }, { status: 400 });
   }
   
-  if (findTestByCode(validation.data.testCode)) {
+  const existingTest = await findTestByCode(validation.data.testCode);
+  if (existingTest) {
     return NextResponse.json({ message: `Test with code ${validation.data.testCode} already exists.`}, { status: 409 });
   }
 
-  const newTest: TestCatalog = {
-    _id: `test-${Date.now()}`,
-    ...validation.data,
-  };
-
-  addTest(newTest);
+  const newTest = await addTest(validation.data);
 
   return NextResponse.json({ data: newTest }, { status: 201 });
 }

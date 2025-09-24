@@ -14,8 +14,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  // Return data in a structured object
-  return NextResponse.json({ data: getUsers() });
+  const users = await getUsers();
+  return NextResponse.json({ data: users });
 }
 
 // POST /api/v1/users
@@ -33,19 +33,15 @@ export async function POST(request: Request) {
   const validation = UserSchema.omit({ _id: true }).safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(validation.error.errors, { status: 400 });
+    return NextResponse.json({ errors: validation.error.errors }, { status: 400 });
   }
   
-  if (findUserByEmail(validation.data.email)) {
+  const existingUser = await findUserByEmail(validation.data.email);
+  if (existingUser) {
     return NextResponse.json({ message: `User with email ${validation.data.email} already exists.`}, { status: 409 });
   }
 
-  const newUser = {
-    _id: `user-${Date.now()}`,
-    ...validation.data,
-  };
+  const createdUser = await addUser(validation.data);
 
-  addUser(newUser);
-
-  return NextResponse.json(newUser, { status: 201 });
+  return NextResponse.json(createdUser, { status: 201 });
 }

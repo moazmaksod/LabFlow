@@ -39,7 +39,6 @@ import type { User } from '@/lib/schemas/auth';
 import { Edit, PlusCircle, Search, Trash2 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -139,7 +138,7 @@ export default function UserManagementPage() {
         toast({ title: 'User created successfully!' });
         setNewUser({ firstName: '', lastName: '', email: '', role: 'receptionist' });
         setAddUserOpen(false);
-        fetchUsers(); // Re-fetch the list to get the new user with their server-generated _id
+        fetchUsers();
       } else {
         const errorData = await response.json();
         toast({
@@ -402,5 +401,3 @@ export default function UserManagementPage() {
     </div>
   );
 }
-
-    

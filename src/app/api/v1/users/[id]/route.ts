@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, findUserById, findUserIndexById, updateUser, removeUser } from '@/lib/api/utils';
+import { getAuthenticatedUser, findUserById, updateUser, removeUser } from '@/lib/api/utils';
 import { UserSchema } from '@/lib/schemas/auth';
 
 // GET /api/v1/users/[id]
@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
    }
 
-  const foundUser = findUserById(params.id);
+  const foundUser = await findUserById(params.id);
   if (foundUser) {
     return NextResponse.json({ data: foundUser });
   }
@@ -32,8 +32,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  const userIndex = findUserIndexById(params.id);
-  if (userIndex === -1) {
+  const existingUser = await findUserById(params.id);
+  if (!existingUser) {
     return NextResponse.json({ message: 'User not found' }, { status: 404 });
   }
 
@@ -46,9 +46,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ message: "Validation failed", errors: validation.error.errors }, { status: 400 });
   }
   
-  const existingUser = findUserById(params.id)!;
+  await updateUser(params.id, validation.data);
   const updatedUser = { ...existingUser, ...validation.data };
-  updateUser(userIndex, updatedUser);
 
   return NextResponse.json({ data: updatedUser });
 }
@@ -66,12 +65,10 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  const userIndex = findUserIndexById(params.id);
-  if (userIndex === -1) {
+  const success = await removeUser(params.id);
+  if (!success) {
     return NextResponse.json({ message: 'User not found' }, { status: 404 });
   }
-
-  removeUser(userIndex);
 
   return new NextResponse(null, { status: 204 }); // No Content
 }

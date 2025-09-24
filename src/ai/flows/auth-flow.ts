@@ -5,9 +5,9 @@
  *
  * - login - A function to handle user login.
  */
-import type {AuthLoginInput, User} from '@/lib/schemas/auth';
+import type {AuthLoginInput} from '@/lib/schemas/auth';
 import {AuthLoginInputSchema} from '@/lib/schemas/auth';
-import { getUsers } from '@/lib/api/utils';
+import { findUserByEmail } from '@/lib/api/utils';
 
 
 /**
@@ -23,9 +23,8 @@ export async function login(input: AuthLoginInput): Promise<string | null> {
     return null;
   }
 
-  // Use the getUsers function to get the current list of users
-  const users = getUsers();
-  const user = users.find(u => u.email === validatedInput.data.email);
+  // Use the findUserByEmail function to get the user from the database
+  const user = await findUserByEmail(validatedInput.data.email);
   
   // In a real app, you'd also check the password hash here.
   if (user) {

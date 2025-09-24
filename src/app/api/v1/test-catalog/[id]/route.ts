@@ -1,8 +1,7 @@
 
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, findTestById, findTestIndexById, updateTest, removeTest } from '@/lib/api/utils';
+import { getAuthenticatedUser, findTestById, updateTest, removeTest } from '@/lib/api/utils';
 import { TestCatalogSchema } from '@/lib/schemas/test-catalog';
-import type { TestCatalog } from '@/lib/schemas/test-catalog';
 
 // GET /api/v1/test-catalog/[id]
 // Retrieves a single test (Manager only)
@@ -15,7 +14,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
    }
 
-  const foundTest = findTestById(params.id);
+  const foundTest = await findTestById(params.id);
   if (foundTest) {
     return NextResponse.json({ data: foundTest });
   }
@@ -33,8 +32,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  const testIndex = findTestIndexById(params.id);
-  if (testIndex === -1) {
+  const existingTest = await findTestById(params.id);
+  if (!existingTest) {
     return NextResponse.json({ message: 'Test not found' }, { status: 404 });
   }
 
@@ -45,12 +44,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ errors: validation.error.errors }, { status: 400 });
   }
 
-  const existingTest = findTestById(params.id)!;
-  const updatedTest: TestCatalog = { 
-    ...existingTest, 
-    ...validation.data 
-  };
-  updateTest(testIndex, updatedTest);
+  await updateTest(params.id, validation.data);
+  const updatedTest = { ...existingTest, ...validation.data };
 
   return NextResponse.json({ data: updatedTest });
 }
@@ -67,12 +62,10 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  const testIndex = findTestIndexById(params.id);
-  if (testIndex === -1) {
+  const success = await removeTest(params.id);
+  if (!success) {
     return NextResponse.json({ message: 'Test not found' }, { status: 404 });
   }
-
-  removeTest(testIndex);
 
   return new NextResponse(null, { status: 204 }); // No Content
 }
