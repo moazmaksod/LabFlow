@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {useToast} from '@/hooks/use-toast';
-import { AuthLoginInput, AuthLoginInputSchema } from '@/lib/schemas/auth';
+import { AuthLoginInput, AuthLoginInputSchema, User } from '@/lib/schemas/auth';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function LoginPage() {
@@ -46,11 +46,15 @@ export default function LoginPage() {
     try {
       const token = await apiLogin(values);
       if (token) {
-        const user = login(token);
-        console.log('[LoginPage] User object received for toast:', user);
+        // Log in the user for the rest of the app
+        login(token);
+
+        // Decode the user object from the token just for the toast message
+        const decodedUser = JSON.parse(Buffer.from(token, 'base64').toString('utf-8')) as User;
+
         toast({
           title: 'Login Successful',
-          description: `Welcome back, ${user?.fullName}!`,
+          description: `Welcome back, ${decodedUser?.fullName}!`,
         });
         router.push('/dashboard');
       } else {

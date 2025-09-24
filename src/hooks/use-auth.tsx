@@ -51,7 +51,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       sessionStorage.setItem(AUTH_STORAGE_KEY, newToken);
       const decodedUser = JSON.parse(Buffer.from(newToken, 'base64').toString('utf-8'));
-      console.log('[useAuth] Decoded user from token:', decodedUser);
       const validatedUser = UserSchema.safeParse(decodedUser);
       if (validatedUser.success) {
         setUser(validatedUser.data);
