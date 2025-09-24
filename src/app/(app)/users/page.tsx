@@ -136,11 +136,10 @@ export default function UserManagementPage() {
       });
 
       if (response.ok) {
-        const createdUser = await response.json();
-        setUsers(currentUsers => [...currentUsers, createdUser]);
         toast({ title: 'User created successfully!' });
         setNewUser({ firstName: '', lastName: '', email: '', role: 'receptionist' });
         setAddUserOpen(false);
+        fetchUsers(); // Re-fetch the list to get the new user with their server-generated _id
       } else {
         const errorData = await response.json();
         toast({
