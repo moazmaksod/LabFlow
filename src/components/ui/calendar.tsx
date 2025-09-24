@@ -1,8 +1,10 @@
+
 "use client"
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker, DropdownProps } from "react-day-picker"
+import { format } from "date-fns"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -95,7 +97,7 @@ function Calendar({
                 const from = fromYear || 1900;
                 const to = toYear || new Date().getFullYear();
 
-                for(let i = from; i <= to; i++){
+                for(let i = to; i >= from; i--){
                     years.push({ value: i, label: String(i)});
                 }
                 
