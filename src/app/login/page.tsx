@@ -49,7 +49,7 @@ export default function LoginPage() {
         const user = login(token);
         toast({
           title: 'Login Successful',
-          description: `Welcome back, ${user?.firstName}!`,
+          description: `Welcome back, ${user?.fullName}!`,
         });
         router.push('/dashboard');
       } else {
