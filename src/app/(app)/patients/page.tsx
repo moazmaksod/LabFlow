@@ -92,7 +92,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                         Fill in the details to add a new patient to the system.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-6">
+                <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-6">
                     <Button type="button" variant="outline" onClick={handleSimulateScan}>Simulate ID/Insurance Card Scan</Button>
                     <FormField control={form.control} name="mrn" render={({ field }) => (
                         <FormItem><FormLabel>Medical Record Number (MRN)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
