@@ -90,27 +90,51 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                         )} />
                     </div>
                      <div className="grid grid-cols-2 gap-4">
-                       <FormItem>
-                            <FormLabel>Date of Birth</FormLabel>
-                            <div className="grid grid-cols-3 gap-2">
-                                <Controller
-                                    name="dateOfBirth.day"
-                                    control={form.control}
-                                    render={({ field }) => <Input type="number" placeholder="DD" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
-                                />
-                                <Controller
-                                    name="dateOfBirth.month"
-                                    control={form.control}
-                                    render={({ field }) => <Input type="number" placeholder="MM" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
-                                />
-                                <Controller
-                                    name="dateOfBirth.year"
-                                    control={form.control}
-                                    render={({ field }) => <Input type="number" placeholder="YYYY" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
-                                />
-                            </div>
-                            <FormMessage>{form.formState.errors.dateOfBirth?.root?.message}</FormMessage>
-                        </FormItem>
+                       <FormField
+                            control={form.control}
+                            name="dateOfBirth"
+                            render={() => (
+                                <FormItem>
+                                    <FormLabel>Date of Birth</FormLabel>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <FormField
+                                            control={form.control}
+                                            name="dateOfBirth.day"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input type="number" placeholder="DD" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="dateOfBirth.month"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input type="number" placeholder="MM" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="dateOfBirth.year"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <Input type="number" placeholder="YYYY" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                          <FormField control={form.control} name="gender" render={({ field }) => (
                             <FormItem><FormLabel>Gender</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
