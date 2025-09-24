@@ -16,6 +16,104 @@ if (!dbName) {
 let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
 
+const initialUsers: Omit<User, '_id'>[] = [
+    {
+        firstName: 'Jane',
+        lastName: 'Doe',
+        email: 'jane.doe@labflow.med',
+        role: 'manager',
+    },
+    {
+        firstName: 'Sam',
+        lastName: 'Wilson',
+        email: 'sam.wilson@labflow.med',
+        role: 'receptionist',
+    },
+    {
+        firstName: 'Bruce',
+        lastName: 'Banner',
+        email: 'bruce.banner@labflow.med',
+        role: 'technician',
+    },
+];
+
+const initialTests: Omit<TestCatalog, '_id'>[] = [
+  {
+    testCode: 'CBC',
+    name: 'Complete Blood Count',
+    description: 'A test that measures the cells that make up your blood.',
+    specimenRequirements: {
+      tubeType: 'Lavender Top',
+      minVolume: 3,
+      units: 'mL',
+    },
+    turnaroundTime: {
+      routine: { value: 4, units: 'hours' },
+      stat: { value: 1, units: 'hours' },
+    },
+    price: 50.0,
+    isPanel: false,
+    isActive: true,
+    referenceRanges: [],
+  },
+  {
+    testCode: 'LP',
+    name: 'Lipid Panel',
+    description: 'Measures fats and fatty substances used as a source of energy by your body.',
+    specimenRequirements: {
+      tubeType: 'Gold Top',
+      minVolume: 5,
+      units: 'mL',
+    },
+    turnaroundTime: {
+      routine: { value: 8, units: 'hours' },
+      stat: { value: 2, units: 'hours' },
+    },
+    price: 100.0,
+    isPanel: true,
+    panelComponents: ['CHOL', 'TRIG', 'HDL', 'LDL'],
+    isActive: true,
+    referenceRanges: [],
+  },
+  {
+    testCode: 'TSH',
+    name: 'Thyroid Stimulating Hormone',
+    description: 'Checks your thyroid gland function.',
+    specimenRequirements: {
+      tubeType: 'Gold Top',
+      minVolume: 5,
+      units: 'mL',
+    },
+    turnaroundTime: {
+      routine: { value: 6, units: 'hours' },
+      stat: { value: 1, units: 'hours' },
+    },
+    price: 120.0,
+    isPanel: false,
+    isActive: true,
+    referenceRanges: [],
+  },
+];
+
+
+async function seedDatabase(db: Db) {
+    const usersCollection = db.collection('users');
+    const testsCollection = db.collection('testCatalog');
+
+    const userCount = await usersCollection.countDocuments();
+    if (userCount === 0) {
+        console.log('Seeding database with initial users...');
+        await usersCollection.insertMany(initialUsers as any[]);
+    }
+
+    const testCount = await testsCollection.countDocuments();
+    if (testCount === 0) {
+        console.log('Seeding database with initial tests...');
+        await testsCollection.insertMany(initialTests as any[]);
+    }
+}
+
+
 async function connectToDatabase() {
   if (cachedClient && cachedDb) {
     return { client: cachedClient, db: cachedDb };
@@ -24,6 +122,9 @@ async function connectToDatabase() {
   const client = new MongoClient(uri!);
   await client.connect();
   const db = client.db(dbName);
+  
+  // Seed the database with initial data if it's empty
+  await seedDatabase(db);
 
   cachedClient = client;
   cachedDb = db;
