@@ -47,6 +47,7 @@ export default function LoginPage() {
       const token = await apiLogin(values);
       if (token) {
         const user = login(token);
+        console.log('[LoginPage] User object received for toast:', user);
         toast({
           title: 'Login Successful',
           description: `Welcome back, ${user?.fullName}!`,
