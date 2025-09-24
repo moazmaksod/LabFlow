@@ -1,10 +1,10 @@
 
 import { NextResponse } from 'next/server';
-import { mockTests, getAuthenticatedUser } from '@/lib/api/utils';
+import { getAuthenticatedUser, getTests, findTestByCode, addTest } from '@/lib/api/utils';
 import { TestCatalogSchema, type TestCatalog } from '@/lib/schemas/test-catalog';
 
 // GET /api/v1/test-catalog
-// Lists all tests (Any authenticated user can view, only manager can manage)
+// Lists all tests (Manager can manage)
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
   if (!user) {
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  return NextResponse.json({ data: mockTests });
+  return NextResponse.json({ data: getTests() });
 }
 
 // POST /api/v1/test-catalog
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ errors: validation.error.errors }, { status: 400 });
   }
   
-  if (mockTests.some(t => t.testCode === validation.data.testCode)) {
+  if (findTestByCode(validation.data.testCode)) {
     return NextResponse.json({ message: `Test with code ${validation.data.testCode} already exists.`}, { status: 409 });
   }
 
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     ...validation.data,
   };
 
-  mockTests.push(newTest);
+  addTest(newTest);
 
   return NextResponse.json({ data: newTest }, { status: 201 });
 }

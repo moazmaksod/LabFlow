@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
-import { mockUsers, getAuthenticatedUser } from '@/lib/api/utils';
-import { User, UserSchema } from '@/lib/schemas/auth';
+import { getAuthenticatedUser, findUserById, findUserIndexById, updateUser, removeUser } from '@/lib/api/utils';
+import { UserSchema } from '@/lib/schemas/auth';
 
 // GET /api/v1/users/[id]
 // Retrieves a single user (Manager only)
@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
    }
 
-  const foundUser = mockUsers.find(u => u._id === params.id);
+  const foundUser = findUserById(params.id);
   if (foundUser) {
     return NextResponse.json({ data: foundUser });
   }
@@ -32,7 +32,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  const userIndex = mockUsers.findIndex(u => u._id === params.id);
+  const userIndex = findUserIndexById(params.id);
   if (userIndex === -1) {
     return NextResponse.json({ message: 'User not found' }, { status: 404 });
   }
@@ -46,8 +46,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ message: "Validation failed", errors: validation.error.errors }, { status: 400 });
   }
   
-  const updatedUser = { ...mockUsers[userIndex], ...validation.data };
-  mockUsers[userIndex] = updatedUser;
+  const existingUser = findUserById(params.id)!;
+  const updatedUser = { ...existingUser, ...validation.data };
+  updateUser(userIndex, updatedUser);
 
   return NextResponse.json({ data: updatedUser });
 }
@@ -65,12 +66,12 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  const userIndex = mockUsers.findIndex(u => u._id === params.id);
+  const userIndex = findUserIndexById(params.id);
   if (userIndex === -1) {
     return NextResponse.json({ message: 'User not found' }, { status: 404 });
   }
 
-  mockUsers.splice(userIndex, 1);
+  removeUser(userIndex);
 
   return new NextResponse(null, { status: 204 }); // No Content
 }

@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { mockUsers, getAuthenticatedUser } from '@/lib/api/utils';
+import { getAuthenticatedUser, getUsers, findUserByEmail, addUser } from '@/lib/api/utils';
 import { UserSchema } from '@/lib/schemas/auth';
 
 // GET /api/v1/users
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   }
 
   // Return data in a structured object
-  return NextResponse.json({ data: mockUsers });
+  return NextResponse.json({ data: getUsers() });
 }
 
 // POST /api/v1/users
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     return NextResponse.json(validation.error.errors, { status: 400 });
   }
   
-  if (mockUsers.some(u => u.email === validation.data.email)) {
+  if (findUserByEmail(validation.data.email)) {
     return NextResponse.json({ message: `User with email ${validation.data.email} already exists.`}, { status: 409 });
   }
 
@@ -45,9 +45,7 @@ export async function POST(request: Request) {
     ...validation.data,
   };
 
-  mockUsers.push(newUser);
+  addUser(newUser);
 
   return NextResponse.json(newUser, { status: 201 });
 }
-
-    

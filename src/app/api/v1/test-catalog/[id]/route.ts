@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { mockTests, getAuthenticatedUser } from '@/lib/api/utils';
+import { getAuthenticatedUser, findTestById, findTestIndexById, updateTest, removeTest } from '@/lib/api/utils';
 import { TestCatalogSchema } from '@/lib/schemas/test-catalog';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
 
@@ -15,7 +15,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
    }
 
-  const foundTest = mockTests.find(t => t._id === params.id);
+  const foundTest = findTestById(params.id);
   if (foundTest) {
     return NextResponse.json({ data: foundTest });
   }
@@ -33,7 +33,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  const testIndex = mockTests.findIndex(t => t._id === params.id);
+  const testIndex = findTestIndexById(params.id);
   if (testIndex === -1) {
     return NextResponse.json({ message: 'Test not found' }, { status: 404 });
   }
@@ -45,12 +45,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ errors: validation.error.errors }, { status: 400 });
   }
 
-  // Correctly merge the existing test with the validated update data
+  const existingTest = findTestById(params.id)!;
   const updatedTest: TestCatalog = { 
-    ...mockTests[testIndex], 
+    ...existingTest, 
     ...validation.data 
   };
-  mockTests[testIndex] = updatedTest;
+  updateTest(testIndex, updatedTest);
 
   return NextResponse.json({ data: updatedTest });
 }
@@ -67,12 +67,12 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  const testIndex = mockTests.findIndex(t => t._id === params.id);
+  const testIndex = findTestIndexById(params.id);
   if (testIndex === -1) {
     return NextResponse.json({ message: 'Test not found' }, { status: 404 });
   }
 
-  mockTests.splice(testIndex, 1);
+  removeTest(testIndex);
 
   return new NextResponse(null, { status: 204 }); // No Content
 }

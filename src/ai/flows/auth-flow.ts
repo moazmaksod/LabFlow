@@ -7,7 +7,7 @@
  */
 import type {AuthLoginInput, User} from '@/lib/schemas/auth';
 import {AuthLoginInputSchema} from '@/lib/schemas/auth';
-import { mockUsers } from '@/lib/api/utils';
+import { getUsers } from '@/lib/api/utils';
 
 
 /**
@@ -23,7 +23,10 @@ export async function login(input: AuthLoginInput): Promise<string | null> {
     return null;
   }
 
-  const user = mockUsers.find(u => u.email === validatedInput.data.email);
+  // Use the getUsers function to get the current list of users
+  const users = getUsers();
+  const user = users.find(u => u.email === validatedInput.data.email);
+  
   // In a real app, you'd also check the password hash here.
   if (user) {
     // Simulate JWT signing by base64 encoding the user object.

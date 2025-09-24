@@ -3,11 +3,8 @@ import { User, UserSchema } from '@/lib/schemas/auth';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import { headers } from 'next/headers';
 
-/**
- * In a real app, this would involve a database lookup.
- * For the prototype, we use a mock array.
- */
-export const mockUsers: User[] = [
+// This is the initial seed data.
+const initialMockUsers: User[] = [
   {
     _id: 'user-1',
     firstName: 'Jane',
@@ -45,7 +42,7 @@ export const mockUsers: User[] = [
   }
 ];
 
-export const mockTests: TestCatalog[] = [
+const initialMockTests: TestCatalog[] = [
   {
     _id: 'test-1',
     testCode: 'CBC',
@@ -104,6 +101,16 @@ export const mockTests: TestCatalog[] = [
 ];
 
 
+// --- SIMULATED DATABASE using Session Storage ---
+// In a real app, these functions would interact with a database.
+// For this prototype, we use sessionStorage to persist data across refreshes.
+
+let mockUsers: User[] = [...initialMockUsers];
+let mockTests: TestCatalog[] = [...initialMockTests];
+
+// We can't use sessionStorage on the server-side directly, so we'll just modify the in-memory arrays.
+// This means data will reset on server restart, which is expected for this prototype.
+
 /**
  * Gets the current user from the request headers.
  * In a real app, this would involve verifying a JWT.
@@ -133,3 +140,34 @@ export async function getAuthenticatedUser(): Promise<User | null> {
 
   return null;
 }
+
+// --- User Data Access ---
+export const getUsers = () => mockUsers;
+export const findUserById = (id: string) => mockUsers.find(u => u._id === id);
+export const findUserIndexById = (id: string) => mockUsers.findIndex(u => u._id === id);
+export const findUserByEmail = (email: string) => mockUsers.find(u => u.email === email);
+export const addUser = (user: User) => {
+    mockUsers.push(user);
+};
+export const updateUser = (index: number, user: User) => {
+    mockUsers[index] = user;
+};
+export const removeUser = (index: number) => {
+    mockUsers.splice(index, 1);
+};
+
+
+// --- Test Catalog Data Access ---
+export const getTests = () => mockTests;
+export const findTestById = (id: string) => mockTests.find(t => t._id === id);
+export const findTestIndexById = (id: string) => mockTests.findIndex(t => t._id === id);
+export const findTestByCode = (code: string) => mockTests.find(t => t.testCode === code);
+export const addTest = (test: TestCatalog) => {
+    mockTests.push(test);
+};
+export const updateTest = (index: number, test: TestCatalog) => {
+    mockTests[index] = test;
+};
+export const removeTest = (index: number) => {
+    mockTests.splice(index, 1);
+};
