@@ -23,17 +23,19 @@ const InsuranceInfoSchema = z.object({
 });
 
 const DateOfBirthSchema = z.object({
-  day: z.number().int().min(1).max(31).optional(),
-  month: z.number().int().min(1).max(12).optional(),
-  year: z.number().int().min(1900).max(new Date().getFullYear()).optional(),
-}).refine(data => data.day && data.month && data.year, {
+  day: z.coerce.number({invalid_type_error: "Day must be a number."}).int().min(1, {message: "Day must be at least 1."}).max(31, {message: "Day must be at most 31."}).optional(),
+  month: z.coerce.number({invalid_type_error: "Month must be a number."}).int().min(1, {message: "Month must be at least 1."}).max(12, {message: "Month must be at most 12."}).optional(),
+  year: z.coerce.number({invalid_type_error: "Year must be a number."}).int().min(1900, {message: "Year must be after 1900."}).max(new Date().getFullYear(), {message: "Year cannot be in the future."}).optional(),
+}).refine(data => data.day !== undefined && data.month !== undefined && data.year !== undefined, {
     message: "Day, Month, and Year are required.",
+    path: ["day"] // Show error on one field to avoid triple messages
 }).refine(data => {
-    if(!data.day || !data.month || !data.year) return false;
+    if(!data.day || !data.month || !data.year) return true; // Let previous refine handle it
     const date = new Date(data.year, data.month - 1, data.day);
     return date.getFullYear() === data.year && date.getMonth() === data.month - 1 && date.getDate() === data.day;
 }, {
     message: "Invalid date provided.",
+    path: ["day"], // Show error on the day field
 });
 
 export const PatientSchema = z.object({
