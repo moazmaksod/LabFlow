@@ -81,7 +81,7 @@ export default function UserManagementPage() {
       });
       if (response.ok) {
         const result = await response.json();
-        setUsers(result.data); // Correctly access the data property
+        setUsers(result.data);
       } else {
         const errorData = await response.json();
         toast({
@@ -136,10 +136,11 @@ export default function UserManagementPage() {
       });
 
       if (response.ok) {
+        const createdUser = await response.json();
+        setUsers(currentUsers => [...currentUsers, createdUser.data]);
         toast({ title: 'User created successfully!' });
         setNewUser({ firstName: '', lastName: '', email: '', role: 'receptionist' });
         setAddUserOpen(false);
-        fetchUsers(); // Refresh list
       } else {
         const errorData = await response.json();
         toast({
@@ -174,12 +175,12 @@ export default function UserManagementPage() {
 
       if (response.ok) {
         toast({ title: 'User updated successfully!' });
-        setEditingUser(null);
+        fetchUsers();
         setEditUserOpen(false);
-        fetchUsers(); // Refresh list
+        setEditingUser(null);
       } else {
         const errorText = await response.text();
-        console.error("Update failed. Status:", response.status, "Body:", errorText);
+        console.error("[DEBUG] Frontend: Update failed. Status:", response.status, "Body:", errorText);
         toast({
           variant: 'destructive',
           title: 'Failed to update user',
@@ -187,7 +188,7 @@ export default function UserManagementPage() {
         });
       }
     } catch (error) {
-       console.error("Catch block error on update:", error);
+       console.error("[DEBUG] Frontend: Catch block error on update:", error);
        toast({
         variant: 'destructive',
         title: 'An error occurred during update.',
@@ -206,8 +207,8 @@ export default function UserManagementPage() {
       });
 
       if (response.ok) {
+        setUsers(currentUsers => currentUsers.filter(u => u._id !== userId));
         toast({ title: 'User deleted successfully!' });
-        fetchUsers(); // Refresh list
       } else {
          toast({
           variant: 'destructive',
