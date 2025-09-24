@@ -17,11 +17,12 @@ export async function GET(request: Request) {
 
   let query = {};
   if (searchTerm) {
+    const searchRegex = new RegExp(searchTerm, 'i');
     query = {
       $or: [
-        { mrn: { $regex: searchTerm, $options: 'i' } },
-        { firstName: { $regex: searchTerm, $options: 'i' } },
-        { lastName: { $regex: searchTerm, $options: 'i' } },
+        { mrn: searchRegex },
+        { firstName: searchRegex },
+        { lastName: searchRegex },
       ],
     };
   }
@@ -66,3 +67,5 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ data: newPatient }, { status: 201 });
 }
+
+    
