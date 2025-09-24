@@ -2,6 +2,7 @@
 import { MongoClient, Db, Collection } from 'mongodb';
 import type { User } from '@/lib/schemas/auth';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
+import type { Patient } from '@/lib/schemas/patient';
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB;
@@ -55,6 +56,7 @@ const initialTests: Omit<TestCatalog, '_id'>[] = [
     isPanel: false,
     isActive: true,
     referenceRanges: [],
+    reflexRules: [],
   },
   {
     testCode: 'LP',
@@ -74,6 +76,7 @@ const initialTests: Omit<TestCatalog, '_id'>[] = [
     panelComponents: ['CHOL', 'TRIG', 'HDL', 'LDL'],
     isActive: true,
     referenceRanges: [],
+    reflexRules: [],
   },
   {
     testCode: 'TSH',
@@ -92,6 +95,7 @@ const initialTests: Omit<TestCatalog, '_id'>[] = [
     isPanel: false,
     isActive: true,
     referenceRanges: [],
+    reflexRules: [],
   },
 ];
 
@@ -102,15 +106,30 @@ async function seedDatabase(db: Db) {
 
     const userCount = await usersCollection.countDocuments();
     if (userCount === 0) {
-        console.log('Seeding database with initial users...');
+        console.log('Seeding `users` collection with initial data...');
         await usersCollection.insertMany(initialUsers as any[]);
     }
 
     const testCount = await testsCollection.countDocuments();
     if (testCount === 0) {
-        console.log('Seeding database with initial tests...');
+        console.log('Seeding `testCatalog` collection with initial data...');
         await testsCollection.insertMany(initialTests as any[]);
     }
+}
+
+async function applyIndexes(db: Db) {
+    console.log('Applying database indexes...');
+    const usersCollection = db.collection('users');
+    await usersCollection.createIndex({ email: 1 }, { unique: true });
+    console.log('Created unique index on `users.email`');
+
+    const testCatalogCollection = db.collection('testCatalog');
+    await testCatalogCollection.createIndex({ testCode: 1 }, { unique: true });
+    console.log('Created unique index on `testCatalog.testCode`');
+
+    const patientsCollection = db.collection('patients');
+    await patientsCollection.createIndex({ mrn: 1 }, { unique: true });
+    console.log('Created unique index on `patients.mrn`');
 }
 
 
@@ -125,6 +144,8 @@ async function connectToDatabase() {
   
   // Seed the database with initial data if it's empty
   await seedDatabase(db);
+  // Ensure all required indexes are applied
+  await applyIndexes(db);
 
   cachedClient = client;
   cachedDb = db;
@@ -140,5 +161,7 @@ export async function getCollection<T extends Document>(name: string): Promise<C
 // Pre-define collections for type safety
 export const getUsersCollection = () => getCollection<User>('users');
 export const getTestsCollection = () => getCollection<TestCatalog>('testCatalog');
+export const getPatientsCollection = () => getCollection<Patient>('patients');
+
 // Add other collections here as needed
 // e.g., export const getOrdersCollection = () => getCollection<Order>('orders');
