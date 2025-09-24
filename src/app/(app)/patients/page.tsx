@@ -53,8 +53,10 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
     
     const DateOfBirthErrorMessage = () => {
         const { formState } = useFormContext();
-        const errorMessage = formState.errors.dateOfBirth?.message;
+        // Access root error for the object
+        const errorMessage = formState.errors.dateOfBirth?.root?.message;
         if (!errorMessage) return null;
+        // The message is inside a `message` property for refine errors
         return <FormMessage>{errorMessage as React.ReactNode}</FormMessage>;
     }
 
@@ -111,7 +113,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" min="1" placeholder="DD" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
+                                                        <Input type="number" min="1" max="31" placeholder="DD" value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -123,7 +125,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" min="1" placeholder="MM" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
+                                                        <Input type="number" min="1" max="12" placeholder="MM" value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
                                                     </FormControl>
                                                      <FormMessage />
                                                 </FormItem>
@@ -135,7 +137,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" min="1900" placeholder="YYYY" value={field.value ?? ''} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
+                                                        <Input type="number" min="1900" max={new Date().getFullYear()} placeholder="YYYY" value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
                                                     </FormControl>
                                                      <FormMessage />
                                                 </FormItem>
