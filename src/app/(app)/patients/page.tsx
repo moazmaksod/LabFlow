@@ -50,14 +50,20 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
             insuranceInfo: [{ providerName: '', policyNumber: '', groupNumber: '', isPrimary: true }]
         }
     });
-    
+
+    const watchedYear = form.watch("dateOfBirth.year");
+    const watchedMonth = form.watch("dateOfBirth.month");
+
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    const currentDay = today.getDate();
+
     const DateOfBirthErrorMessage = () => {
         const { formState } = useFormContext();
-        // Access root error for the object
-        const errorMessage = formState.errors.dateOfBirth?.root?.message;
+        const errorMessage = formState.errors.dateOfBirth?.message as string | undefined ?? (formState.errors.dateOfBirth as any)?.root?.message;
         if (!errorMessage) return null;
-        // The message is inside a `message` property for refine errors
-        return <FormMessage>{errorMessage as React.ReactNode}</FormMessage>;
+        return <FormMessage>{errorMessage}</FormMessage>;
     }
 
 
@@ -113,7 +119,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" min="1" max="31" placeholder="DD" value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                                        <Input type="number" min="1" max={watchedYear === currentYear && watchedMonth === currentMonth ? currentDay : 31} placeholder="DD" value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -125,7 +131,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" min="1" max="12" placeholder="MM" value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                                        <Input type="number" min="1" max={watchedYear === currentYear ? currentMonth : 12} placeholder="MM" value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
                                                     </FormControl>
                                                      <FormMessage />
                                                 </FormItem>
