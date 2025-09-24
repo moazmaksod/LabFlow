@@ -70,15 +70,10 @@ export default function UserManagementPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const fetchUsers = async () => {
-    if (!token) {
-       toast({
-          variant: 'destructive',
-          title: 'Authentication Error',
-          description: 'No token found. Please log in again.',
-        });
+    if (!user || !token || user.role !== 'manager') {
       setIsLoading(false);
       return;
-    };
+    }
     try {
       setIsLoading(true);
       const response = await fetch('/api/v1/users', {
@@ -96,6 +91,7 @@ export default function UserManagementPage() {
         });
       }
     } catch (error) {
+      console.error("An error occurred while fetching users:", error);
       toast({
         variant: 'destructive',
         title: 'An error occurred while fetching users.',
@@ -115,13 +111,17 @@ export default function UserManagementPage() {
     if (user && user.role === 'manager' && token) {
       fetchUsers();
     }
-  }, [user, token, router]);
+  }, [user, token]);
 
   
   if (!user || user.role !== 'manager') {
+    // This part should be hit for non-managers, and useEffect will redirect them.
     return (
        <div className="flex min-h-screen items-center justify-center">
-         <Skeleton className="h-32 w-full" />
+         <div className="flex items-center gap-2">
+           <Icons.logo className="size-8 animate-spin" />
+           <span className="text-lg font-semibold">Loading...</span>
+         </div>
        </div>
     );
   }
@@ -161,14 +161,21 @@ export default function UserManagementPage() {
 
   const handleUpdateUser = async () => {
     if (!editingUser) return;
+    
+    console.log("[DEBUG] Frontend: Initiating user update for:", editingUser);
+    const url = `/api/v1/users/${editingUser.id}`;
+    const body = JSON.stringify({ role: editingUser.role });
+    console.log("[DEBUG] Frontend: Calling PUT", url);
+    console.log("[DEBUG] Frontend: Sending body:", body);
+
     try {
-      const response = await fetch(`/api/v1/users/${editingUser.id}`, {
+      const response = await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ role: editingUser.role }),
+        body: body,
       });
 
       if (response.ok) {
@@ -177,15 +184,20 @@ export default function UserManagementPage() {
         setEditUserOpen(false);
         fetchUsers(); // Refresh list
       } else {
+        const errorText = await response.text();
+        console.error("[DEBUG] Frontend: Update failed. Status:", response.status, "Body:", errorText);
         toast({
           variant: 'destructive',
           title: 'Failed to update user',
+          description: `Server responded with status ${response.status}. Check console for details.`,
         });
       }
     } catch (error) {
+       console.error("[DEBUG] Frontend: Catch block error on update:", error);
        toast({
         variant: 'destructive',
-        title: 'An error occurred.',
+        title: 'An error occurred during update.',
+        description: 'Check the console for network error details.'
       });
     }
   };
@@ -333,7 +345,7 @@ export default function UserManagementPage() {
                           </DialogTrigger>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                               <Button variant="ghost" size="icon" disabled={u.id === user.id}>
+                               <Button variant="ghost" size="icon" disabled={u.id === user?.id}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                                 <span className="sr-only">Deactivate User</span>
                               </Button>
