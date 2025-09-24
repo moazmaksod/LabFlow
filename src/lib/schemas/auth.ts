@@ -9,7 +9,7 @@ export const AuthLoginInputSchema = z.object({
 export type AuthLoginInput = z.infer<typeof AuthLoginInputSchema>;
 
 export const UserSchema = z.object({
-  id: z.string(),
+  _id: z.string(),
   firstName: z.string(),
   lastName: z.string(),
   email: z.string().email(),

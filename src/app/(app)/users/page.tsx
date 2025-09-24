@@ -66,7 +66,7 @@ export default function UserManagementPage() {
   const [isAddUserOpen, setAddUserOpen] = useState(false);
   const [isEditUserOpen, setEditUserOpen] = useState(false);
 
-  const [newUser, setNewUser] = useState<Omit<User, 'id'>>({ firstName: '', lastName: '', email: '', role: 'receptionist' });
+  const [newUser, setNewUser] = useState<Omit<User, '_id'>>({ firstName: '', lastName: '', email: '', role: 'receptionist' });
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const fetchUsers = async () => {
@@ -103,11 +103,9 @@ export default function UserManagementPage() {
   };
 
   useEffect(() => {
-    // This is the client-side equivalent of RBAC middleware.
     if (user && user.role !== 'manager') {
       router.push('/dashboard');
     }
-    // Only fetch users if the user is a manager and the token is present.
     if (user && user.role === 'manager' && token) {
       fetchUsers();
     }
@@ -115,7 +113,6 @@ export default function UserManagementPage() {
 
   
   if (!user || user.role !== 'manager') {
-    // This part should be hit for non-managers, and useEffect will redirect them.
     return (
        <div className="flex min-h-screen items-center justify-center">
          <div className="flex items-center gap-2">
@@ -162,11 +159,8 @@ export default function UserManagementPage() {
   const handleUpdateUser = async () => {
     if (!editingUser) return;
     
-    console.log("[DEBUG] Frontend: Initiating user update for:", editingUser);
-    const url = `/api/v1/users/${editingUser.id}`;
+    const url = `/api/v1/users/${editingUser._id}`;
     const body = JSON.stringify({ role: editingUser.role });
-    console.log("[DEBUG] Frontend: Calling PUT", url);
-    console.log("[DEBUG] Frontend: Sending body:", body);
 
     try {
       const response = await fetch(url, {
@@ -185,7 +179,7 @@ export default function UserManagementPage() {
         fetchUsers(); // Refresh list
       } else {
         const errorText = await response.text();
-        console.error("[DEBUG] Frontend: Update failed. Status:", response.status, "Body:", errorText);
+        console.error("Update failed. Status:", response.status, "Body:", errorText);
         toast({
           variant: 'destructive',
           title: 'Failed to update user',
@@ -193,7 +187,7 @@ export default function UserManagementPage() {
         });
       }
     } catch (error) {
-       console.error("[DEBUG] Frontend: Catch block error on update:", error);
+       console.error("Catch block error on update:", error);
        toast({
         variant: 'destructive',
         title: 'An error occurred during update.',
@@ -330,7 +324,7 @@ export default function UserManagementPage() {
                   </TableRow>
                 ) : (
                   users.map((u) => (
-                    <TableRow key={u.id}>
+                    <TableRow key={u._id}>
                       <TableCell className="font-medium">
                         {u.firstName} {u.lastName}
                       </TableCell>
@@ -345,7 +339,7 @@ export default function UserManagementPage() {
                           </DialogTrigger>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                               <Button variant="ghost" size="icon" disabled={u.id === user?.id}>
+                               <Button variant="ghost" size="icon" disabled={u._id === user?._id}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                                 <span className="sr-only">Deactivate User</span>
                               </Button>
@@ -359,7 +353,7 @@ export default function UserManagementPage() {
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteUser(u.id)}>Delete</AlertDialogAction>
+                                <AlertDialogAction onClick={() => handleDeleteUser(u._id)}>Delete</AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>

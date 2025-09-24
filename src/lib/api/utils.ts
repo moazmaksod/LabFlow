@@ -9,35 +9,35 @@ import { headers } from 'next/headers';
  */
 export const mockUsers: User[] = [
   {
-    id: '1',
+    _id: 'user-1',
     firstName: 'Jane',
     lastName: 'Doe',
     email: 'jane.doe@labflow.med',
     role: 'manager',
   },
   {
-    id: '2',
+    _id: 'user-2',
     firstName: 'Sam',
     lastName: 'Wilson',
     email: 'sam.wilson@labflow.med',
     role: 'receptionist',
   },
   {
-    id: '3',
+    _id: 'user-3',
     firstName: 'Bruce',
     lastName: 'Banner',
     email: 'bruce.banner@labflow.med',
     role: 'technician',
   },
   {
-    id: '4',
+    _id: 'user-4',
     firstName: 'Dr. Stephen',
     lastName: 'Strange',
     email: 'dr.strange@clinic.com',
     role: 'physician',
   },
   {
-    id: '5',
+    _id: 'user-5',
     firstName: 'Peter',
     lastName: 'Parker',
     email: 'peter.parker@labflow.med',
@@ -123,7 +123,7 @@ export async function getAuthenticatedUser(): Promise<User | null> {
     const validatedUser = UserSchema.safeParse(decodedUser);
     if (validatedUser.success) {
       // Find the user in our mock DB to ensure they are valid
-      const userExists = mockUsers.find(u => u.id === validatedUser.data.id);
+      const userExists = mockUsers.find(u => u._id === validatedUser.data._id);
       return userExists ? validatedUser.data : null;
     }
   } catch (error) {

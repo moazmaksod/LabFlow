@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const validation = UserSchema.omit({ id: true }).safeParse(body);
+  const validation = UserSchema.omit({ _id: true }).safeParse(body);
 
   if (!validation.success) {
     return NextResponse.json(validation.error.errors, { status: 400 });
@@ -41,11 +41,11 @@ export async function POST(request: Request) {
   }
 
   const newUser = {
-    id: `user-${Date.now()}`,
+    _id: `user-${Date.now()}`,
     ...validation.data,
   };
 
   mockUsers.push(newUser);
 
-  return NextResponse.json(newUser, { status: 201 });
+  return NextResponse.json({ data: newUser }, { status: 201 });
 }
