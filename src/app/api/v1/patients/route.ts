@@ -41,11 +41,6 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   
-  // Zod can't parse date from JSON automatically, so we preprocess it
-  if(body.dateOfBirth) {
-    body.dateOfBirth = new Date(body.dateOfBirth);
-  }
-  
   const validation = PatientFormSchema.safeParse(body);
 
   if (!validation.success) {
@@ -57,13 +52,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: `Patient with MRN ${validation.data.mrn} already exists.`}, { status: 409 });
   }
 
+  const { dateOfBirth, ...rest } = validation.data;
+  const dobDate = new Date(dateOfBirth.year, dateOfBirth.month - 1, dateOfBirth.day);
+
   const patientWithTimestamps = {
-      ...validation.data,
+      ...rest,
+      dateOfBirth: dobDate,
       createdAt: new Date(),
       updatedAt: new Date()
   };
 
-  const newPatient = await addPatient(patientWithTimestamps);
+  const newPatient = await addPatient(patientWithTimestamps as any);
 
   return NextResponse.json({ data: newPatient }, { status: 201 });
 }

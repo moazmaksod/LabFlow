@@ -26,15 +26,11 @@ import type { Patient, PatientFormData } from '@/lib/schemas/patient';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PatientFormSchema } from '@/lib/schemas/patient';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) => void, closeDialog: () => void }) => {
@@ -44,6 +40,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
             mrn: '',
             firstName: '',
             lastName: '',
+            dateOfBirth: { day: undefined, month: undefined, year: undefined },
             gender: 'Male',
             contactInfo: {
                 phone: '',
@@ -59,7 +56,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
             mrn: `MRN${Math.floor(1000 + Math.random() * 9000)}`,
             firstName: 'John',
             lastName: 'Doe',
-            dateOfBirth: new Date('1990-05-15'),
+            dateOfBirth: { day: 15, month: 5, year: 1990 },
             gender: 'Male',
             contactInfo: {
                 phone: '+966501234567',
@@ -93,27 +90,27 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                         )} />
                     </div>
                      <div className="grid grid-cols-2 gap-4">
-                       <FormField control={form.control} name="dateOfBirth" render={({ field }) => (
-                            <FormItem className="flex flex-col"><FormLabel>Date of Birth</FormLabel>
-                                <Popover><PopoverTrigger asChild>
-                                    <FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button></FormControl>
-                                </PopoverTrigger><PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
-                                        captionLayout="dropdown-buttons"
-                                        fromYear={1920}
-                                        toYear={new Date().getFullYear()}
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                                        initialFocus
-                                    />
-                                </PopoverContent></Popover>
-                            <FormMessage /></FormItem>
-                        )} />
+                       <FormItem>
+                            <FormLabel>Date of Birth</FormLabel>
+                            <div className="grid grid-cols-3 gap-2">
+                                <Controller
+                                    name="dateOfBirth.day"
+                                    control={form.control}
+                                    render={({ field }) => <Input type="number" placeholder="DD" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
+                                />
+                                <Controller
+                                    name="dateOfBirth.month"
+                                    control={form.control}
+                                    render={({ field }) => <Input type="number" placeholder="MM" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
+                                />
+                                <Controller
+                                    name="dateOfBirth.year"
+                                    control={form.control}
+                                    render={({ field }) => <Input type="number" placeholder="YYYY" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />}
+                                />
+                            </div>
+                            <FormMessage>{form.formState.errors.dateOfBirth?.message}</FormMessage>
+                        </FormItem>
                          <FormField control={form.control} name="gender" render={({ field }) => (
                             <FormItem><FormLabel>Gender</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
@@ -211,6 +208,21 @@ export default function PatientsPage() {
             toast({ variant: 'destructive', title: 'An error occurred.' });
         }
     };
+    
+    const formatDateOfBirth = (dob: any): string => {
+        if (!dob) return 'N/A';
+        // Handle both Date objects from creation and object from DB
+        if (dob instanceof Date) {
+            return format(dob, 'yyyy-MM-dd');
+        }
+        if(typeof dob === 'string') {
+             return format(new Date(dob), 'yyyy-MM-dd');
+        }
+        if (dob.year && dob.month && dob.day) {
+            return format(new Date(dob.year, dob.month - 1, dob.day), 'yyyy-MM-dd');
+        }
+        return 'Invalid Date';
+    };
 
     if (!user || !['receptionist', 'manager'].includes(user.role)) {
         return <div className="flex min-h-screen items-center justify-center"><Skeleton className="h-32 w-full" /></div>;
@@ -276,7 +288,7 @@ export default function PatientsPage() {
                         </Link>
                     </TableCell>
                     <TableCell>{patient.firstName} {patient.lastName}</TableCell>
-                    <TableCell>{format(new Date(patient.dateOfBirth), 'yyyy-MM-dd')}</TableCell>
+                    <TableCell>{formatDateOfBirth(patient.dateOfBirth)}</TableCell>
                     <TableCell>{patient.gender}</TableCell>
                     <TableCell>{patient.contactInfo.phone}</TableCell>
                     </TableRow>
@@ -297,4 +309,3 @@ export default function PatientsPage() {
 }
 
     
-

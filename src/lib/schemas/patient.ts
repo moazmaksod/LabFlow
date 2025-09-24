@@ -22,12 +22,28 @@ const InsuranceInfoSchema = z.object({
   isPrimary: z.boolean().default(true),
 });
 
+const DateOfBirthSchema = z.object({
+  day: z.number().int().min(1).max(31).optional(),
+  month: z.number().int().min(1).max(12).optional(),
+  year: z.number().int().min(1900).max(new Date().getFullYear()).optional(),
+}).refine(data => data.day && data.month && data.year, {
+    message: "Day, Month, and Year are required.",
+    path: [],
+}).refine(data => {
+    if(!data.day || !data.month || !data.year) return false;
+    const date = new Date(data.year, data.month - 1, data.day);
+    return date.getFullYear() === data.year && date.getMonth() === data.month - 1 && date.getDate() === data.day;
+}, {
+    message: "Invalid date provided.",
+    path: [],
+});
+
 export const PatientSchema = z.object({
   _id: z.string(), // ObjectId will be a string
   mrn: z.string().min(1, { message: "MRN is required." }).describe("The patient's unique Medical Record Number."),
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
-  dateOfBirth: z.date({ required_error: "Date of birth is required."}),
+  dateOfBirth: z.union([z.date(), DateOfBirthSchema]),
   gender: z.enum(['Male', 'Female', 'Other', 'Prefer not to say']),
   contactInfo: ContactInfoSchema,
   insuranceInfo: z.array(InsuranceInfoSchema).optional(),
@@ -41,7 +57,12 @@ export type Patient = z.infer<typeof PatientSchema>;
 export const PatientFormSchema = PatientSchema.omit({
     _id: true,
     createdAt: true,
-    updatedAt: true
+    updatedAt: true,
+    dateOfBirth: true,
+}).extend({
+    dateOfBirth: DateOfBirthSchema,
 });
 
 export type PatientFormData = z.infer<typeof PatientFormSchema>;
+
+    
