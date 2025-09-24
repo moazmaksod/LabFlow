@@ -26,6 +26,9 @@ export async function login(input: AuthLoginInput): Promise<string | null> {
   // Use the findUserByEmail function to get the user from the database
   const user = await findUserByEmail(validatedInput.data.email);
   
+  // DEBUG: Log the user object fetched from the database
+  console.log('[DEBUG: auth-flow.ts] User from DB:', user);
+
   // In a real app, you'd also check the password hash here.
   if (user) {
     // Simulate JWT signing by base64 encoding the user object.
