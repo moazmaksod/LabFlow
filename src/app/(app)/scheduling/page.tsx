@@ -56,6 +56,14 @@ const initialAppointments = [
         duration: 15,
         status: 'Scheduled',
         avatarId: 'user-avatar-1',
+    },
+    {
+        id: 'apt5',
+        patientName: 'Layla Faisal',
+        time: '11:00',
+        duration: 45,
+        status: 'Scheduled',
+        avatarId: 'user-avatar-1',
     }
 ];
 
@@ -66,7 +74,7 @@ const statusColors: {[key: string]: string} = {
     'No-show': 'bg-red-500/20 border-red-500 text-red-800 dark:text-red-300',
 }
 
-const SLOT_HEIGHT_REM = 4; // Increased from 3.5 to 4
+const SLOT_HEIGHT_REM = 3; // 12 in tailwind units (3 * 4)
 
 export default function SchedulingPage() {
    const userAvatar = PlaceHolderImages.find(
@@ -123,24 +131,27 @@ export default function SchedulingPage() {
           </div>
         </CardHeader>
         <CardContent>
-           <div className="flex">
+           <div className="flex w-full">
             {/* Time column */}
-            <div className="pr-4 text-right">
-              {timeSlots.map((time, index) => (
-                <div
-                  key={time}
-                  className="relative flex items-start justify-end text-xs text-muted-foreground"
-                  style={{ height: `${SLOT_HEIGHT_REM}rem`}}
-                >
-                  {time.endsWith(':00') && (
-                    <span className="absolute -translate-y-1/2 text-muted-foreground text-xs">{time}</span>
-                  )}
-                </div>
-              ))}
+            <div className="w-16 pr-2 text-right">
+              {timeSlots.map((time, index) => {
+                if (time.endsWith(':00')) {
+                  return (
+                    <div
+                      key={`label-${time}`}
+                      className="relative"
+                      style={{ height: `${SLOT_HEIGHT_REM * 4}rem`}}
+                    >
+                      <span className="absolute -top-2 right-2 text-xs text-muted-foreground">{time}</span>
+                    </div>
+                  );
+                }
+                return null;
+              })}
             </div>
 
             {/* Calendar grid */}
-            <div className="relative grid flex-1 h-full border-l">
+            <div className="relative grid flex-1 h-full border-l pt-4 pb-4">
                 {/* Grid lines as drop zones */}
                 {timeSlots.map((time) => (
                     <div 
@@ -163,7 +174,7 @@ export default function SchedulingPage() {
                     const heightInSlots = Math.max(app.duration / 15, 1);
                     
                     const topPosition = topIndex * SLOT_HEIGHT_REM;
-                    const height = heightInSlots * SLOT_HEIGHT_REM - 0.5; // -0.5rem for margin
+                    const height = heightInSlots * SLOT_HEIGHT_REM - 0.25; // 0.25rem margin
 
                     return (
                         <div key={app.id} 
@@ -174,7 +185,7 @@ export default function SchedulingPage() {
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
-                             style={{ top: `${topPosition}rem`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
+                             style={{ top: `calc(${topPosition}rem + 0.25rem/2 + 1rem)`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
                              <div className="flex items-start gap-2 flex-wrap w-full">
                                 <Avatar className="h-6 w-6">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
