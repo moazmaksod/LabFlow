@@ -6,7 +6,7 @@ export const AppointmentSchema = z.object({
   patientId: z.string(), // ObjectId as string
   scheduledTime: z.date(),
   durationMinutes: z.number().int().positive(),
-  status: z.enum(['Scheduled', 'CheckedIn', 'Completed', 'NoShow']).default('Scheduled'),
+  status: z.enum(['Scheduled', 'Arrived/Checked-in', 'Completed', 'No-show']).default('Scheduled'),
   notes: z.string().optional(),
 });
 

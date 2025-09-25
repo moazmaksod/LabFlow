@@ -503,8 +503,3 @@ export default function SchedulingPage() {
     </div>
   );
 }
-
-    
-
-    
-
