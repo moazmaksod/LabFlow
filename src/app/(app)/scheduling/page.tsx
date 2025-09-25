@@ -66,8 +66,7 @@ const statusColors: {[key: string]: string} = {
     'No-show': 'bg-red-500/20 border-red-500 text-red-800 dark:text-red-300',
 }
 
-const SLOT_HEIGHT_REM = 3.5; // Corresponds to h-14
-const SLOT_MARGIN_REM = 0.25; // Corresponds to my-1
+const SLOT_HEIGHT_REM = 4; // Increased from 3.5 to 4
 
 export default function SchedulingPage() {
    const userAvatar = PlaceHolderImages.find(
@@ -80,7 +79,7 @@ export default function SchedulingPage() {
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // This is necessary to allow a drop
+    e.preventDefault(); 
   };
   
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, time: string) => {
@@ -124,28 +123,33 @@ export default function SchedulingPage() {
           </div>
         </CardHeader>
         <CardContent>
-           <div className="grid grid-cols-[auto_1fr] pt-4">
+           <div className="flex">
             {/* Time column */}
-            <div className="pr-4">
+            <div className="pr-4 text-right">
               {timeSlots.map((time, index) => (
-                <div key={time} className="h-14 my-1 flex items-start text-xs text-muted-foreground">
+                <div
+                  key={time}
+                  className="relative flex items-start justify-end text-xs text-muted-foreground"
+                  style={{ height: `${SLOT_HEIGHT_REM}rem`}}
+                >
                   {time.endsWith(':00') && (
-                    <span className="-translate-y-1.5">{time}</span>
+                    <span className="absolute -translate-y-1/2 text-muted-foreground text-xs">{time}</span>
                   )}
                 </div>
               ))}
             </div>
 
             {/* Calendar grid */}
-            <div className="relative grid h-full border-l">
+            <div className="relative grid flex-1 h-full border-l">
                 {/* Grid lines as drop zones */}
                 {timeSlots.map((time) => (
                     <div 
                       key={`grid-${time}`} 
                       className={cn(
-                        "h-14 border-t my-1",
-                         time.endsWith(':00') ? "border-border" : "border-border/50 border-dashed",
+                        "border-t",
+                         time.endsWith(':00') ? "border-border" : "border-border/50 border-dashed"
                       )}
+                       style={{ height: `${SLOT_HEIGHT_REM}rem`}}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, time)}
                     />
@@ -158,20 +162,20 @@ export default function SchedulingPage() {
                     
                     const heightInSlots = Math.max(app.duration / 15, 1);
                     
-                    const topPosition = topIndex * (SLOT_HEIGHT_REM + (SLOT_MARGIN_REM * 2));
-                    const height = (heightInSlots * SLOT_HEIGHT_REM) + ((heightInSlots - 1) * (SLOT_MARGIN_REM * 2));
+                    const topPosition = topIndex * SLOT_HEIGHT_REM;
+                    const height = heightInSlots * SLOT_HEIGHT_REM - 0.5; // -0.5rem for margin
 
                     return (
                         <div key={app.id} 
                              draggable={app.status !== 'Completed'}
                              onDragStart={(e) => handleDragStart(e, app.id)}
                              className={cn(
-                                "absolute left-2 right-2 p-2 rounded-lg border flex items-start",
+                                "absolute left-2 right-2 p-2 rounded-lg border flex flex-col items-start",
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
                              style={{ top: `${topPosition}rem`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
-                             <div className="flex items-start gap-2 flex-wrap">
+                             <div className="flex items-start gap-2 flex-wrap w-full">
                                 <Avatar className="h-6 w-6">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
                                     <AvatarFallback>{app.patientName.charAt(0)}</AvatarFallback>
@@ -185,7 +189,6 @@ export default function SchedulingPage() {
                         </div>
                     );
                 })}
-
             </div>
           </div>
         </CardContent>
