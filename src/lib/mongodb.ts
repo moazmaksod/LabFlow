@@ -127,6 +127,8 @@ async function applyIndexes(db: Db) {
     const patientsCollection = db.collection('patients');
     await patientsCollection.createIndex({ mrn: 1 }, { unique: true });
     console.log('Created unique index on `patients.mrn`');
+    await patientsCollection.createIndex({ fullName: 1 });
+    console.log('Created index on `patients.fullName`');
 }
 
 
