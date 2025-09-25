@@ -173,11 +173,11 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             </div>
              <div>
               <p className="text-sm font-medium text-muted-foreground">Overall Status</p>
-              <p><Badge variant={statusVariant[orderDetails.status] || 'default'}>{orderDetails.status}</Badge></p>
+              <div><Badge variant={statusVariant[orderDetails.status] || 'default'}>{orderDetails.status}</Badge></div>
             </div>
              <div>
               <p className="text-sm font-medium text-muted-foreground">Payment Status</p>
-              <p><Badge variant="destructive">{orderDetails.paymentStatus}</Badge></p>
+              <div><Badge variant="destructive">{orderDetails.paymentStatus}</Badge></div>
             </div>
         </CardContent>
        </Card>
