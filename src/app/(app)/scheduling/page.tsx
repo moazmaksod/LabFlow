@@ -124,9 +124,9 @@ export default function SchedulingPage() {
           <div className="relative grid grid-cols-[auto_1fr] h-[148rem] overflow-y-auto rounded-lg border">
             {/* Time column */}
             <div className="flex flex-col border-r">
-                {timeSlots.map((time, index) => (
+                {timeSlots.map((time) => (
                     <div key={time} className="h-16 flex-shrink-0 text-right pr-2 -mt-2.5">
-                       {index > 0 && index % 2 === 0 && <span className="text-xs text-muted-foreground">{time}</span>}
+                       {time.endsWith(':00') && <span className="text-xs text-muted-foreground">{time}</span>}
                     </div>
                 ))}
             </div>
@@ -159,7 +159,8 @@ export default function SchedulingPage() {
                              className={cn(
                                 "absolute left-2 right-2 p-2 rounded-lg border flex flex-col justify-center",
                                 statusColors[app.status] || 'bg-gray-500/20',
-                                app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
+                                app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed",
+                                "min-h-[4rem]" // Ensure a minimum height for smaller appointments
                              )}
                              style={{ top: `${topPosition}rem`, height: `${heightInRem}rem`, transition: 'top 0.3s ease-out'}}>
                             <div className="flex items-center gap-2">
@@ -167,11 +168,11 @@ export default function SchedulingPage() {
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
                                     <AvatarFallback>{app.patientName.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-grow">
                                     <p className="font-medium truncate">{app.patientName}</p>
                                     <p className="text-sm">{app.time}</p>
                                 </div>
-                                <Badge variant="secondary" className="ml-auto opacity-80 whitespace-nowrap self-start">{app.status}</Badge>
+                                <Badge variant="secondary" className="ml-auto opacity-80 whitespace-nowrap self-start flex-shrink-0">{app.status}</Badge>
                             </div>
                         </div>
                     );
