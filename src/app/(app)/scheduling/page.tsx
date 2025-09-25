@@ -121,11 +121,11 @@ export default function SchedulingPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="relative grid grid-cols-[auto_1fr] h-[148rem] overflow-y-auto rounded-lg border">
+          <div className="relative grid grid-cols-[auto_1fr] h-[92.5rem] overflow-y-auto rounded-lg border">
             {/* Time column */}
             <div className="flex flex-col border-r">
                 {timeSlots.map((time) => (
-                    <div key={time} className="h-16 flex-shrink-0 text-right pr-2 -mt-2.5">
+                    <div key={time} className="h-10 flex-shrink-0 text-right pr-2 -mt-2.5">
                        {time.endsWith(':00') && <span className="text-xs text-muted-foreground">{time}</span>}
                     </div>
                 ))}
@@ -137,7 +137,7 @@ export default function SchedulingPage() {
                 {timeSlots.map(time => (
                     <div 
                       key={`grid-${time}`} 
-                      className="h-16 border-b"
+                      className="h-10 border-b"
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, time)}
                     />
@@ -146,11 +146,11 @@ export default function SchedulingPage() {
                 {/* Appointments */}
                 {appointments.map(app => {
                     const topIndex = timeSlots.indexOf(app.time);
-                    const heightInRem = (app.duration / 15) * 4;
+                    const heightInRem = (app.duration / 15) * 2.5;
                     
                     if (topIndex === -1) return null;
 
-                    const topPosition = topIndex * 4; // Each slot is h-16 (4rem)
+                    const topPosition = topIndex * 2.5; // Each slot is h-10 (2.5rem)
 
                     return (
                         <div key={app.id} 
@@ -160,17 +160,17 @@ export default function SchedulingPage() {
                                 "absolute left-2 right-2 p-2 rounded-lg border flex flex-col justify-center",
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed",
-                                "min-h-[4rem]" // Ensure a minimum height for smaller appointments
+                                "min-h-[2.5rem]"
                              )}
                              style={{ top: `${topPosition}rem`, height: `${heightInRem}rem`, transition: 'top 0.3s ease-out'}}>
                             <div className="flex items-center gap-2">
-                                <Avatar className="h-8 w-8">
+                                <Avatar className="h-6 w-6">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
                                     <AvatarFallback>{app.patientName.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div className="min-w-0 flex-grow">
-                                    <p className="font-medium truncate">{app.patientName}</p>
-                                    <p className="text-sm">{app.time}</p>
+                                    <p className="font-medium truncate text-sm">{app.patientName}</p>
+                                    <p className="text-xs">{app.time}</p>
                                 </div>
                                 <Badge variant="secondary" className="ml-auto opacity-80 whitespace-nowrap self-start flex-shrink-0">{app.status}</Badge>
                             </div>
