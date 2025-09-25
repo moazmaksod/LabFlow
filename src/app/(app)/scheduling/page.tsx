@@ -17,9 +17,11 @@ import { CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
 
 const timeSlots = [
-  '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-  '16:00', '16:30', '17:00'
+  '08:00', '08:15', '08:30', '08:45', '09:00', '09:15', '09:30', '09:45',
+  '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30', '11:45',
+  '12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30', '13:45',
+  '14:00', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45',
+  '16:00', '16:15', '16:30', '16:45', '17:00'
 ];
 
 const initialAppointments = [
@@ -47,6 +49,14 @@ const initialAppointments = [
         status: 'Completed',
          avatarId: 'user-avatar-1'
     },
+    {
+        id: 'apt4',
+        patientName: 'Omar Abdullah',
+        time: '08:15',
+        duration: 15,
+        status: 'Scheduled',
+        avatarId: 'user-avatar-1',
+    }
 ];
 
 const statusColors: {[key: string]: string} = {
@@ -111,18 +121,18 @@ export default function SchedulingPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="relative grid grid-cols-[auto_1fr] h-[70vh] overflow-y-auto rounded-lg border">
+          <div className="relative grid grid-cols-[auto_1fr] h-[148rem] overflow-y-auto rounded-lg border">
             {/* Time column */}
             <div className="flex flex-col border-r">
                 {timeSlots.map((time, index) => (
                     <div key={time} className="h-16 flex-shrink-0 text-right pr-2 -mt-2.5">
-                       {index > 0 && <span className="text-xs text-muted-foreground">{time}</span>}
+                       {index > 0 && index % 2 === 0 && <span className="text-xs text-muted-foreground">{time}</span>}
                     </div>
                 ))}
             </div>
 
             {/* Calendar grid */}
-            <div className="relative col-start-2 row-start-1 grid grid-rows-[repeat(19,minmax(0,1fr))]">
+            <div className="relative col-start-2 row-start-1 grid grid-rows-[repeat(37,minmax(0,1fr))]">
                  {/* Grid lines as drop zones */}
                 {timeSlots.map(time => (
                     <div 
@@ -136,7 +146,7 @@ export default function SchedulingPage() {
                 {/* Appointments */}
                 {appointments.map(app => {
                     const topIndex = timeSlots.indexOf(app.time);
-                    const heightInRem = (app.duration / 30) * 4;
+                    const heightInRem = (app.duration / 15) * 4;
                     
                     if (topIndex === -1) return null;
 
@@ -147,12 +157,12 @@ export default function SchedulingPage() {
                              draggable={app.status !== 'Completed'}
                              onDragStart={(e) => handleDragStart(e, app.id)}
                              className={cn(
-                                "absolute left-2 right-2 p-2 rounded-lg border flex flex-col md:flex-row md:items-center gap-2 overflow-hidden",
+                                "absolute left-2 right-2 p-2 rounded-lg border flex flex-col justify-center",
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
                              style={{ top: `${topPosition}rem`, height: `${heightInRem}rem`, transition: 'top 0.3s ease-out'}}>
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-2">
                                 <Avatar className="h-8 w-8">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
                                     <AvatarFallback>{app.patientName.charAt(0)}</AvatarFallback>
@@ -161,8 +171,8 @@ export default function SchedulingPage() {
                                     <p className="font-medium truncate">{app.patientName}</p>
                                     <p className="text-sm">{app.time}</p>
                                 </div>
+                                <Badge variant="secondary" className="ml-auto opacity-80 whitespace-nowrap self-start">{app.status}</Badge>
                             </div>
-                            <Badge variant="secondary" className="mt-1 md:mt-0 md:ml-auto opacity-80 whitespace-nowrap self-start md:self-center">{app.status}</Badge>
                         </div>
                     );
                 })}
