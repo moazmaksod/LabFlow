@@ -114,17 +114,15 @@ export default function SchedulingPage() {
           <div className="relative grid grid-cols-[auto_1fr] h-[70vh] overflow-y-auto rounded-lg border">
             {/* Time column */}
             <div className="flex flex-col border-r">
-                {timeSlots.map(time => (
-                    <div key={time} className="h-16 flex-shrink-0">
-                        <div className="-translate-y-1/2 px-2 text-right">
-                            <span className="text-xs text-muted-foreground">{time}</span>
-                        </div>
+                {timeSlots.map((time, index) => (
+                    <div key={time} className="h-16 flex-shrink-0 text-right pr-2 -mt-2.5">
+                       {index > 0 && <span className="text-xs text-muted-foreground">{time}</span>}
                     </div>
                 ))}
             </div>
 
             {/* Calendar grid */}
-            <div className="relative col-start-2 row-start-1">
+            <div className="relative col-start-2 row-start-1 grid grid-rows-[repeat(19,minmax(0,1fr))]">
                  {/* Grid lines as drop zones */}
                 {timeSlots.map(time => (
                     <div 
@@ -137,8 +135,12 @@ export default function SchedulingPage() {
 
                 {/* Appointments */}
                 {appointments.map(app => {
-                    const top = timeSlots.indexOf(app.time) * 4; // 4rem per hour
+                    const topIndex = timeSlots.indexOf(app.time);
+                    const top = topIndex * 4; // 4rem per hour slot (h-16)
                     const height = (app.duration / 30) * 2; // 2rem per 30 mins
+                    
+                    if (topIndex === -1) return null;
+
                     return (
                         <div key={app.id} 
                              draggable={app.status !== 'Completed'}
@@ -171,4 +173,3 @@ export default function SchedulingPage() {
     </div>
   );
 }
-
