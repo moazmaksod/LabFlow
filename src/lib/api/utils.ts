@@ -68,9 +68,9 @@ export const removeUser = async (id: string): Promise<boolean> => {
 
 
 // --- Test Catalog Data Access ---
-export const getTests = async (): Promise<TestCatalog[]> => {
+export const getTests = async (query: any = {}): Promise<TestCatalog[]> => {
     const collection = await getTestsCollection();
-    return await collection.find({}).toArray() as TestCatalog[];
+    return await collection.find(query).toArray() as TestCatalog[];
 };
 export const findTestById = async (id: string): Promise<TestCatalog | null> => {
     const collection = await getTestsCollection();

@@ -4,18 +4,33 @@ import { getAuthenticatedUser, getTests, findTestByCode, addTest } from '@/lib/a
 import { TestCatalogSchema } from '@/lib/schemas/test-catalog';
 
 // GET /api/v1/test-catalog
-// Lists all tests (Manager can manage)
+// Lists all tests, or searches if a query param is provided
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
   if (!user) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
   
-   if (user.role !== 'manager') {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+   // Allow any authenticated user to search, but only managers to get all
+   const { searchParams } = new URL(request.url);
+   const searchTerm = searchParams.get('search');
+  
+   if (!searchTerm && user.role !== 'manager') {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+   }
+
+  let query = {};
+  if (searchTerm) {
+    const searchRegex = new RegExp(searchTerm, 'i');
+    query = {
+      $or: [
+        { name: searchRegex },
+        { testCode: searchRegex },
+      ],
+    };
   }
   
-  const tests = await getTests();
+  const tests = await getTests(query);
   return NextResponse.json({ data: tests });
 }
 

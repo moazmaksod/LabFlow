@@ -84,15 +84,26 @@ export default function NewOrderPage() {
         const handler = setTimeout(async () => {
             if (!token) return;
             setIsSearchingTests(true);
-            // In a real app, this would be a debounced API call.
-            // For now, we simulate with a filter on a pre-fetched list if available,
-            // or we would fetch here. This part will be completed when the Test Catalog API is final.
-            // setTestSearchResults(allTests.filter(t => t.name.toLowerCase().includes(testSearchTerm.toLowerCase())));
-            setIsSearchingTests(false);
+            try {
+                const response = await fetch(`/api/v1/test-catalog?search=${testSearchTerm}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                 if (response.ok) {
+                    const result = await response.json();
+                    // Filter out already selected tests
+                    setTestSearchResults(result.data.filter((test: TestCatalog) => 
+                        !selectedTests.some(selected => selected._id === test._id)
+                    ));
+                }
+            } catch (error) {
+                console.error("Failed to search tests", error);
+            } finally {
+                setIsSearchingTests(false);
+            }
         }, 500);
 
          return () => clearTimeout(handler);
-    }, [testSearchTerm, token]);
+    }, [testSearchTerm, token, selectedTests]);
 
 
     const handleSelectPatient = (patient: Patient) => {
