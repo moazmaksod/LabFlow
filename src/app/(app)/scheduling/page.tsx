@@ -133,7 +133,7 @@ export default function SchedulingPage() {
         <CardContent>
            <div className="flex w-full">
             {/* Time column */}
-            <div className="w-16 pr-2 text-right">
+            <div className="w-16 pr-2 text-right pt-4">
               {timeSlots.map((time, index) => {
                 if (time.endsWith(':00')) {
                   return (
@@ -185,7 +185,7 @@ export default function SchedulingPage() {
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
-                             style={{ top: `calc(${topPosition}rem + 0.25rem/2 + 1rem)`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
+                             style={{ top: `calc(${topPosition}rem + 0.25rem/2)`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
                              <div className="flex items-start gap-2 flex-wrap w-full">
                                 <Avatar className="h-6 w-6">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
