@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card';
 import { PlaceHolderImages }from '@/lib/images';
 import { cn } from '@/lib/utils';
-import { CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarClock, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import type { Appointment } from '@/lib/schemas/appointment';
@@ -39,6 +39,8 @@ const statusColors: {[key: string]: string} = {
     'Completed': 'bg-gray-500/20 border-gray-500 text-gray-800 dark:text-gray-400',
     'No-show': 'bg-red-500/20 border-red-500 text-red-800 dark:text-red-300',
 }
+
+const APPOINTMENT_STATUSES: Appointment['status'][] = ['Scheduled', 'Arrived/Checked-in', 'Completed', 'No-show'];
 
 const SLOT_HEIGHT_REM = 3; // 12 in tailwind units (3 * 4)
 
@@ -119,6 +121,9 @@ export default function SchedulingPage() {
     const [newAppointmentTime, setNewAppointmentTime] = useState('');
     const [selectedPatientForNewAppt, setSelectedPatientForNewAppt] = useState<Patient | null>(null);
     const [newAppointmentDuration, setNewAppointmentDuration] = useState(30);
+
+    const [isEditAppointmentDialogOpen, setEditAppointmentDialogOpen] = useState(false);
+    const [editingAppointment, setEditingAppointment] = useState<AppointmentWithPatient | null>(null);
 
     const fetchAppointments = async (date: Date) => {
         if (!token) return;
@@ -227,6 +232,54 @@ export default function SchedulingPage() {
         }
     };
 
+    const openEditAppointmentDialog = (appointment: AppointmentWithPatient) => {
+        setEditingAppointment(appointment);
+        setEditAppointmentDialogOpen(true);
+    }
+    
+    const handleUpdateAppointment = async () => {
+        if (!editingAppointment || !token) return;
+
+        try {
+            const response = await fetch(`/api/v1/appointments/${editingAppointment._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
+                body: JSON.stringify({ status: editingAppointment.status })
+            });
+
+            if (response.ok) {
+                toast({ title: "Appointment Updated" });
+                fetchAppointments(currentDate); // Refresh
+                setEditAppointmentDialogOpen(false);
+            } else {
+                 toast({ variant: "destructive", title: "Failed to update appointment"});
+            }
+        } catch (error) {
+            toast({ variant: "destructive", title: "Network Error"});
+        }
+    };
+
+    const handleDeleteAppointment = async () => {
+        if (!editingAppointment || !token) return;
+        
+        try {
+            const response = await fetch(`/api/v1/appointments/${editingAppointment._id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.status === 204) {
+                 toast({ title: "Appointment Canceled" });
+                 fetchAppointments(currentDate); // Refresh
+                 setEditAppointmentDialogOpen(false);
+            } else {
+                toast({ variant: "destructive", title: "Failed to cancel appointment" });
+            }
+        } catch (error) {
+             toast({ variant: "destructive", title: "Network Error" });
+        }
+    };
+
+
     const handlePreviousDay = () => setCurrentDate(sub(currentDate, { days: 1 }));
     const handleNextDay = () => setCurrentDate(add(currentDate, { days: 1 }));
     const handleGoToToday = () => setCurrentDate(startOfDay(new Date()));
@@ -267,7 +320,7 @@ export default function SchedulingPage() {
         <CardContent>
            <div className="flex w-full">
             {/* Time column */}
-            <div className="w-16 pr-2 text-right pt-4">
+            <div className="w-16 pr-2 text-right">
               {timeSlots.map((time) => {
                 if (time.endsWith(':00')) {
                   return (
@@ -324,12 +377,14 @@ export default function SchedulingPage() {
                             <div key={app._id} 
                                  draggable={app.status !== 'Completed'}
                                  onDragStart={(e) => handleDragStart(e, app._id)}
+                                 onClick={() => openEditAppointmentDialog(app)}
                                  className={cn(
                                     "absolute left-2 right-2 p-2 rounded-lg border flex flex-col items-start",
                                     statusColors[app.status] || 'bg-gray-500/20',
-                                    app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
+                                    app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed",
+                                    "hover:ring-2 hover:ring-primary"
                                  )}
-                                 style={{ top: `calc(1rem + ${topPosition}rem + 0.25rem/2)`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
+                                 style={{ top: `calc(${topPosition}rem + 0.25rem/2)`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
                                  <div className="flex items-start gap-2 flex-wrap w-full">
                                     <Avatar className="h-6 w-6">
                                         {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
@@ -350,6 +405,7 @@ export default function SchedulingPage() {
         </CardContent>
       </Card>
       
+      {/* New Appointment Dialog */}
       <Dialog open={isNewAppointmentDialogOpen} onOpenChange={setNewAppointmentDialogOpen}>
         <DialogContent>
             <DialogHeader>
@@ -399,6 +455,50 @@ export default function SchedulingPage() {
             </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Edit Appointment Dialog */}
+      <Dialog open={isEditAppointmentDialogOpen} onOpenChange={setEditAppointmentDialogOpen}>
+          <DialogContent>
+            {editingAppointment && (
+                <>
+                <DialogHeader>
+                    <DialogTitle>Edit Appointment</DialogTitle>
+                    <DialogDescription>
+                        Update status for {editingAppointment.patientDetails?.fullName} at {format(editingAppointment.scheduledTime, 'HH:mm')}.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div>
+                        <Label>Status</Label>
+                        <Select
+                            value={editingAppointment.status}
+                            onValueChange={(value) => setEditingAppointment(prev => prev ? {...prev, status: value as Appointment['status']} : null)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {APPOINTMENT_STATUSES.map(status => (
+                                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <DialogFooter className="justify-between">
+                     <Button variant="destructive" onClick={handleDeleteAppointment}>
+                        <Trash2 className="mr-2 h-4 w-4"/>
+                        Cancel Appointment
+                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setEditAppointmentDialogOpen(false)}>Close</Button>
+                        <Button onClick={handleUpdateAppointment}>Save Changes</Button>
+                    </div>
+                </DialogFooter>
+                </>
+            )}
+          </DialogContent>
+      </Dialog>
 
     </div>
   );
@@ -407,3 +507,4 @@ export default function SchedulingPage() {
     
 
     
+
