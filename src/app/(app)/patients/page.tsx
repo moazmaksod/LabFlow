@@ -183,7 +183,7 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" min="1" max={watchedYear === currentYear && watchedMonth === currentMonth ? currentDay : 31} placeholder="DD" value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                                        <Input type="number" min="1" max={watchedYear === currentYear && watchedMonth === currentMonth ? currentDay : 31} placeholder="DD" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -195,7 +195,7 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" min="1" max={watchedYear === currentYear ? currentMonth : 12} placeholder="MM" value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                                        <Input type="number" min="1" max={watchedYear === currentYear ? currentMonth : 12} placeholder="MM" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
                                                     </FormControl>
                                                      <FormMessage />
                                                 </FormItem>
@@ -207,7 +207,7 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input type="number" min="1900" max={new Date().getFullYear()} placeholder="YYYY" value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                                                        <Input type="number" min="1900" max={new Date().getFullYear()} placeholder="YYYY" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
                                                     </FormControl>
                                                      <FormMessage />
                                                 </FormItem>
