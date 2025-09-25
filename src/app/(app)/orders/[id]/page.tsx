@@ -42,12 +42,15 @@ const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' } = {
 };
 const statuses = ['In-Progress', 'Awaiting Validation', 'Completed'];
 
-// We need to add the patientDetails from the aggregation to the Order type
-type OrderWithPatient = Order & {
+type OrderWithDetails = Order & {
     patientDetails: {
         _id: string;
         fullName: string;
         mrn: string;
+    };
+    physicianDetails?: {
+        _id: string;
+        fullName: string;
     }
 }
 
@@ -55,7 +58,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   const { id } = params;
   const { token } = useAuth();
   const { toast } = useToast();
-  const [orderDetails, setOrderDetails] = useState<OrderWithPatient | null>(null);
+  const [orderDetails, setOrderDetails] = useState<OrderWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -147,7 +150,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                 href={`/patients/${orderDetails.patientId}`}
                 className="text-primary hover:underline"
               >
-                {orderDetails.patientDetails.fullName} (MRN: {orderDetails.patientDetails.mrn})
+                {orderDetails.patientDetails?.fullName || 'N/A'} (MRN: {orderDetails.patientDetails?.mrn || 'N/A'})
               </Link>
             </p>
           </div>
@@ -218,11 +221,11 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
         <CardContent className="grid md:grid-cols-3 gap-4">
              <div>
               <p className="text-sm font-medium text-muted-foreground">Order Date</p>
-              <p>{format(new Date(orderDetails.createdAt), 'yyyy-MM-dd')}</p>
+              <p>{format(new Date(orderDetails.createdAt), 'MMMM d, yyyy')}</p>
             </div>
              <div>
               <p className="text-sm font-medium text-muted-foreground">Referring Doctor</p>
-              <p>{orderDetails.physicianId || 'N/A'}</p>
+              <p>{orderDetails.physicianDetails?.fullName || 'N/A'}</p>
             </div>
              <div>
               <p className="text-sm font-medium text-muted-foreground">Total Amount</p>

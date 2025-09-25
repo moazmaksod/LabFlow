@@ -153,14 +153,12 @@ export const getOrders = async (query: any = {}): Promise<any[]> => {
 
 export const findOrderById = async (orderId: string): Promise<any | null> => {
     const collection = await getOrdersCollection();
-    // This uses an aggregation pipeline to fetch the order and join the patient details
-    const order = await collection.aggregate([
-        // Match first to reduce the pipeline workload
+    const pipeline = [
         { $match: { orderId: orderId } },
-        // Then, convert patientId string to ObjectId for joining
         {
           $addFields: {
-            "patientObjectId": { "$toObjectId": "$patientId" }
+            "patientObjectId": { "$toObjectId": "$patientId" },
+            "physicianObjectId": { "$toObjectId": "$physicianId" }
           }
         },
         {
@@ -172,18 +170,34 @@ export const findOrderById = async (orderId: string): Promise<any | null> => {
             }
         },
         {
-            $unwind: {
-                path: '$patientDetails',
-                preserveNullAndEmptyArrays: true // Keep orders even if patient is somehow deleted
+            $lookup: {
+                from: 'users',
+                localField: 'physicianObjectId',
+                foreignField: '_id',
+                as: 'physicianDetails'
             }
         },
-         // We can remove the temporary field now
+        {
+            $unwind: {
+                path: '$patientDetails',
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $unwind: {
+                path: '$physicianDetails',
+                preserveNullAndEmptyArrays: true
+            }
+        },
         {
           $project: {
-            patientObjectId: 0
+            patientObjectId: 0,
+            physicianObjectId: 0
           }
         }
-    ]).next();
+    ];
+    
+    const order = await collection.aggregate(pipeline).next();
 
     return order;
 };
