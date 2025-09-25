@@ -125,8 +125,8 @@ export default function SchedulingPage() {
             {/* Time column */}
             <div className="flex flex-col border-r">
                 {timeSlots.map((time) => (
-                    <div key={time} className="h-10 flex-shrink-0 text-right pr-2 -mt-2.5">
-                       {time.endsWith(':00') && <span className="text-xs text-muted-foreground">{time}</span>}
+                    <div key={time} className="h-10 flex-shrink-0 text-right pr-2">
+                       {time.endsWith(':00') && <span className="text-xs text-muted-foreground -translate-y-1/2 relative top-0">{time}</span>}
                     </div>
                 ))}
             </div>
@@ -146,7 +146,7 @@ export default function SchedulingPage() {
                 {/* Appointments */}
                 {appointments.map(app => {
                     const topIndex = timeSlots.indexOf(app.time);
-                    const heightInRem = (app.duration / 15) * 2.5;
+                    const heightInRem = Math.max((app.duration / 15), 1) * 2.5;
                     
                     if (topIndex === -1) return null;
 
@@ -185,3 +185,4 @@ export default function SchedulingPage() {
     </div>
   );
 }
+
