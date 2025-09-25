@@ -330,7 +330,7 @@ export default function SchedulingPage() {
                                  <div className="flex items-start gap-2 flex-wrap w-full">
                                     <Avatar className="h-6 w-6">
                                         {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
-                                        <AvatarFallback>{app.patientDetails?.fullName.charAt(0) || '?'}</AvatarFallback>
+                                        <AvatarFallback>{app.patientDetails?.fullName?.charAt(0) || '?'}</AvatarFallback>
                                     </Avatar>
                                     <div className="min-w-0 flex-grow">
                                         <p className="font-medium truncate text-sm">{app.patientDetails?.fullName || 'Unknown Patient'}</p>
@@ -383,5 +383,7 @@ export default function SchedulingPage() {
     </div>
   );
 }
+
+    
 
     
