@@ -120,13 +120,13 @@ export default function SchedulingPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="py-6">
-          <div className="relative grid grid-cols-[auto_1fr] rounded-lg border py-4">
+        <CardContent>
+          <div className="relative grid grid-cols-[auto_1fr] rounded-lg border">
             {/* Time column */}
-            <div className="flex flex-col border-r">
-                {timeSlots.map((time) => (
-                    <div key={time} className="h-12 flex-shrink-0 text-right pr-2">
-                       {time.endsWith(':00') && <span className="text-xs text-muted-foreground -translate-y-1/2 relative top-0">{time}</span>}
+            <div className="flex flex-col border-r py-4">
+                {timeSlots.map((time, index) => (
+                    <div key={time} className="h-12 flex-shrink-0 text-right pr-2 relative">
+                       {time.endsWith(':00') && <span className="text-xs text-muted-foreground absolute -top-2 right-2">{time}</span>}
                     </div>
                 ))}
             </div>
@@ -134,10 +134,10 @@ export default function SchedulingPage() {
             {/* Calendar grid */}
             <div className="relative col-start-2 row-start-1">
                  {/* Grid lines as drop zones */}
-                {timeSlots.map(time => (
+                {timeSlots.map((time, index) => (
                     <div 
                       key={`grid-${time}`} 
-                      className="h-12 border-b"
+                      className={cn("h-12 border-b", (index === 0) && "border-t mt-4", (index === timeSlots.length -1) && "mb-4")}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, time)}
                     />
@@ -148,23 +148,22 @@ export default function SchedulingPage() {
                     const topIndex = timeSlots.indexOf(app.time);
                     const heightInSlots = Math.max(app.duration / 15, 1);
                     const heightInRem = heightInSlots * 3; // h-12 is 3rem
-                    
+
                     if (topIndex === -1) return null;
 
-                    const topPosition = topIndex * 3; // Each slot is h-12 (3rem)
+                    const topPosition = (topIndex * 3) + 1; // Each slot is h-12 (3rem), plus mt-4 (1rem)
 
                     return (
                         <div key={app.id} 
                              draggable={app.status !== 'Completed'}
                              onDragStart={(e) => handleDragStart(e, app.id)}
                              className={cn(
-                                "absolute left-2 right-2 p-2 rounded-lg border flex flex-col justify-center",
+                                "absolute left-2 right-2 p-2 rounded-lg border flex flex-col",
                                 statusColors[app.status] || 'bg-gray-500/20',
-                                app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed",
-                                "min-h-[3rem]" // h-12
+                                app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
                              style={{ top: `${topPosition}rem`, height: `${heightInRem}rem`, transition: 'top 0.3s ease-out'}}>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 <Avatar className="h-6 w-6">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
                                     <AvatarFallback>{app.patientName.charAt(0)}</AvatarFallback>
