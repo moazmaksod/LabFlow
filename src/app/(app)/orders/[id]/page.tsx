@@ -76,7 +76,9 @@ const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' } = {
 };
 const statuses = ['In-Progress', 'Awaiting Validation', 'Completed'];
 
-export default function OrderDetailsPage({ params: { id } }: { params: { id: string } }) {
+export default function OrderDetailsPage({ params }: { params: { id: string } }) {
+  const id = params.id;
+  
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
