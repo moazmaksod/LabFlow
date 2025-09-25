@@ -123,25 +123,26 @@ export default function SchedulingPage() {
         <CardContent>
           <div className="relative grid grid-cols-[auto_1fr] rounded-lg border">
             {/* Time column */}
-            <div className="flex flex-col border-r py-4">
-                {timeSlots.map((time) => (
-                    <div key={time} className="h-12 flex-shrink-0 text-right pr-2 relative">
-                       {time.endsWith(':00') && <span className="text-xs text-muted-foreground absolute top-0 right-2 -translate-y-1/2">{time}</span>}
-                    </div>
-                ))}
+            <div className="flex flex-col border-r bg-card pt-4 pb-4">
+              {timeSlots.map((time) => (
+                  <div key={time} className="relative h-12 flex-shrink-0 text-right">
+                  {time.endsWith(':00') && (
+                      <span className="absolute right-2 -top-2.5 text-xs text-muted-foreground bg-card px-1">{time}</span>
+                  )}
+                  </div>
+              ))}
             </div>
 
+
             {/* Calendar grid */}
-            <div className="relative col-start-2 row-start-1 h-full">
+            <div className="relative col-start-2 row-start-1 grid h-full pt-4 pb-4">
                  {/* Grid lines as drop zones */}
                 {timeSlots.map((time, index) => (
                     <div 
                       key={`grid-${time}`} 
                       className={cn(
                         "h-12 border-b",
-                        time.endsWith(':00') ? "border-border" : "border-border/50",
-                        (index === 0) && "border-t mt-4",
-                        (index === timeSlots.length - 1) && "mb-4 border-b-0"
+                         time.endsWith(':00') ? "border-border" : "border-transparent",
                       )}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, time)}
@@ -156,7 +157,7 @@ export default function SchedulingPage() {
 
                     if (topIndex === -1) return null;
 
-                    const topPosition = (topIndex * 3) + 1; // Each slot is h-12 (3rem), plus mt-4 (1rem)
+                    const topPosition = (topIndex * 3); // Each slot is h-12 (3rem)
 
                     return (
                         <div key={app.id} 
