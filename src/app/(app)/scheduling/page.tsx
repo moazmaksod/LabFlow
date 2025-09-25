@@ -127,7 +127,7 @@ export default function SchedulingPage() {
               {timeSlots.map((time) => (
                   <div key={time} className="relative h-12 flex-shrink-0 text-right">
                   {time.endsWith(':00') && (
-                      <span className="absolute right-2 -top-2.5 text-xs text-muted-foreground bg-card px-1">{time}</span>
+                      <span className="absolute -right-0 -top-2.5 translate-x-full pr-2 text-xs text-muted-foreground">{time}</span>
                   )}
                   </div>
               ))}
@@ -135,14 +135,14 @@ export default function SchedulingPage() {
 
 
             {/* Calendar grid */}
-            <div className="relative col-start-2 row-start-1 grid h-full pt-4 pb-4">
+            <div className="relative col-start-2 row-start-1 grid h-full">
                  {/* Grid lines as drop zones */}
                 {timeSlots.map((time, index) => (
                     <div 
                       key={`grid-${time}`} 
                       className={cn(
                         "h-12 border-b",
-                         time.endsWith(':00') ? "border-border" : "border-transparent",
+                         time.endsWith(':00') ? "border-border" : "border-border/50 border-dashed",
                       )}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, time)}
