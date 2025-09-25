@@ -3,8 +3,9 @@ import { User, UserSchema } from '@/lib/schemas/auth';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import type { Patient } from '@/lib/schemas/patient';
 import type { Order } from '@/lib/schemas/order';
+import type { Appointment } from '@/lib/schemas/appointment';
 import { headers } from 'next/headers';
-import { getOrdersCollection, getPatientsCollection, getUsersCollection, getTestsCollection } from '@/lib/mongodb';
+import { getAppointmentsCollection, getOrdersCollection, getPatientsCollection, getUsersCollection, getTestsCollection } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 
@@ -219,4 +220,46 @@ export const addOrder = async (order: Omit<Order, '_id' | 'orderId'>): Promise<O
     
     const result = await collection.insertOne(finalOrder as any);
     return { ...finalOrder, _id: result.insertedId.toHexString() } as unknown as Order;
+};
+
+// --- Appointment Data Access ---
+export const getAppointments = async (query: any = {}): Promise<any[]> => {
+    const collection = await getAppointmentsCollection();
+    // Aggregate to join with patient info
+    return collection.aggregate([
+        { $match: query },
+        { $addFields: { "patientObjectId": { "$toObjectId": "$patientId" } } },
+        {
+            $lookup: {
+                from: 'patients',
+                localField: 'patientObjectId',
+                foreignField: '_id',
+                as: 'patientDetails'
+            }
+        },
+        { $unwind: { path: '$patientDetails', preserveNullAndEmptyArrays: true } }
+    ]).toArray();
+};
+
+export const findAppointmentById = async (id: string): Promise<Appointment | null> => {
+    const collection = await getAppointmentsCollection();
+    return await collection.findOne({ _id: new ObjectId(id) as any }) as Appointment | null;
+};
+
+export const addAppointment = async (appointment: Omit<Appointment, '_id'>): Promise<Appointment> => {
+    const collection = await getAppointmentsCollection();
+    const result = await collection.insertOne(appointment as any);
+    return { ...appointment, _id: result.insertedId.toHexString() };
+};
+
+export const updateAppointment = async (id: string, updates: Partial<Appointment>): Promise<boolean> => {
+    const collection = await getAppointmentsCollection();
+    const result = await collection.updateOne({ _id: new ObjectId(id) as any }, { $set: updates });
+    return result.modifiedCount > 0;
+};
+
+export const removeAppointment = async (id: string): Promise<boolean> => {
+    const collection = await getAppointmentsCollection();
+    const result = await collection.deleteOne({ _id: new ObjectId(id) as any });
+    return result.deletedCount > 0;
 };

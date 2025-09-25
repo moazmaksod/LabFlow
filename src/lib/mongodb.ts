@@ -4,6 +4,7 @@ import type { User } from '@/lib/schemas/auth';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import type { Patient } from '@/lib/schemas/patient';
 import type { Order } from '@/lib/schemas/order';
+import type { Appointment } from '@/lib/schemas/appointment';
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB;
@@ -130,6 +131,10 @@ async function applyIndexes(db: Db) {
     console.log('Created unique index on `patients.mrn`');
     await patientsCollection.createIndex({ fullName: 1 });
     console.log('Created index on `patients.fullName`');
+    
+    const appointmentsCollection = db.collection('appointments');
+    await appointmentsCollection.createIndex({ scheduledTime: 1 });
+    console.log('Created index on `appointments.scheduledTime`');
 }
 
 
@@ -163,3 +168,4 @@ export const getUsersCollection = () => getCollection<User>('users');
 export const getTestsCollection = () => getCollection<TestCatalog>('testCatalog');
 export const getPatientsCollection = () => getCollection<Patient>('patients');
 export const getOrdersCollection = () => getCollection<Order>('orders');
+export const getAppointmentsCollection = () => getCollection<Appointment>('appointments');
