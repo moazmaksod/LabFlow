@@ -123,7 +123,7 @@ export default function SchedulingPage() {
         <CardContent>
           <div className="relative grid grid-cols-[auto_1fr] rounded-lg border">
             {/* Time column */}
-            <div className="flex flex-col border-r bg-card pt-4 pb-4">
+            <div className="flex flex-col border-r bg-card">
               {timeSlots.map((time) => (
                   <div key={time} className="relative h-12 flex-shrink-0 text-right">
                   {time.endsWith(':00') && (
@@ -164,7 +164,7 @@ export default function SchedulingPage() {
                              draggable={app.status !== 'Completed'}
                              onDragStart={(e) => handleDragStart(e, app.id)}
                              className={cn(
-                                "absolute left-2 right-2 p-2 rounded-lg border flex flex-col",
+                                "absolute left-2 right-2 p-2 rounded-lg border flex items-start",
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
