@@ -121,23 +121,23 @@ export default function SchedulingPage() {
           </div>
         </CardHeader>
         <CardContent className="py-6">
-          <div className="relative grid grid-cols-[auto_1fr] rounded-lg border pt-4 pb-4">
+          <div className="relative grid grid-cols-[auto_1fr] rounded-lg border py-4">
             {/* Time column */}
             <div className="flex flex-col border-r">
                 {timeSlots.map((time) => (
-                    <div key={time} className="h-10 flex-shrink-0 text-right pr-2">
+                    <div key={time} className="h-12 flex-shrink-0 text-right pr-2">
                        {time.endsWith(':00') && <span className="text-xs text-muted-foreground -translate-y-1/2 relative top-0">{time}</span>}
                     </div>
                 ))}
             </div>
 
             {/* Calendar grid */}
-            <div className="relative col-start-2 row-start-1 grid grid-rows-[repeat(37,minmax(0,1fr))]">
+            <div className="relative col-start-2 row-start-1">
                  {/* Grid lines as drop zones */}
                 {timeSlots.map(time => (
                     <div 
                       key={`grid-${time}`} 
-                      className="h-10 border-b"
+                      className="h-12 border-b"
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, time)}
                     />
@@ -147,11 +147,11 @@ export default function SchedulingPage() {
                 {appointments.map(app => {
                     const topIndex = timeSlots.indexOf(app.time);
                     const heightInSlots = Math.max(app.duration / 15, 1);
-                    const heightInRem = heightInSlots * 2.5;
+                    const heightInRem = heightInSlots * 3; // h-12 is 3rem
                     
                     if (topIndex === -1) return null;
 
-                    const topPosition = topIndex * 2.5; // Each slot is h-10 (2.5rem)
+                    const topPosition = topIndex * 3; // Each slot is h-12 (3rem)
 
                     return (
                         <div key={app.id} 
@@ -161,7 +161,7 @@ export default function SchedulingPage() {
                                 "absolute left-2 right-2 p-2 rounded-lg border flex flex-col justify-center",
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed",
-                                "min-h-[2.5rem]"
+                                "min-h-[3rem]" // h-12
                              )}
                              style={{ top: `${topPosition}rem`, height: `${heightInRem}rem`, transition: 'top 0.3s ease-out'}}>
                             <div className="flex items-center gap-2">
