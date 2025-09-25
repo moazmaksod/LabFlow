@@ -39,8 +39,9 @@ const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' } = {
   'In-Progress': 'secondary',
   'Awaiting Validation': 'outline',
   'Pending': 'outline',
+  'Verified': 'default',
 };
-const statuses = ['In-Progress', 'Awaiting Validation', 'Completed'];
+const statuses = ['In-Progress', 'AwaitingVerification', 'Verified', 'Cancelled'];
 
 type OrderWithDetails = Order & {
     patientDetails: {
@@ -56,10 +57,12 @@ type OrderWithDetails = Order & {
 
 export default function OrderDetailsPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const { toast } = useToast();
   const [orderDetails, setOrderDetails] = useState<OrderWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const canEditResults = user?.role === 'technician' || user?.role === 'manager';
 
   useEffect(() => {
     if (!id || !token) return;
@@ -123,12 +126,9 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     );
   }
 
-  // Calculate total price from all tests in all samples
-  // In a real app, this might be stored on the order itself.
   const totalOrderPrice = orderDetails.samples.reduce((sampleTotal, sample) => {
       const testsTotal = sample.tests.reduce((testTotal, test) => {
           // This is a simplification. We'd need to look up the price from the catalog snapshot
-          // or have it stored on the snapshotted test. For now, let's use a placeholder value.
           return testTotal + 75; // Placeholder price per test
       }, 0);
       return sampleTotal + testsTotal;
@@ -142,7 +142,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
           <ClipboardList className="size-10 text-muted-foreground" />
           <div>
             <h1 className="font-headline text-3xl font-semibold">
-              Order {id}
+              Order {orderDetails.orderId}
             </h1>
             <p className="text-muted-foreground">
               Patient:{' '}
@@ -185,26 +185,34 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                             <TableRow key={test.testCode}>
                             <TableCell className="font-medium">{test.name}</TableCell>
                             <TableCell>
-                                <Input
-                                defaultValue={test.resultValue}
-                                placeholder="Enter result..."
-                                />
+                                {canEditResults ? (
+                                    <Input
+                                    defaultValue={test.resultValue}
+                                    placeholder="Enter result..."
+                                    />
+                                ) : (
+                                    <span>{test.resultValue || 'N/A'}</span>
+                                )}
                             </TableCell>
                             <TableCell>{test.resultUnits}</TableCell>
                             <TableCell>{test.referenceRange}</TableCell>
                             <TableCell>
-                                <Select defaultValue={test.status}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Update status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {statuses.map((status) => (
-                                    <SelectItem key={status} value={status}>
-                                        {status}
-                                    </SelectItem>
-                                    ))}
-                                </SelectContent>
-                                </Select>
+                                {canEditResults ? (
+                                    <Select defaultValue={test.status}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Update status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {statuses.map((status) => (
+                                            <SelectItem key={status} value={status}>
+                                                {status}
+                                            </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                     <Badge variant={statusVariant[test.status] || 'secondary'}>{test.status}</Badge>
+                                )}
                             </TableCell>
                             </TableRow>
                         ))}
