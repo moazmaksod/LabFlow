@@ -124,20 +124,25 @@ export default function SchedulingPage() {
           <div className="relative grid grid-cols-[auto_1fr] rounded-lg border">
             {/* Time column */}
             <div className="flex flex-col border-r py-4">
-                {timeSlots.map((time, index) => (
+                {timeSlots.map((time) => (
                     <div key={time} className="h-12 flex-shrink-0 text-right pr-2 relative">
-                       {time.endsWith(':00') && <span className="text-xs text-muted-foreground absolute -top-2 right-2">{time}</span>}
+                       {time.endsWith(':00') && <span className="text-xs text-muted-foreground absolute top-0 right-2 -translate-y-1/2">{time}</span>}
                     </div>
                 ))}
             </div>
 
             {/* Calendar grid */}
-            <div className="relative col-start-2 row-start-1">
+            <div className="relative col-start-2 row-start-1 h-full">
                  {/* Grid lines as drop zones */}
                 {timeSlots.map((time, index) => (
                     <div 
                       key={`grid-${time}`} 
-                      className={cn("h-12 border-b", (index === 0) && "border-t mt-4", (index === timeSlots.length -1) && "mb-4")}
+                      className={cn(
+                        "h-12 border-b",
+                        time.endsWith(':00') ? "border-border" : "border-border/50",
+                        (index === 0) && "border-t mt-4",
+                        (index === timeSlots.length - 1) && "mb-4 border-b-0"
+                      )}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, time)}
                     />
@@ -163,7 +168,7 @@ export default function SchedulingPage() {
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
                              style={{ top: `${topPosition}rem`, height: `${heightInRem}rem`, transition: 'top 0.3s ease-out'}}>
-                            <div className="flex items-center gap-2 flex-wrap">
+                             <div className="flex items-start gap-2 flex-wrap">
                                 <Avatar className="h-6 w-6">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
                                     <AvatarFallback>{app.patientName.charAt(0)}</AvatarFallback>
