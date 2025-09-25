@@ -197,7 +197,10 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                     </div>
 
                     <Separator />
-                    <h4 className="font-medium text-sm">Primary Insurance</h4>
+                    <div className="flex justify-between items-center">
+                        <h4 className="font-medium text-sm">Primary Insurance</h4>
+                        <Button type="button" variant="secondary" size="sm">Verify Eligibility</Button>
+                    </div>
                     
                      <FormField control={form.control} name="insuranceInfo.0.providerName" render={({ field }) => (
                         <FormItem><FormLabel>Provider Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -392,7 +395,3 @@ export default function PatientsPage() {
     </div>
   );
 }
-
-    
-
-    
