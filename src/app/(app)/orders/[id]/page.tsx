@@ -159,7 +159,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
       </div>
 
         {orderDetails.samples.map((sample, index) => (
-            <Card key={index}>
+            <Card key={sample.accessionNumber || index}>
                 <CardHeader>
                     <CardTitle>Sample {index + 1}: {sample.sampleType}</CardTitle>
                     <CardDescription>
