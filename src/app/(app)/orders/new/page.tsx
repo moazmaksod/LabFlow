@@ -127,8 +127,49 @@ export default function NewOrderPage() {
     const orderTotal = selectedTests.reduce((total, test) => total + test.price, 0);
 
     const handleCreateOrder = async () => {
-        // This function will be built out in the next step to call the backend API
-        toast({ title: "Order creation pending backend implementation." });
+        if (!selectedPatient || selectedTests.length === 0 || !icd10Code || !token) return;
+
+        setIsCreating(true);
+        const orderPayload = {
+            patientId: selectedPatient._id,
+            icd10Code: icd10Code,
+            testCodes: selectedTests.map(t => t.testCode),
+            notes: notes,
+            // physicianId could be added here if we had a physician search
+        };
+
+        try {
+            const response = await fetch('/api/v1/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify(orderPayload),
+            });
+
+            if (response.ok) {
+                const newOrder = await response.json();
+                toast({
+                    title: "Order Created Successfully!",
+                    description: `Order ID: ${newOrder.data.orderId}`,
+                });
+                router.push(`/orders/${newOrder.data.orderId}`);
+            } else {
+                const errorData = await response.json();
+                 toast({
+                    variant: 'destructive',
+                    title: 'Failed to Create Order',
+                    description: errorData.message || 'An unexpected error occurred.',
+                });
+            }
+
+        } catch (error) {
+             toast({
+                variant: 'destructive',
+                title: 'Network Error',
+                description: 'Could not connect to the server.',
+            });
+        } finally {
+            setIsCreating(false);
+        }
     };
 
   return (

@@ -2,8 +2,9 @@
 import { User, UserSchema } from '@/lib/schemas/auth';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import type { Patient } from '@/lib/schemas/patient';
+import type { Order } from '@/lib/schemas/order';
 import { headers } from 'next/headers';
-import { getPatientsCollection, getUsersCollection, getTestsCollection } from '@/lib/mongodb';
+import { getOrdersCollection, getPatientsCollection, getUsersCollection, getTestsCollection } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 
@@ -114,4 +115,22 @@ export const addPatient = async (patient: Omit<Patient, '_id'>): Promise<Patient
     const collection = await getPatientsCollection();
     const result = await collection.insertOne(patient as any);
     return { ...patient, _id: result.insertedId.toHexString() };
+};
+
+// --- Order Data Access ---
+export const addOrder = async (order: Omit<Order, '_id' | 'orderId'>): Promise<Order> => {
+    const collection = await getOrdersCollection();
+    // Simple order ID generation for the prototype
+    const count = await collection.countDocuments();
+    const orderId = `ORD-${new Date().getFullYear()}-${(count + 1).toString().padStart(5, '0')}`;
+    
+    const finalOrder = {
+        ...order,
+        orderId: orderId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    };
+    
+    const result = await collection.insertOne(finalOrder as any);
+    return { ...finalOrder, _id: result.insertedId.toHexString() };
 };

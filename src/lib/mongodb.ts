@@ -3,6 +3,7 @@ import { MongoClient, Db, Collection } from 'mongodb';
 import type { User } from '@/lib/schemas/auth';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import type { Patient } from '@/lib/schemas/patient';
+import type { Order } from '@/lib/schemas/order';
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB;
@@ -161,6 +162,4 @@ export async function getCollection<T extends Document>(name: string): Promise<C
 export const getUsersCollection = () => getCollection<User>('users');
 export const getTestsCollection = () => getCollection<TestCatalog>('testCatalog');
 export const getPatientsCollection = () => getCollection<Patient>('patients');
-
-// Add other collections here as needed
-// e.g., export const getOrdersCollection = () => getCollection<Order>('orders');
+export const getOrdersCollection = () => getCollection<Order>('orders');
