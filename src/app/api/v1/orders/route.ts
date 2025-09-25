@@ -2,8 +2,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, findPatientById, findTestByCode, addOrder } from '@/lib/api/utils';
 import { CreateOrderInputSchema } from '@/lib/schemas/order';
-import type { TestCatalog, ReferenceRange } from '@/lib/schemas/test-catalog';
-import type { Order } from '@/lib/schemas/order';
+import type { TestCatalog } from '@/lib/schemas/test-catalog';
 
 // POST /api/v1/orders
 // Creates a new test order
@@ -33,7 +32,7 @@ export async function POST(request: Request) {
     for (const code of testCodes) {
         const test = await findTestByCode(code);
         if (!test) {
-            return NextResponse.json({ message `Test with code "${code}" not found.` }, { status: 400 });
+            return NextResponse.json({ message: `Test with code "${code}" not found.` }, { status: 400 });
         }
         foundTests.push(test);
     }
@@ -71,14 +70,16 @@ export async function POST(request: Request) {
         };
     });
     
-    // Placeholder for subsequent steps
-    const newOrder = {
+    // --- Steps 2.4 & 2.5: Generate ID and Save Order ---
+    const orderToCreate = {
         patientId,
         ...orderData,
         samples: orderSamples,
         orderStatus: 'Pending',
         createdBy: user._id,
     };
+    
+    const newOrder = await addOrder(orderToCreate);
 
     return NextResponse.json({ data: newOrder }, { status: 201 });
 }
