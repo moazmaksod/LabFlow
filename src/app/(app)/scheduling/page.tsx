@@ -66,7 +66,7 @@ const statusColors: {[key: string]: string} = {
     'No-show': 'bg-red-500/20 border-red-500 text-red-800 dark:text-red-300',
 }
 
-const SLOT_HEIGHT_REM = 3; // Corresponds to h-12
+const SLOT_HEIGHT_REM = 3.5; // Corresponds to h-14
 const SLOT_MARGIN_REM = 0.25; // Corresponds to my-1
 
 export default function SchedulingPage() {
@@ -124,27 +124,26 @@ export default function SchedulingPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="relative grid grid-cols-[auto_1fr]">
+           <div className="grid grid-cols-[auto_1fr] pt-4">
             {/* Time column */}
-            <div className="flex flex-col text-right pr-2">
-              {timeSlots.map((time) => (
-                  <div key={time} className="h-12 my-1 flex-shrink-0 relative">
+            <div className="pr-4">
+              {timeSlots.map((time, index) => (
+                <div key={time} className="h-14 my-1 flex items-start text-xs text-muted-foreground">
                   {time.endsWith(':00') && (
-                      <span className="absolute -top-2.5 text-xs text-muted-foreground">{time}</span>
+                    <span className="-translate-y-1.5">{time}</span>
                   )}
-                  </div>
+                </div>
               ))}
             </div>
 
-
             {/* Calendar grid */}
-            <div className="relative col-start-2 row-start-1 grid h-full">
-                 {/* Grid lines as drop zones */}
+            <div className="relative grid h-full border-l">
+                {/* Grid lines as drop zones */}
                 {timeSlots.map((time) => (
                     <div 
                       key={`grid-${time}`} 
                       className={cn(
-                        "h-12 border-b my-1",
+                        "h-14 border-t my-1",
                          time.endsWith(':00') ? "border-border" : "border-border/50 border-dashed",
                       )}
                       onDragOver={handleDragOver}
