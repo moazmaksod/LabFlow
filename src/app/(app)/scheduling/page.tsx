@@ -142,7 +142,7 @@ export default function SchedulingPage() {
                       className="relative"
                       style={{ height: `${SLOT_HEIGHT_REM * 4}rem`}}
                     >
-                      <span className="absolute -top-2 right-2 text-xs text-muted-foreground">{time}</span>
+                      <span className="absolute -top-1.5 right-2 text-xs text-muted-foreground">{time}</span>
                     </div>
                   );
                 }
