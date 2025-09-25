@@ -14,7 +14,7 @@ import {
 import { PlaceHolderImages }from '@/lib/images';
 import { cn } from '@/lib/utils';
 import { CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 
 const timeSlots = [
   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -22,8 +22,9 @@ const timeSlots = [
   '16:00', '16:30', '17:00'
 ];
 
-const appointments = [
+const initialAppointments = [
     {
+        id: 'apt1',
         patientName: 'Fahad Al-Ghamdi',
         time: '09:00',
         duration: 60, // minutes
@@ -31,6 +32,7 @@ const appointments = [
         avatarId: 'user-avatar-1'
     },
     {
+        id: 'apt2',
         patientName: 'Sarah Khan',
         time: '10:30',
         duration: 30, // minutes
@@ -38,6 +40,7 @@ const appointments = [
          avatarId: 'user-avatar-1'
     },
     {
+        id: 'apt3',
         patientName: 'Mohammed Al-Zahrani',
         time: '14:00',
         duration: 90, // minutes
@@ -57,6 +60,27 @@ export default function SchedulingPage() {
    const userAvatar = PlaceHolderImages.find(
     (img) => img.id === 'user-avatar-1'
   );
+  const [appointments, setAppointments] = useState(initialAppointments);
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, appointmentId: string) => {
+    e.dataTransfer.setData("appointmentId", appointmentId);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); // This is necessary to allow a drop
+  };
+  
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, time: string) => {
+    e.preventDefault();
+    const appointmentId = e.dataTransfer.getData("appointmentId");
+    
+    setAppointments(prevAppointments => 
+      prevAppointments.map(app => 
+        app.id === appointmentId ? { ...app, time: time } : app
+      )
+    );
+  };
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -101,9 +125,14 @@ export default function SchedulingPage() {
 
             {/* Calendar grid */}
             <div className="relative col-start-2 row-start-1">
-                 {/* Grid lines */}
+                 {/* Grid lines as drop zones */}
                 {timeSlots.map(time => (
-                    <div key={`grid-${time}`} className="h-16 border-b" />
+                    <div 
+                      key={`grid-${time}`} 
+                      className="h-16 border-b"
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, time)}
+                    />
                 ))}
 
                 {/* Appointments */}
@@ -111,12 +140,15 @@ export default function SchedulingPage() {
                     const top = timeSlots.indexOf(app.time) * 4; // 4rem per hour
                     const height = (app.duration / 30) * 2; // 2rem per 30 mins
                     return (
-                        <div key={app.patientName} 
+                        <div key={app.id} 
+                             draggable={app.status !== 'Completed'}
+                             onDragStart={(e) => handleDragStart(e, app.id)}
                              className={cn(
-                                "absolute left-2 right-2 p-3 rounded-lg border cursor-pointer",
-                                statusColors[app.status] || 'bg-gray-500/20'
+                                "absolute left-2 right-2 p-3 rounded-lg border",
+                                statusColors[app.status] || 'bg-gray-500/20',
+                                app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
-                             style={{ top: `${top}rem`, height: `${height}rem`}}>
+                             style={{ top: `${top}rem`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
                             <div className="flex items-start gap-3">
                                 <Avatar className="h-8 w-8">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
