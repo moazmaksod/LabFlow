@@ -77,8 +77,6 @@ const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' } = {
 const statuses = ['In-Progress', 'Awaiting Validation', 'Completed'];
 
 export default function OrderDetailsPage({ params }: { params: { id: string } }) {
-  const { id } = params;
-
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -86,7 +84,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
           <ClipboardList className="size-10 text-muted-foreground" />
           <div>
             <h1 className="font-headline text-3xl font-semibold">
-              Order {id}
+              Order {params.id}
             </h1>
             <p className="text-muted-foreground">
               Patient:{' '}
