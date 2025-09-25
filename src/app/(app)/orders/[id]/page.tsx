@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ClipboardList, Printer, Save, Loader2 } from 'lucide-react';
+import { ClipboardList, Printer, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Order } from '@/lib/schemas/order';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { useParams } from 'next/navigation';
 
 const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' } = {
   Completed: 'default',
@@ -55,8 +56,9 @@ type OrderWithDetails = Order & {
     }
 }
 
-export default function OrderDetailsPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function OrderDetailsPage() {
+  const params = useParams();
+  const id = params.id as string;
   const { user, token } = useAuth();
   const { toast } = useToast();
   const [orderDetails, setOrderDetails] = useState<OrderWithDetails | null>(null);
