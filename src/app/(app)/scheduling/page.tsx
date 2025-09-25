@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import type { Patient } from '@/lib/schemas/patient';
 import { add, format, startOfDay, sub } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const timeSlots = Array.from({ length: (17 - 8) * 4 }, (_, i) => {
     const hour = 8 + Math.floor(i / 4);
@@ -117,6 +118,7 @@ export default function SchedulingPage() {
     const [isNewAppointmentDialogOpen, setNewAppointmentDialogOpen] = useState(false);
     const [newAppointmentTime, setNewAppointmentTime] = useState('');
     const [selectedPatientForNewAppt, setSelectedPatientForNewAppt] = useState<Patient | null>(null);
+    const [newAppointmentDuration, setNewAppointmentDuration] = useState(30);
 
     const fetchAppointments = async (date: Date) => {
         if (!token) return;
@@ -189,6 +191,7 @@ export default function SchedulingPage() {
     const openNewAppointmentDialog = (time: string) => {
         setNewAppointmentTime(time);
         setSelectedPatientForNewAppt(null);
+        setNewAppointmentDuration(30);
         setNewAppointmentDialogOpen(true);
     };
 
@@ -202,7 +205,7 @@ export default function SchedulingPage() {
         const newAppointmentPayload = {
             patientId: selectedPatientForNewAppt._id,
             scheduledTime: scheduledDateTime.toISOString(),
-            durationMinutes: 30, // Default duration
+            durationMinutes: newAppointmentDuration,
             status: 'Scheduled',
         };
 
@@ -372,6 +375,23 @@ export default function SchedulingPage() {
                         <PatientSearch onSelectPatient={setSelectedPatientForNewAppt} />
                     </div>
                 )}
+                <div>
+                  <Label>Duration</Label>
+                   <Select
+                        value={String(newAppointmentDuration)}
+                        onValueChange={(value) => setNewAppointmentDuration(Number(value))}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Set duration" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="15">15 minutes</SelectItem>
+                            <SelectItem value="30">30 minutes</SelectItem>
+                            <SelectItem value="45">45 minutes</SelectItem>
+                            <SelectItem value="60">60 minutes</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
             <DialogFooter>
                 <Button variant="outline" onClick={() => setNewAppointmentDialogOpen(false)}>Cancel</Button>
