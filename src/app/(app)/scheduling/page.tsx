@@ -120,7 +120,7 @@ export default function SchedulingPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="py-6">
           <div className="relative grid grid-cols-[auto_1fr] h-[92.5rem] overflow-y-auto rounded-lg border">
             {/* Time column */}
             <div className="flex flex-col border-r">
@@ -146,7 +146,8 @@ export default function SchedulingPage() {
                 {/* Appointments */}
                 {appointments.map(app => {
                     const topIndex = timeSlots.indexOf(app.time);
-                    const heightInRem = Math.max((app.duration / 15), 1) * 2.5;
+                    const heightInSlots = Math.max(app.duration / 15, 1);
+                    const heightInRem = heightInSlots * 2.5;
                     
                     if (topIndex === -1) return null;
 
@@ -185,4 +186,3 @@ export default function SchedulingPage() {
     </div>
   );
 }
-
