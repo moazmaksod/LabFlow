@@ -136,30 +136,33 @@ export default function SchedulingPage() {
                 {/* Appointments */}
                 {appointments.map(app => {
                     const topIndex = timeSlots.indexOf(app.time);
-                    const top = topIndex * 4; // 4rem per hour slot (h-16)
-                    const height = (app.duration / 30) * 2; // 2rem per 30 mins
+                    const heightInRem = (app.duration / 30) * 4;
                     
                     if (topIndex === -1) return null;
+
+                    const topPosition = topIndex * 4; // Each slot is h-16 (4rem)
 
                     return (
                         <div key={app.id} 
                              draggable={app.status !== 'Completed'}
                              onDragStart={(e) => handleDragStart(e, app.id)}
                              className={cn(
-                                "absolute left-2 right-2 p-3 rounded-lg border flex items-center gap-3",
+                                "absolute left-2 right-2 p-2 rounded-lg border flex flex-col md:flex-row md:items-center gap-2 overflow-hidden",
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
-                             style={{ top: `${top}rem`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
-                            <Avatar className="h-8 w-8">
-                                {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
-                                <AvatarFallback>{app.patientName.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-grow">
-                                <p className="font-medium truncate">{app.patientName}</p>
-                                <p className="text-sm">{app.time}</p>
+                             style={{ top: `${topPosition}rem`, height: `${heightInRem}rem`, transition: 'top 0.3s ease-out'}}>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                <Avatar className="h-8 w-8">
+                                    {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
+                                    <AvatarFallback>{app.patientName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                    <p className="font-medium truncate">{app.patientName}</p>
+                                    <p className="text-sm">{app.time}</p>
+                                </div>
                             </div>
-                            <Badge variant="secondary" className="opacity-80 whitespace-nowrap">{app.status}</Badge>
+                            <Badge variant="secondary" className="mt-1 md:mt-0 md:ml-auto opacity-80 whitespace-nowrap self-start md:self-center">{app.status}</Badge>
                         </div>
                     );
                 })}
