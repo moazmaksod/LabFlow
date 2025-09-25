@@ -22,24 +22,24 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import type { Patient, PatientFormData } from '@/lib/schemas/patient';
+import type { Patient } from '@/lib/schemas/patient';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PatientFormSchema } from '@/lib/schemas/patient';
+import { PatientFormSchema, type PatientFormData } from '@/lib/schemas/patient';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, useFormField } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 
-const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) => void, closeDialog: () => void }) => {
+const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: PatientFormData) => void, closeDialog: () => void, patientData?: Partial<PatientFormData> }) => {
     const { token } = useAuth();
     const { toast } = useToast();
     const form = useForm<PatientFormData>({
         resolver: zodResolver(PatientFormSchema),
-        defaultValues: {
+        defaultValues: patientData || {
             mrn: '',
             fullName: '',
             dateOfBirth: { day: undefined, month: undefined, year: undefined },
@@ -96,7 +96,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
     };
 
     const handleVerifyEligibility = async () => {
-        const patientId = form.getValues('_id'); // Assuming you set this after patient creation/selection
+        const patientId = form.getValues('_id');
         if (!patientId) {
             toast({
                 variant: "destructive",
@@ -152,9 +152,9 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSave)}>
                 <DialogHeader>
-                    <DialogTitle>Register New Patient</DialogTitle>
+                    <DialogTitle>{patientData?._id ? "Edit Patient" : "Register New Patient"}</DialogTitle>
                     <DialogDescription>
-                        Fill in the details to add a new patient to the system.
+                        Fill in the details for the patient record.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-6">
@@ -292,7 +292,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
                     <Button type="submit" disabled={form.formState.isSubmitting}>
-                        {form.formState.isSubmitting ? 'Registering...' : 'Register Patient'}
+                        {form.formState.isSubmitting ? 'Saving...' : 'Save Patient'}
                     </Button>
                 </DialogFooter>
             </form>
@@ -471,5 +471,3 @@ export default function PatientsPage() {
     </div>
   );
 }
-
-  
