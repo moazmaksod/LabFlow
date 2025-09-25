@@ -35,6 +35,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 
 const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) => void, closeDialog: () => void }) => {
+    const { token } = useAuth();
+    const { toast } = useToast();
     const form = useForm<PatientFormData>({
         resolver: zodResolver(PatientFormSchema),
         defaultValues: {
@@ -93,14 +95,57 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
         });
     };
 
-    const handleVerifyEligibility = () => {
-      setIsVerifying(true);
-      setVerificationStatus('verifying');
-      // Simulate an async API call as described in the sprint plan
-      setTimeout(() => {
-        setIsVerifying(false);
-        setVerificationStatus('verified');
-      }, 1500);
+    const handleVerifyEligibility = async () => {
+        const patientId = form.getValues('_id'); // Assuming you set this after patient creation/selection
+        if (!patientId) {
+            toast({
+                variant: "destructive",
+                title: "Cannot Verify Eligibility",
+                description: "Please save the patient record before verifying insurance.",
+            });
+            return;
+        }
+
+        setIsVerifying(true);
+        setVerificationStatus('verifying');
+        
+        try {
+            const response = await fetch(`/api/v1/patients/${patientId}/verify-eligibility`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (response.status === 202) {
+                toast({
+                    title: "Verification Initiated",
+                    description: "The eligibility check is running in the background. The status will update shortly.",
+                });
+                // In a real app with WebSockets, you'd listen for an event.
+                // Here, we'll just simulate the success state after a delay.
+                setTimeout(() => {
+                    setVerificationStatus('verified');
+                    setIsVerifying(false);
+                }, 3000); // Simulate a 3-second background job
+            } else {
+                 const errorData = await response.json();
+                 toast({
+                    variant: "destructive",
+                    title: "Verification Failed",
+                    description: errorData.message || "Could not start eligibility check."
+                 });
+                 setVerificationStatus('failed');
+                 setIsVerifying(false);
+            }
+
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Network Error",
+                description: "Could not connect to the server for verification.",
+            });
+            setVerificationStatus('failed');
+            setIsVerifying(false);
+        }
     }
 
     return (
@@ -214,7 +259,7 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
                             <h4 className="font-medium text-sm">Primary Insurance</h4>
-                            <Button type="button" variant="secondary" size="sm" onClick={handleVerifyEligibility} disabled={isVerifying}>
+                            <Button type="button" variant="secondary" size="sm" onClick={handleVerifyEligibility} disabled={isVerifying || !form.getValues('_id')}>
                                 {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Verify Eligibility
                             </Button>
