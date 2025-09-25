@@ -118,6 +118,30 @@ export const addPatient = async (patient: Omit<Patient, '_id'>): Promise<Patient
 };
 
 // --- Order Data Access ---
+export const findOrderById = async (orderId: string): Promise<any | null> => {
+    const collection = await getOrdersCollection();
+    // This uses an aggregation pipeline to fetch the order and join the patient details
+    const order = await collection.aggregate([
+        { $match: { orderId: orderId } },
+        {
+            $lookup: {
+                from: 'patients',
+                localField: 'patientId',
+                foreignField: '_id',
+                as: 'patientDetails'
+            }
+        },
+        {
+            $unwind: {
+                path: '$patientDetails',
+                preserveNullAndEmptyArrays: true // Keep orders even if patient is somehow deleted
+            }
+        }
+    ]).next();
+
+    return order;
+};
+
 export const addOrder = async (order: Omit<Order, '_id' | 'orderId'>): Promise<Order> => {
     const collection = await getOrdersCollection();
     // Simple order ID generation for the prototype
@@ -127,10 +151,12 @@ export const addOrder = async (order: Omit<Order, '_id' | 'orderId'>): Promise<O
     const finalOrder = {
         ...order,
         orderId: orderId,
+        patientId: new ObjectId(order.patientId),
+        createdBy: new ObjectId(order.createdBy),
         createdAt: new Date(),
         updatedAt: new Date(),
     };
     
     const result = await collection.insertOne(finalOrder as any);
-    return { ...finalOrder, _id: result.insertedId.toHexString() };
+    return { ...finalOrder, _id: result.insertedId.toHexString() } as unknown as Order;
 };
