@@ -122,20 +122,35 @@ export const findOrderById = async (orderId: string): Promise<any | null> => {
     const collection = await getOrdersCollection();
     // This uses an aggregation pipeline to fetch the order and join the patient details
     const order = await collection.aggregate([
-        { $match: { orderId: orderId } },
+        // First, add a field to convert the string patientId to a BSON ObjectId
+        {
+          $addFields: {
+            "patientObjectId": { "$toObjectId": "$patientId" }
+          }
+        },
+        // Then perform the lookup using the new ObjectId field
         {
             $lookup: {
                 from: 'patients',
-                localField: 'patientId',
+                localField: 'patientObjectId',
                 foreignField: '_id',
                 as: 'patientDetails'
             }
         },
+        // Unwind the resulting array (should only be one patient)
         {
             $unwind: {
                 path: '$patientDetails',
                 preserveNullAndEmptyArrays: true // Keep orders even if patient is somehow deleted
             }
+        },
+        // Finally, match for the requested orderId
+        { $match: { orderId: orderId } },
+         // We can remove the temporary field now
+        {
+          $project: {
+            patientObjectId: 0
+          }
         }
     ]).next();
 
