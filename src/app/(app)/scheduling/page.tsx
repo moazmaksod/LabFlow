@@ -66,6 +66,9 @@ const statusColors: {[key: string]: string} = {
     'No-show': 'bg-red-500/20 border-red-500 text-red-800 dark:text-red-300',
 }
 
+const SLOT_HEIGHT_REM = 3; // Corresponds to h-12
+const SLOT_MARGIN_REM = 0.25; // Corresponds to my-1
+
 export default function SchedulingPage() {
    const userAvatar = PlaceHolderImages.find(
     (img) => img.id === 'user-avatar-1'
@@ -121,13 +124,13 @@ export default function SchedulingPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="relative grid grid-cols-[auto_1fr] rounded-lg border">
+          <div className="relative grid grid-cols-[auto_1fr]">
             {/* Time column */}
-            <div className="flex flex-col border-r bg-card">
+            <div className="flex flex-col text-right pr-2">
               {timeSlots.map((time) => (
-                  <div key={time} className="relative h-12 flex-shrink-0 text-right">
+                  <div key={time} className="h-12 my-1 flex-shrink-0 relative">
                   {time.endsWith(':00') && (
-                      <span className="absolute -right-0 -top-2.5 translate-x-full pr-2 text-xs text-muted-foreground">{time}</span>
+                      <span className="absolute -top-2.5 text-xs text-muted-foreground">{time}</span>
                   )}
                   </div>
               ))}
@@ -137,11 +140,11 @@ export default function SchedulingPage() {
             {/* Calendar grid */}
             <div className="relative col-start-2 row-start-1 grid h-full">
                  {/* Grid lines as drop zones */}
-                {timeSlots.map((time, index) => (
+                {timeSlots.map((time) => (
                     <div 
                       key={`grid-${time}`} 
                       className={cn(
-                        "h-12 border-b",
+                        "h-12 border-b my-1",
                          time.endsWith(':00') ? "border-border" : "border-border/50 border-dashed",
                       )}
                       onDragOver={handleDragOver}
@@ -152,12 +155,12 @@ export default function SchedulingPage() {
                 {/* Appointments */}
                 {appointments.map(app => {
                     const topIndex = timeSlots.indexOf(app.time);
-                    const heightInSlots = Math.max(app.duration / 15, 1);
-                    const heightInRem = heightInSlots * 3; // h-12 is 3rem
-
                     if (topIndex === -1) return null;
-
-                    const topPosition = (topIndex * 3); // Each slot is h-12 (3rem)
+                    
+                    const heightInSlots = Math.max(app.duration / 15, 1);
+                    
+                    const topPosition = topIndex * (SLOT_HEIGHT_REM + (SLOT_MARGIN_REM * 2));
+                    const height = (heightInSlots * SLOT_HEIGHT_REM) + ((heightInSlots - 1) * (SLOT_MARGIN_REM * 2));
 
                     return (
                         <div key={app.id} 
@@ -168,7 +171,7 @@ export default function SchedulingPage() {
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
-                             style={{ top: `${topPosition}rem`, height: `${heightInRem}rem`, transition: 'top 0.3s ease-out'}}>
+                             style={{ top: `${topPosition}rem`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
                              <div className="flex items-start gap-2 flex-wrap">
                                 <Avatar className="h-6 w-6">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
