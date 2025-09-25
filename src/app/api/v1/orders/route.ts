@@ -1,8 +1,27 @@
 
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, findPatientById, findTestByCode, addOrder } from '@/lib/api/utils';
+import { getAuthenticatedUser, findPatientById, findTestByCode, addOrder, getOrders } from '@/lib/api/utils';
 import { CreateOrderInputSchema } from '@/lib/schemas/order';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
+
+// GET /api/v1/orders
+// Retrieves all orders
+export async function GET(request: Request) {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    // In a real app, you might filter by physician or patient role
+    // For now, managers and receptionists can see all
+    if (!['receptionist', 'manager', 'technician'].includes(user.role)) {
+         return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
+
+    const orders = await getOrders();
+    return NextResponse.json({ data: orders });
+}
+
 
 // POST /api/v1/orders
 // Creates a new test order

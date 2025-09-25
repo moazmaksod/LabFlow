@@ -21,60 +21,71 @@ import {
 import { PlusCircle, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import type { Order } from '@/lib/schemas/order';
+import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const orders = [
-  {
-    id: 'ORD-001',
-    patient: 'John Doe',
-    doctor: 'Dr. Smith',
-    date: '2024-05-20',
-    total: 'SAR 150.00',
-    status: 'Completed',
-  },
-  {
-    id: 'ORD-002',
-    patient: 'Jane Smith',
-    doctor: 'Dr. Jones',
-    date: '2024-05-21',
-    total: 'SAR 250.00',
-    status: 'In-Progress',
-  },
-  {
-    id: 'ORD-003',
-    patient: 'Alice Johnson',
-    doctor: 'Dr. Brown',
-    date: '2024-05-21',
-    total: 'SAR 75.00',
-    status: 'Awaiting Sample',
-  },
-  {
-    id: 'ORD-004',
-    patient: 'Bob Williams',
-    doctor: 'Dr. White',
-    date: '2024-05-22',
-    total: 'SAR 320.00',
-    status: 'Sample Collected',
-  },
-  {
-    id: 'ORD-005',
-    patient: 'Charlie Brown',
-    doctor: 'Dr. Green',
-    date: '2024-05-22',
-    total: 'SAR 500.00',
-    status: 'Awaiting Validation',
-  },
-];
+type OrderWithPatient = Order & {
+    patientDetails: {
+        _id: string;
+        fullName: string;
+        mrn: string;
+    }
+}
 
 const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' | 'destructive' } = {
     'Completed': 'default',
     'In-Progress': 'secondary',
+    'Pending': 'outline',
     'Awaiting Sample': 'outline',
     'Sample Collected': 'secondary',
-    'Awaiting Validation': 'outline'
+    'Awaiting Validation': 'outline',
+    'Partially Complete': 'secondary'
 };
 
-
 export default function OrdersPage() {
+  const [orders, setOrders] = useState<OrderWithPatient[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { token } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!token) return;
+    
+    const fetchOrders = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/v1/orders', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setOrders(result.data);
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Failed to fetch orders',
+            description: 'Could not retrieve order data from the server.'
+          });
+        }
+      } catch (error) {
+         toast({
+            variant: 'destructive',
+            title: 'Network Error',
+            description: 'Could not connect to the server.',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [token, toast]);
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -104,29 +115,39 @@ export default function OrdersPage() {
               <TableRow>
                 <TableHead>Order ID</TableHead>
                 <TableHead>Patient</TableHead>
-                <TableHead>Referring Doctor</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Total Price</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">
-                     <Link href={`/orders/${order.id}`} className="text-primary hover:underline">
-                        {order.id}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{order.patient}</TableCell>
-                  <TableCell>{order.doctor}</TableCell>
-                  <TableCell>{order.date}</TableCell>
-                  <TableCell>{order.total}</TableCell>
-                  <TableCell>
-                    <Badge variant={statusVariant[order.status] || 'default'}>{order.status}</Badge>
-                  </TableCell>
+              {isLoading ? (
+                 Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell colSpan={4}><Skeleton className="h-6 w-full" /></TableCell>
+                    </TableRow>
+                  ))
+              ) : orders.length > 0 ? (
+                 orders.map((order) => (
+                    <TableRow key={order._id}>
+                      <TableCell className="font-medium">
+                        <Link href={`/orders/${order.orderId}`} className="text-primary hover:underline">
+                            {order.orderId}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{order.patientDetails?.fullName || 'N/A'}</TableCell>
+                      <TableCell>{format(new Date(order.createdAt), 'yyyy-MM-dd')}</TableCell>
+                      <TableCell>
+                        <Badge variant={statusVariant[order.orderStatus] || 'default'}>{order.orderStatus}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : (
+                 <TableRow>
+                    <TableCell colSpan={4} className="text-center h-24">
+                        No orders found.
+                    </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
