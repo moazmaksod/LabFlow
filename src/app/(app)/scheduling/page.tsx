@@ -121,7 +121,7 @@ export default function SchedulingPage() {
           </div>
         </CardHeader>
         <CardContent className="py-6">
-          <div className="relative grid grid-cols-[auto_1fr] h-[92.5rem] overflow-y-auto rounded-lg border">
+          <div className="relative grid grid-cols-[auto_1fr] rounded-lg border pt-4 pb-4">
             {/* Time column */}
             <div className="flex flex-col border-r">
                 {timeSlots.map((time) => (
