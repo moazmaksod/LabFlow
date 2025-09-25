@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { PlusCircle, Search } from 'lucide-react';
+import { CheckCircle, Loader2, PlusCircle, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -50,6 +50,10 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
             insuranceInfo: [{ providerName: '', policyNumber: '', groupNumber: '', isPrimary: true }]
         }
     });
+
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verifying' | 'verified' | 'failed'>('idle');
+
 
     const watchedYear = form.watch("dateOfBirth.year");
     const watchedMonth = form.watch("dateOfBirth.month");
@@ -88,6 +92,16 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
             insuranceInfo: [{ providerName: 'Bupa', policyNumber: 'BUPA-98765', groupNumber: 'GRP-XYZ', isPrimary: true }]
         });
     };
+
+    const handleVerifyEligibility = () => {
+      setIsVerifying(true);
+      setVerificationStatus('verifying');
+      // Simulate an async API call as described in the sprint plan
+      setTimeout(() => {
+        setIsVerifying(false);
+        setVerificationStatus('verified');
+      }, 1500);
+    }
 
     return (
         <Form {...form}>
@@ -197,9 +211,26 @@ const PatientForm = ({ onSave, closeDialog }: { onSave: (data: PatientFormData) 
                     </div>
 
                     <Separator />
-                    <div className="flex justify-between items-center">
-                        <h4 className="font-medium text-sm">Primary Insurance</h4>
-                        <Button type="button" variant="secondary" size="sm">Verify Eligibility</Button>
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                            <h4 className="font-medium text-sm">Primary Insurance</h4>
+                            <Button type="button" variant="secondary" size="sm" onClick={handleVerifyEligibility} disabled={isVerifying}>
+                                {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Verify Eligibility
+                            </Button>
+                        </div>
+                        {verificationStatus === 'verified' && (
+                            <div className="flex items-center gap-2 text-sm text-green-600 p-2 bg-green-500/10 rounded-md">
+                                <CheckCircle className="h-4 w-4" />
+                                <span>Eligibility Verified: Active Coverage. Co-pay: $25.00</span>
+                            </div>
+                        )}
+                        {verificationStatus === 'verifying' && (
+                             <div className="flex items-center gap-2 text-sm text-muted-foreground p-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>Verifying eligibility with provider...</span>
+                            </div>
+                        )}
                     </div>
                     
                      <FormField control={form.control} name="insuranceInfo.0.providerName" render={({ field }) => (
@@ -395,3 +426,5 @@ export default function PatientsPage() {
     </div>
   );
 }
+
+  
