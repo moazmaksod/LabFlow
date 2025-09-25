@@ -146,22 +146,20 @@ export default function SchedulingPage() {
                              draggable={app.status !== 'Completed'}
                              onDragStart={(e) => handleDragStart(e, app.id)}
                              className={cn(
-                                "absolute left-2 right-2 p-3 rounded-lg border",
+                                "absolute left-2 right-2 p-3 rounded-lg border flex items-center gap-3",
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
                              style={{ top: `${top}rem`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
-                            <div className="flex items-start gap-3">
-                                <Avatar className="h-8 w-8">
-                                    {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
-                                    <AvatarFallback>{app.patientName.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="min-w-0">
-                                    <p className="font-medium truncate">{app.patientName}</p>
-                                    <p className="text-sm">{app.time}</p>
-                                    <Badge className="mt-1 opacity-80" variant="secondary">{app.status}</Badge>
-                                </div>
+                            <Avatar className="h-8 w-8">
+                                {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
+                                <AvatarFallback>{app.patientName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-grow">
+                                <p className="font-medium truncate">{app.patientName}</p>
+                                <p className="text-sm">{app.time}</p>
                             </div>
+                            <Badge variant="secondary" className="opacity-80 whitespace-nowrap">{app.status}</Badge>
                         </div>
                     );
                 })}
