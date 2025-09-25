@@ -185,7 +185,7 @@ export default function SchedulingPage() {
                                 statusColors[app.status] || 'bg-gray-500/20',
                                 app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                              )}
-                             style={{ top: `calc(${topPosition}rem + 0.25rem/2)`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
+                             style={{ top: `calc(1rem + ${topPosition}rem + 0.25rem/2)`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
                              <div className="flex items-start gap-2 flex-wrap w-full">
                                 <Avatar className="h-6 w-6">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
