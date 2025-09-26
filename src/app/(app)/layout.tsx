@@ -112,13 +112,13 @@ function AppSidebar() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname.startsWith('/quality-control')} tooltip="Quality Control">
-          <Link href="/quality-control"><ShieldCheck /><span>Quality Control</span></Link>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/quality-control')} tooltip="Quality">
+          <Link href="/quality-control"><ShieldCheck /><span>Quality</span></Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory/search')} tooltip="Inventory Search">
-          <Link href="/inventory/search"><Package /><span>Inventory Search</span></Link>
+        <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory/search')} tooltip="Inventory">
+          <Link href="/inventory/search"><Package /><span>Inventory</span></Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
     </>
