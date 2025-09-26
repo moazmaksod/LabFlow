@@ -36,10 +36,12 @@ const initialTests: Omit<TestCatalog, '_id'>[] = [
     specimenRequirements: { tubeType: 'Lavender Top', minVolume: 3, units: 'mL' },
     turnaroundTime: { routine: { value: 4, units: 'hours' }, stat: { value: 1, units: 'hours' } },
     price: 75.00,
-    isPanel: false,
+    isPanel: true,
+    panelComponents: ['WBC', 'RBC', 'HGB', 'HCT', 'PLT'],
     isActive: true,
     referenceRanges: [
-        { ageMin: 18, ageMax: 99, gender: 'Any', rangeLow: 4.5, rangeHigh: 5.9, units: '10^6/µL', interpretiveText: 'RBC Count' },
+        { ageMin: 18, ageMax: 99, gender: 'Male', rangeLow: 4.5, rangeHigh: 5.9, units: '10^6/µL', interpretiveText: 'RBC Count' },
+        { ageMin: 18, ageMax: 99, gender: 'Female', rangeLow: 4.0, rangeHigh: 5.2, units: '10^6/µL', interpretiveText: 'RBC Count' },
         { ageMin: 18, ageMax: 99, gender: 'Any', rangeLow: 150, rangeHigh: 450, units: '10^3/µL', interpretiveText: 'Platelet Count' }
     ],
     reflexRules: [],
@@ -87,6 +89,62 @@ const initialTests: Omit<TestCatalog, '_id'>[] = [
         { condition: { testCode: 'TSH', operator: 'gt', value: 4.0 }, action: { addTestCode: 'FT4' } }
     ],
   },
+  {
+    testCode: 'LIPID',
+    name: 'Lipid Panel',
+    description: 'Measures fats and fatty substances used as a source of energy by your body, including cholesterol, triglycerides, HDL, and LDL.',
+    specimenRequirements: { tubeType: 'Gold Top', minVolume: 5, units: 'mL' },
+    turnaroundTime: { routine: { value: 12, units: 'hours' }, stat: { value: 2, units: 'hours' } },
+    price: 150.00,
+    isPanel: true,
+    panelComponents: ['CHOL', 'TRIG', 'HDL', 'LDL'],
+    isActive: true,
+    referenceRanges: [],
+    reflexRules: [],
+  },
+  {
+    testCode: 'A1C',
+    name: 'Hemoglobin A1c',
+    description: 'Provides an average of your blood sugar control over the past 2 to 3 months.',
+    specimenRequirements: { tubeType: 'Lavender Top', minVolume: 3, units: 'mL' },
+    turnaroundTime: { routine: { value: 24, units: 'hours' }, stat: { value: 4, units: 'hours' } },
+    price: 85.00,
+    isPanel: false,
+    isActive: true,
+    referenceRanges: [
+        { ageMin: 0, ageMax: 99, gender: 'Any', rangeLow: 4.0, rangeHigh: 5.6, units: '%', interpretiveText: 'Normal' },
+        { ageMin: 0, ageMax: 99, gender: 'Any', rangeLow: 5.7, rangeHigh: 6.4, units: '%', interpretiveText: 'Prediabetes' },
+    ],
+    reflexRules: [],
+  },
+  {
+    testCode: 'NA',
+    name: 'Sodium',
+    description: 'Measures the level of sodium in your blood.',
+    specimenRequirements: { tubeType: 'Gold Top', minVolume: 1, units: 'mL' },
+    turnaroundTime: { routine: { value: 4, units: 'hours' }, stat: { value: 1, units: 'hours' } },
+    price: 35.00,
+    isPanel: false,
+    isActive: true,
+    referenceRanges: [
+        { ageMin: 0, ageMax: 99, gender: 'Any', rangeLow: 135, rangeHigh: 145, units: 'mmol/L', interpretiveText: '' },
+    ],
+    reflexRules: [],
+  },
+   {
+    testCode: 'K',
+    name: 'Potassium',
+    description: 'Measures the level of potassium in your blood.',
+    specimenRequirements: { tubeType: 'Gold Top', minVolume: 1, units: 'mL' },
+    turnaroundTime: { routine: { value: 4, units: 'hours' }, stat: { value: 1, units: 'hours' } },
+    price: 35.00,
+    isPanel: false,
+    isActive: true,
+    referenceRanges: [
+        { ageMin: 0, ageMax: 99, gender: 'Any', rangeLow: 3.5, rangeHigh: 5.2, units: 'mmol/L', interpretiveText: '' },
+    ],
+    reflexRules: [],
+  },
 ];
 
 const initialPatients: Omit<Patient, '_id' | 'createdAt' | 'updatedAt'>[] = [
@@ -113,7 +171,31 @@ const initialPatients: Omit<Patient, '_id' | 'createdAt' | 'updatedAt'>[] = [
             address: { street: '456 Oak Ave', city: 'Metropolis', state: 'NY', zipCode: '10002', country: 'USA' }
         },
         insuranceInfo: [{ providerName: 'National Health', policyNumber: 'NH123456', isPrimary: true }]
-    }
+    },
+    {
+        mrn: 'ED-0003',
+        fullName: 'Emily Davis',
+        dateOfBirth: new Date('1998-01-15T00:00:00.000Z'),
+        gender: 'Female',
+        contactInfo: {
+            phone: '555-0103',
+            email: 'emily.davis@email.com',
+            address: { street: '789 Pine Ln', city: 'Gotham', state: 'NJ', zipCode: '07001', country: 'USA' }
+        },
+        insuranceInfo: [{ providerName: 'Gotham General', policyNumber: 'GG987654', isPrimary: true }]
+    },
+    {
+        mrn: 'MB-0004',
+        fullName: 'Michael Brown',
+        dateOfBirth: new Date('1965-09-30T00:00:00.000Z'),
+        gender: 'Male',
+        contactInfo: {
+            phone: '555-0104',
+            email: 'michael.brown@email.com',
+            address: { street: '101 Birch Rd', city: 'Star City', state: 'CA', zipCode: '90210', country: 'USA' }
+        },
+        insuranceInfo: [{ providerName: 'Coastline Coverage', policyNumber: 'CC555111', isPrimary: true }]
+    },
 ];
 
 
@@ -147,8 +229,6 @@ async function seedDatabase(db: Db) {
         console.log('Seeded `counters` collection.');
 
         console.log('Database seeding complete.');
-    } else {
-        console.log('Database already contains data. Skipping seed process.');
     }
 }
 
@@ -213,5 +293,7 @@ export const getOrdersCollection = () => getCollection<Order>('orders');
 export const getAppointmentsCollection = () => getCollection<Appointment>('appointments');
 export const getAuditLogsCollection = () => getCollection<AuditLog>('auditLogs');
 export const getCountersCollection = () => getCollection<any>('counters');
+
+    
 
     
