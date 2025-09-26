@@ -6,12 +6,19 @@ import { useAuth } from '@/hooks/use-auth';
 import type { Order } from '@/lib/schemas/order';
 import { SampleLabel } from '@/components/label/sample-label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RequisitionForm } from '@/components/label/requisition-form';
 
 type OrderWithPatient = Order & {
     patientDetails: {
         fullName: string;
         mrn: string;
+        dateOfBirth: string | Date;
+        gender: string;
     };
+     physicianDetails?: {
+        _id:string;
+        fullName: string;
+    }
 };
 
 export default function PrintLabelPage() {
@@ -70,7 +77,7 @@ export default function PrintLabelPage() {
     }, [orderId, token]); // Effect depends on the token now.
 
     if (isLoading) {
-        return <div className="p-4"><Skeleton className="h-24 w-80" /></div>;
+        return <div className="p-4"><Skeleton className="w-[210mm] h-[297mm]" /></div>;
     }
 
     if (error) {
@@ -81,17 +88,17 @@ export default function PrintLabelPage() {
         return <div className="p-4 text-red-500 text-sm font-sans">Error: Could not find Order.</div>;
     }
 
-    // Determine which barcode to show
-    const barcodeValue = accessionNumber || orderIdentifier || order.orderId;
     const isRequisition = !accessionNumber;
 
-    // Find the relevant sample. For requisitions, we just use the first one.
-    const sample = accessionNumber 
-        ? order.samples.find(s => s.accessionNumber === accessionNumber)
-        : order.samples[0];
-        
+    if (isRequisition) {
+        return <RequisitionForm order={order} />;
+    }
+
+    // --- Logic for printing individual sample labels ---
+
+    const sample = order.samples.find(s => s.accessionNumber === accessionNumber);
     if (!sample) {
-        return <div className="p-4 text-red-500 text-sm font-sans">Error: Sample not found.</div>
+        return <div className="p-4 text-red-500 text-sm font-sans">Error: Sample with accession number {accessionNumber} not found.</div>
     }
 
     return (
@@ -100,11 +107,10 @@ export default function PrintLabelPage() {
                 patientName={order.patientDetails.fullName}
                 mrn={order.patientDetails.mrn}
                 orderId={order.orderId}
-                barcodeValue={barcodeValue}
+                barcodeValue={accessionNumber!}
                 sampleType={sample.sampleType}
-                isRequisition={isRequisition}
+                isRequisition={false}
             />
         </div>
     );
 }
-

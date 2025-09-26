@@ -235,9 +235,21 @@ export const findOrderById = async (orderId: string): Promise<any | null> => {
             }
         },
         {
+          $addFields: {
+            "physicianDetails.fullName": {
+                $ifNull: [
+                    "$physicianDetails.fullName",
+                    { $concat: ["$physicianDetails.firstName", " ", "$physicianDetails.lastName"] }
+                ]
+            }
+          }
+        },
+        {
           $project: {
             patientObjectId: 0,
-            physicianObjectId: 0
+            physicianObjectId: 0,
+            "physicianDetails.passwordHash": 0,
+            "physicianDetails.role": 0,
           }
         }
     ];
