@@ -57,6 +57,7 @@ export const PatientSchema = z.object({
   insuranceInfo: z.array(InsuranceInfoSchema).optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
+  createdBy: z.string().optional(), // ObjectId as string
 });
 
 export type Patient = z.infer<typeof PatientSchema>;
@@ -65,6 +66,7 @@ export type Patient = z.infer<typeof PatientSchema>;
 export const PatientFormSchema = PatientSchema.omit({
     createdAt: true,
     updatedAt: true,
+    createdBy: true,
     dateOfBirth: true,
 }).extend({
     dateOfBirth: DateOfBirthSchema,

@@ -1,8 +1,9 @@
 
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, getPatients, findPatientByMrn, addPatient } from '@/lib/api/utils';
+import { getAuthenticatedUser, getPatients, findPatientByMrn, addPatient, createAuditLog } from '@/lib/api/utils';
 import { PatientFormSchema } from '@/lib/schemas/patient';
 import { z } from 'zod';
+import { ObjectId } from 'mongodb';
 
 // GET /api/v1/patients
 // Lists all patients, or searches if query params are provided
@@ -58,11 +59,26 @@ export async function POST(request: Request) {
   const patientWithTimestamps = {
       ...rest,
       dateOfBirth: dobDate,
+      createdBy: new ObjectId(user._id),
       createdAt: new Date(),
       updatedAt: new Date()
   };
 
   const newPatient = await addPatient(patientWithTimestamps as any);
+  
+  // Create an audit log for this event
+  await createAuditLog({
+    action: 'PATIENT_CREATE',
+    userId: user._id,
+    entity: {
+      collectionName: 'patients',
+      documentId: newPatient._id,
+    },
+    details: {
+      mrn: newPatient.mrn,
+      fullName: newPatient.fullName,
+    },
+  });
 
   return NextResponse.json({ data: newPatient }, { status: 201 });
 }
