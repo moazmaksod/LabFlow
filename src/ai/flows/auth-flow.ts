@@ -29,10 +29,9 @@ export async function login(input: AuthLoginInput): Promise<string | null> {
   // In a real app, you'd also check the password hash here.
   if (userFromDb) {
     // Construct the final user object for the token, ensuring fullName exists.
-    // This handles both new users (with fullName) and legacy users (with firstName/lastName).
     const userForToken: User = {
         _id: userFromDb._id.toString(),
-        fullName: userFromDb.fullName || `${userFromDb.firstName} ${userFromDb.lastName}`,
+        fullName: userFromDb.fullName, // The DB should always have fullName now
         email: userFromDb.email,
         role: userFromDb.role,
     }
