@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/api/utils';
+import { getAuthenticatedUser, getNextSequenceValue } from '@/lib/api/utils';
 import { getOrdersCollection } from '@/lib/mongodb';
 import { z } from 'zod';
 
@@ -44,8 +44,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Sample has already been accessioned or processed.' }, { status: 409 });
   }
   
-  // Generate a new, unique accessionNumber
-  const accessionNumber = `ACC-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+  // Generate a new, sequential accessionNumber
+  const nextId = await getNextSequenceValue('accessionNumber');
+  const accessionNumber = `ACC-${new Date().getFullYear()}-${nextId.toString().padStart(5, '0')}`;
+
 
   // Update the sample's status, add the accession number and timestamp
   const updateResult = await ordersCollection.updateOne(

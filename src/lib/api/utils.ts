@@ -5,7 +5,7 @@ import type { Patient } from '@/lib/schemas/patient';
 import type { Order } from '@/lib/schemas/order';
 import type { Appointment } from '@/lib/schemas/appointment';
 import { headers } from 'next/headers';
-import { getAppointmentsCollection, getOrdersCollection, getPatientsCollection, getUsersCollection, getTestsCollection } from '@/lib/mongodb';
+import { getAppointmentsCollection, getCountersCollection, getOrdersCollection, getPatientsCollection, getUsersCollection, getTestsCollection } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 
@@ -37,6 +37,28 @@ export async function getAuthenticatedUser(): Promise<User | null> {
   }
 
   return null;
+}
+
+/**
+ * Gets the next value from a sequence counter collection.
+ * @param sequenceName - The name of the sequence (e.g., 'accessionNumber').
+ * @returns The next number in the sequence.
+ */
+export async function getNextSequenceValue(sequenceName: string): Promise<number> {
+    const collection = await getCountersCollection();
+    const sequenceDocument = await collection.findOneAndUpdate(
+        { _id: sequenceName },
+        { $inc: { sequence_value: 1 } },
+        { returnDocument: 'after', upsert: true }
+    );
+    // If the counter was just created, sequenceDocument will be null initially, but the upsert guarantees it exists.
+    // A second find would be needed for the very first call, or we can handle it like this.
+    if (sequenceDocument) {
+        return sequenceDocument.sequence_value;
+    }
+    // Handle the edge case of the very first creation
+    const newCounter = await collection.findOne({ _id: sequenceName });
+    return newCounter?.sequence_value || 1;
 }
 
 // --- User Data Access ---
@@ -106,7 +128,7 @@ export const getPatients = async (query: any = {}): Promise<Patient[]> => {
 };
 export const findPatientById = async (id: string): Promise<Patient | null> => {
     const collection = await getPatientsCollection();
-    return await collection.findOne({ _id: new ObjectId(id) as any }) as Patient | null;
+    return await collection.findOne({ _id: new ObjectId(d) as any }) as Patient | null;
 };
 export const findPatientByMrn = async (mrn: string): Promise<Patient | null> => {
     const collection = await getPatientsCollection();

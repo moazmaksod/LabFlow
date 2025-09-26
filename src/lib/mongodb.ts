@@ -102,6 +102,7 @@ const initialTests: Omit<TestCatalog, '_id'>[] = [
 async function seedDatabase(db: Db) {
     const usersCollection = db.collection('users');
     const testsCollection = db.collection('testCatalog');
+    const countersCollection = db.collection('counters');
 
     const userCount = await usersCollection.countDocuments();
     if (userCount === 0) {
@@ -113,6 +114,12 @@ async function seedDatabase(db: Db) {
     if (testCount === 0) {
         console.log('Seeding `testCatalog` collection with initial data...');
         await testsCollection.insertMany(initialTests as any[]);
+    }
+
+    const accessionCounter = await countersCollection.findOne({ _id: 'accessionNumber' });
+    if (!accessionCounter) {
+        console.log('Seeding `counters` collection with initial accession number...');
+        await countersCollection.insertOne({ _id: 'accessionNumber', sequence_value: 0 });
     }
 }
 
@@ -169,3 +176,4 @@ export const getTestsCollection = () => getCollection<TestCatalog>('testCatalog'
 export const getPatientsCollection = () => getCollection<Patient>('patients');
 export const getOrdersCollection = () => getCollection<Order>('orders');
 export const getAppointmentsCollection = () => getCollection<Appointment>('appointments');
+export const getCountersCollection = () => getCollection<any>('counters');
