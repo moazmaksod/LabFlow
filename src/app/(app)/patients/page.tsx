@@ -33,6 +33,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, useFormField } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: PatientFormData) => void, closeDialog: () => void, patientData?: Partial<PatientFormData> }) => {
     const { token } = useAuth();
@@ -148,6 +149,8 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
         }
     }
 
+    const isVerifyButtonDisabled = isVerifying || !form.getValues('_id');
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSave)}>
@@ -259,10 +262,24 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
                     <div className="space-y-2">
                         <div className="flex justify-between items-center">
                             <h4 className="font-medium text-sm">Primary Insurance</h4>
-                            <Button type="button" variant="secondary" size="sm" onClick={handleVerifyEligibility} disabled={isVerifying || !form.getValues('_id')}>
-                                {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Verify Eligibility
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        {/* The button is wrapped in a span for the tooltip to work when disabled */}
+                                        <span tabIndex={isVerifyButtonDisabled ? 0 : -1}>
+                                            <Button type="button" variant="secondary" size="sm" onClick={handleVerifyEligibility} disabled={isVerifyButtonDisabled}>
+                                                {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                Verify Eligibility
+                                            </Button>
+                                        </span>
+                                    </TooltipTrigger>
+                                    {isVerifyButtonDisabled && !isVerifying && (
+                                        <TooltipContent>
+                                            <p>Please save the patient record first to enable eligibility checks.</p>
+                                        </TooltipContent>
+                                    )}
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
                         {verificationStatus === 'verified' && (
                             <div className="flex items-center gap-2 text-sm text-green-600 p-2 bg-green-500/10 rounded-md">
