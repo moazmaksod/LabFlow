@@ -21,7 +21,8 @@ export default function PrintLabelPage() {
     const { token } = useAuth();
     
     const orderId = params.id as string;
-    const accessionNumber = searchParams.get('accessionNumber');
+    const accessionNumber = searchParams.get('accession');
+    const orderIdentifier = searchParams.get('order');
     
     const [order, setOrder] = useState<OrderWithPatient | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -45,6 +46,7 @@ export default function PrintLabelPage() {
             setIsLoading(true);
             setError(null);
             try {
+                // The order ID in the URL for this route is the human-readable one.
                 const response = await fetch(`/api/v1/orders/${orderId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
@@ -75,13 +77,21 @@ export default function PrintLabelPage() {
         return <div className="p-4 text-red-500 text-sm font-sans">Error: {error}</div>;
     }
 
-    if (!order || !accessionNumber) {
-        return <div className="p-4 text-red-500 text-sm font-sans">Error: Could not find Order or Accession Number.</div>;
+    if (!order) {
+        return <div className="p-4 text-red-500 text-sm font-sans">Error: Could not find Order.</div>;
     }
 
-    const sample = order.samples.find(s => s.accessionNumber === accessionNumber);
+    // Determine which barcode to show
+    const barcodeValue = accessionNumber || orderIdentifier || order.orderId;
+    const isRequisition = !accessionNumber;
+
+    // Find the relevant sample. For requisitions, we just use the first one.
+    const sample = accessionNumber 
+        ? order.samples.find(s => s.accessionNumber === accessionNumber)
+        : order.samples[0];
+        
     if (!sample) {
-        return <div className="p-4 text-red-500 text-sm font-sans">Error: Sample with accession number {accessionNumber} not found in this order.</div>
+        return <div className="p-4 text-red-500 text-sm font-sans">Error: Sample not found.</div>
     }
 
     return (
@@ -90,8 +100,9 @@ export default function PrintLabelPage() {
                 patientName={order.patientDetails.fullName}
                 mrn={order.patientDetails.mrn}
                 orderId={order.orderId}
-                accessionNumber={accessionNumber}
+                barcodeValue={barcodeValue}
                 sampleType={sample.sampleType}
+                isRequisition={isRequisition}
             />
         </div>
     );

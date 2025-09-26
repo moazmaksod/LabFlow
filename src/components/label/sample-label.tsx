@@ -9,7 +9,9 @@ const Barcode = ({ text, height = 50 }: { text: string, height?: number }) => {
     const codes: { [key: string]: string } = {
         '0': '11011001100', '1': '11001101100', '2': '11001100110', '3': '10010011000', '4': '10010001100', '5': '10001001100', '6': '10011001000',
         '7': '10011000100', '8': '10001100100', '9': '11001001000', 'A': '11010001010', 'B': '11010100010', 'C': '10110000100', 'D': '10001011000',
-        '-': '10100011000', 'O': '10010111000', 'R': '10011101000', 'C': '10011100010', 'D': '10110000100', 'S': '11101011000', ' ': '11001011100'
+        'E': '10000101100', 'F': '10000110100', 'G': '10110001000', 'H': '10110000100', 'I': '10010110000', 'J': '10010011000', 'K': '10001011000',
+        'L': '10001001100', 'M': '10001101000', 'N': '10001100100', 'O': '10010111000', 'P': '10011101000', 'R': '10011100010', 'S': '11101011000',
+        '-': '10100011000', ' ': '11001011100'
     };
     
     // Start character for Code 128 B
@@ -21,7 +23,7 @@ const Barcode = ({ text, height = 50 }: { text: string, height?: number }) => {
     let checksum = 104; // Start value for Code B
 
     for (let i = 0; i < text.length; i++) {
-        const char = text[i];
+        const char = text[i].toUpperCase();
         let charBinary = '';
         let charValue = 0;
 
@@ -30,7 +32,7 @@ const Barcode = ({ text, height = 50 }: { text: string, height?: number }) => {
             charValue = parseInt(char);
         } else if (char >= 'A' && char <= 'Z') {
             charBinary = codes[char] || '10100011000'; // fallback to '-'
-            charValue = char.charCodeAt(0) - 65 + 10;
+            charValue = char.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
         } else if (char === '-') {
             charBinary = codes['-'];
             charValue = 39;
@@ -43,19 +45,31 @@ const Barcode = ({ text, height = 50 }: { text: string, height?: number }) => {
     }
     
     const checksumValue = checksum % 103;
-    const checksumChar = Object.keys(codes).find(key => {
-        if(key >= '0' && key <= '9') return parseInt(key) === checksumValue;
-        if(key >= 'A' && key <= 'Z') return key.charCodeAt(0) - 65 + 10 === checksumValue;
-        return false;
-    }) || '0';
+    let checksumCharKey = '';
 
-    binaryString += codes[checksumChar];
+    for (const key in codes) {
+        let value = 0;
+         if (key >= '0' && key <= '9') {
+            value = parseInt(key);
+        } else if (key >= 'A' && key <= 'Z') {
+            value = key.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+        } else if (key === '-') {
+            value = 39;
+        }
+        if (value === checksumValue) {
+            checksumCharKey = key;
+            break;
+        }
+    }
+    checksumCharKey = checksumCharKey || ' '; // fallback
+
+    binaryString += codes[checksumCharKey];
     binaryString += stopChar;
 
     const bars = [];
     let x = 0;
     for (let i = 0; i < binaryString.length; i++) {
-        const barWidth = 1; // Width of each bar
+        const barWidth = 1.2; // Width of each bar
         if (binaryString[i] === '1') {
             bars.push(<rect key={i} x={x} y={0} width={barWidth} height={height} fill="black" />);
         }
@@ -74,32 +88,34 @@ interface SampleLabelProps {
     patientName: string;
     mrn: string;
     orderId: string;
-    accessionNumber: string;
+    barcodeValue: string;
     sampleType: string;
+    isRequisition: boolean;
 }
 
 export const SampleLabel: React.FC<SampleLabelProps> = ({
     patientName,
     mrn,
     orderId,
-    accessionNumber,
+    barcodeValue,
     sampleType,
+    isRequisition,
 }) => {
     return (
-        <div style={{ width: '3.5in', height: '1.5in', fontFamily: 'sans-serif', fontSize: '10pt', border: '1px solid #ccc', padding: '0.1in' }} className="flex flex-col justify-between">
+        <div style={{ width: '3.5in', height: '2in', fontFamily: 'sans-serif', fontSize: '10pt', border: '1px solid #ccc', padding: '0.1in' }} className="flex flex-col justify-between bg-white text-black">
             <div className="flex justify-between items-start">
-                <div className='max-w-40'>
-                    <p className="font-bold truncate">{patientName}</p>
+                <div className='max-w-48'>
+                    <p className="font-bold truncate text-base">{patientName}</p>
                     <p>MRN: {mrn}</p>
                 </div>
                 <div>
-                     <p className='text-right'>Order: {orderId}</p>
+                     <p className='text-right font-semibold'>{isRequisition ? 'REQUISITION' : 'SAMPLE'}</p>
                      <p className='text-right'>{sampleType}</p>
                 </div>
             </div>
             <div className="text-center">
-                <Barcode text={accessionNumber} height={30} />
-                <p className="text-sm font-mono tracking-widest">{accessionNumber}</p>
+                <Barcode text={barcodeValue} height={40} />
+                <p className="text-sm font-mono tracking-widest pt-1">{barcodeValue}</p>
             </div>
             <div className='flex justify-between text-xs'>
                 <p>LabFlow Diagnostics</p>

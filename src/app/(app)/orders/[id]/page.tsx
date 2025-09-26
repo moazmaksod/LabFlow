@@ -65,6 +65,8 @@ export default function OrderDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const canEditResults = user?.role === 'technician' || user?.role === 'manager';
+  const isReceptionist = user?.role === 'receptionist';
+
 
   useEffect(() => {
     if (!id || !token) return;
@@ -100,9 +102,9 @@ export default function OrderDetailsPage() {
     fetchOrder();
   }, [id, token, toast]);
 
-  const handlePrintLabel = (sampleAccessionNumber: string) => {
-    const printUrl = `/print/orders/${id}/print?accessionNumber=${sampleAccessionNumber}`;
-    const printWindow = window.open(printUrl, '_blank', 'width=400,height=200');
+  const handlePrint = (barcodeValue: string, type: 'accession' | 'order') => {
+    const printUrl = `/print/orders/${id}/print?${type}=${barcodeValue}`;
+    const printWindow = window.open(printUrl, '_blank', 'width=400,height=250');
     
     // Pass the token to the new window via sessionStorage
     if (printWindow && token) {
@@ -175,7 +177,12 @@ export default function OrderDetailsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-             <Button><Save className="mr-2 h-4 w-4" /> Save Changes</Button>
+            {isReceptionist && (
+              <Button onClick={() => handlePrint(orderDetails.orderId, 'order')}>
+                <Printer className="mr-2 h-4 w-4" /> Print Requisition
+              </Button>
+            )}
+             {!isReceptionist && <Button><Save className="mr-2 h-4 w-4" /> Save Changes</Button>}
         </div>
       </div>
 
@@ -189,14 +196,16 @@ export default function OrderDetailsPage() {
                           Accession Number: {sample.accessionNumber || 'Not yet accessioned'}
                       </CardDescription>
                     </div>
-                    <Button 
-                      variant="outline"
-                      disabled={!sample.accessionNumber}
-                      onClick={() => handlePrintLabel(sample.accessionNumber!)}
-                    >
-                      <Printer className="mr-2 h-4 w-4" /> 
-                      Print Label
-                    </Button>
+                    {!isReceptionist && (
+                      <Button 
+                        variant="outline"
+                        disabled={!sample.accessionNumber}
+                        onClick={() => handlePrint(sample.accessionNumber!, 'accession')}
+                      >
+                        <Printer className="mr-2 h-4 w-4" /> 
+                        Print Label
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
