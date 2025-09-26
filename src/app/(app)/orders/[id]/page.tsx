@@ -340,6 +340,10 @@ export default function OrderDetailsPage() {
               <p className="text-sm font-medium text-muted-foreground">Referring Doctor</p>
               <p>{orderDetails.physicianDetails?.fullName || 'N/A'}</p>
             </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Billing Type</p>
+              <p>{orderDetails.billingType}</p>
+            </div>
              <div>
               <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
               <p className="font-semibold text-lg">${totalOrderPrice.toFixed(2)}</p>

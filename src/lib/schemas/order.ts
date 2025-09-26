@@ -47,6 +47,7 @@ export const OrderSchema = z.object({
   icd10Code: z.string(),
   orderStatus: z.enum(['Pending', 'Partially Complete', 'Complete', 'Cancelled']).default('Pending'),
   priority: z.enum(['Routine', 'STAT']).default('Routine'),
+  billingType: z.enum(['Insurance', 'Self-Pay']).default('Insurance'),
   paymentStatus: z.enum(['Paid', 'Unpaid', 'Waived']).default('Unpaid'),
   clinicalJustification: z.string().optional(), // Required for STAT
   samples: z.array(SampleSchema),
@@ -69,6 +70,7 @@ export const CreateOrderInputSchema = z.object({
     physicianId: z.string().optional(),
     icd10Code: z.string().min(1, 'ICD-10 code is required'),
     priority: z.enum(['Routine', 'STAT']).default('Routine'),
+    billingType: z.enum(['Insurance', 'Self-Pay']).default('Insurance'),
     testCodes: z.array(z.string()).min(1, 'At least one test must be selected'),
     notes: z.string().optional(),
 });

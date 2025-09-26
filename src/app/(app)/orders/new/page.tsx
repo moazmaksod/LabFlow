@@ -25,6 +25,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateOrderInput, CreateOrderInputSchema } from '@/lib/schemas/order';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 type FormValues = CreateOrderInput & {
     physicianSearch?: string;
@@ -55,6 +57,7 @@ export default function NewOrderPage() {
             icd10Code: '',
             testCodes: [],
             priority: 'Routine',
+            billingType: 'Insurance',
             notes: '',
         }
     });
@@ -145,6 +148,9 @@ export default function NewOrderPage() {
     const handleSelectPatient = (patient: Patient) => {
         setSelectedPatient(patient);
         form.setValue('patientId', patient._id);
+        // Default billing type based on patient's insurance info
+        const hasInsurance = patient.insuranceInfo && patient.insuranceInfo.length > 0;
+        form.setValue('billingType', hasInsurance ? 'Insurance' : 'Self-Pay');
         setPatientSearchTerm('');
         setPatientSearchResults([]);
     };
@@ -273,6 +279,43 @@ export default function NewOrderPage() {
                     </FormItem>
                     )}
                 />
+
+                 {/* Billing Type */}
+                <FormField
+                    control={form.control}
+                    name="billingType"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3">
+                        <FormLabel>Billing Type for this Order</FormLabel>
+                        <FormControl>
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex items-center space-x-4"
+                            >
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                <RadioGroupItem value="Insurance" />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                Bill Insurance
+                                </FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                <RadioGroupItem value="Self-Pay" />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                Self-Pay
+                                </FormLabel>
+                            </FormItem>
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
 
                 {/* Referring Physician */}
                 <FormField
