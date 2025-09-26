@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, findPatientById, findTestByCode, addOrder, getOrders } from '@/lib/api/utils';
+import { getAuthenticatedUser, findPatientById, findTestByCode, addOrder, getOrders, createAuditLog } from '@/lib/api/utils';
 import { CreateOrderInputSchema } from '@/lib/schemas/order';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import { ObjectId } from 'mongodb';
@@ -50,13 +50,13 @@ export async function POST(request: Request) {
 
     const { patientId, testCodes, ...orderData } = validation.data;
 
-    // --- Step 2.1: Validate patient existence ---
+    // --- Validate patient existence ---
     const patient = await findPatientById(patientId);
     if (!patient) {
         return NextResponse.json({ message: `Patient with ID ${patientId} not found.` }, { status: 404 });
     }
 
-    // --- Step 2.2: Validate each test code ---
+    // --- Validate each test code ---
     const foundTests: TestCatalog[] = [];
     for (const code of testCodes) {
         const test = await findTestByCode(code);
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         foundTests.push(test);
     }
     
-    // --- Step 2.3: Perform the "snapshotting" process ---
+    // --- Perform the "snapshotting" process ---
 
     // Group tests by required sample type to model real-world samples
     const samplesByTubeType = foundTests.reduce((acc, test) => {
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
                 return {
                     testCode: test.testCode,
                     name: test.name,
-                    price: test.price, // Snapshot the price
+                    price: test.price, // Snapshot the price at time of order
                     status: 'Pending',
                     resultUnits: range?.units || test.specimenRequirements.units,
                     referenceRange: formattedRange,
@@ -100,17 +100,34 @@ export async function POST(request: Request) {
         };
     });
     
-    // --- Steps 2.4 & 2.5: Generate ID and Save Order ---
+    // --- Generate ID and Save Order ---
     const orderToCreate = {
         patientId,
         ...orderData,
         samples: orderSamples,
         orderStatus: 'Pending',
-        paymentStatus: 'Unpaid',
+        paymentStatus: orderData.billingType === 'Self-Pay' ? 'Unpaid' : 'Waived', // Waived for insurance, Unpaid for self-pay
         createdBy: user._id,
+        payments: [],
     };
     
     const newOrder = await addOrder(orderToCreate);
+    
+    // --- Create an audit log for the order creation event ---
+    await createAuditLog({
+        action: 'ORDER_CREATE',
+        userId: user._id,
+        entity: {
+            collectionName: 'orders',
+            documentId: newOrder._id,
+        },
+        details: {
+            orderId: newOrder.orderId,
+            patientId: newOrder.patientId,
+            testCount: newOrder.samples.reduce((acc, s) => acc + s.tests.length, 0),
+        },
+    });
+
 
     return NextResponse.json({ data: newOrder }, { status: 201 });
 }
