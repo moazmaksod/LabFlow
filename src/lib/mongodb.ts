@@ -26,6 +26,7 @@ const initialUsers: Omit<User, '_id'>[] = [
     { fullName: 'Maria Garcia', email: 'maria.garcia@labflow.med', role: 'technician' },
     { fullName: 'Dr. Ben Carter', email: 'ben.carter@clinic.com', role: 'physician' },
     { fullName: 'Sarah Johnson', email: 'sarah.johnson@email.com', role: 'patient' },
+    { fullName: 'Michael Scott', email: 'michael.scott@dundermifflin.com', role: 'patient' },
 ];
 
 const initialTests: Omit<TestCatalog, '_id'>[] = [
@@ -196,40 +197,66 @@ const initialPatients: Omit<Patient, '_id' | 'createdAt' | 'updatedAt'>[] = [
         },
         insuranceInfo: [{ providerName: 'Coastline Coverage', policyNumber: 'CC555111', isPrimary: true }]
     },
+     {
+        mrn: 'MS-0005',
+        fullName: 'Michael Scott',
+        dateOfBirth: new Date('1964-03-15T00:00:00.000Z'),
+        gender: 'Male',
+        contactInfo: {
+            phone: '555-0105',
+            email: 'michael.scott@dundermifflin.com',
+            address: { street: '1725 Slough Ave', city: 'Scranton', state: 'PA', zipCode: '18505', country: 'USA' }
+        },
+        insuranceInfo: [{ providerName: 'Dunder Mifflin', policyNumber: 'DM-12345', isPrimary: true }]
+    },
 ];
 
 
 async function seedDatabase(db: Db) {
-    const usersCollection = db.collection('users');
-    const userCount = await usersCollection.countDocuments();
-    
-    // Only seed if the users collection is empty
-    if (userCount === 0) {
-        console.log('Empty `users` collection detected. Seeding database with initial data...');
-        
-        const testsCollection = db.collection('testCatalog');
-        const patientsCollection = db.collection('patients');
-        const countersCollection = db.collection('counters');
-
-        await usersCollection.insertMany(initialUsers as any[]);
-        console.log('Seeded `users` collection.');
-
-        await testsCollection.insertMany(initialTests as any[]);
-        console.log('Seeded `testCatalog` collection.');
-        
-        const patientsWithTimestamps = initialPatients.map(p => ({
-            ...p,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        }));
-        await patientsCollection.insertMany(patientsWithTimestamps as any[]);
-        console.log('Seeded `patients` collection.');
-
-        await countersCollection.insertOne({ _id: 'accessionNumber', sequence_value: 0 });
-        console.log('Seeded `counters` collection.');
-
-        console.log('Database seeding complete.');
+    if (process.env.POPULATE_DB !== 'true') {
+        console.log('Skipping database seeding as POPULATE_DB is not set to true.');
+        return;
     }
+    
+    console.log('POPULATE_DB is true. Wiping and seeding database...');
+    
+    // List all collections to wipe
+    const collectionsToWipe = ['users', 'testCatalog', 'patients', 'counters', 'orders', 'appointments', 'auditLogs'];
+    for (const name of collectionsToWipe) {
+        try {
+            await db.dropCollection(name);
+            console.log(`Dropped collection: ${name}`);
+        } catch (error: any) {
+            if (error.codeName === 'NamespaceNotFound') {
+                console.log(`Collection ${name} not found, skipping drop.`);
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    const usersCollection = db.collection('users');
+    await usersCollection.insertMany(initialUsers as any[]);
+    console.log(`Seeded ${initialUsers.length} users.`);
+
+    const testsCollection = db.collection('testCatalog');
+    await testsCollection.insertMany(initialTests as any[]);
+    console.log(`Seeded ${initialTests.length} tests.`);
+    
+    const patientsCollection = db.collection('patients');
+    const patientsWithTimestamps = initialPatients.map(p => ({
+        ...p,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    }));
+    await patientsCollection.insertMany(patientsWithTimestamps as any[]);
+    console.log(`Seeded ${initialPatients.length} patients.`);
+
+    const countersCollection = db.collection('counters');
+    await countersCollection.insertOne({ _id: 'accessionNumber', sequence_value: 0 });
+    console.log('Seeded `counters` collection.');
+
+    console.log('Database seeding complete.');
 }
 
 async function applyIndexes(db: Db) {
@@ -269,7 +296,7 @@ async function connectToDatabase() {
   await client.connect();
   const db = client.db(dbName);
   
-  // Seed the database with initial data ONLY if it's empty
+  // Seed the database with initial data
   await seedDatabase(db);
   // Ensure all required indexes are applied
   await applyIndexes(db);
