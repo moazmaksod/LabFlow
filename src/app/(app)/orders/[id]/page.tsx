@@ -100,6 +100,15 @@ export default function OrderDetailsPage() {
     fetchOrder();
   }, [id, token, toast]);
 
+  const handlePrintLabel = (sampleAccessionNumber: string) => {
+    const printUrl = `/orders/${id}/print?accessionNumber=${sampleAccessionNumber}`;
+    const printWindow = window.open(printUrl, '_blank', 'width=400,height=200');
+    printWindow?.addEventListener('load', () => {
+        printWindow.print();
+    });
+  };
+
+
   if (isLoading) {
     return (
         <div className="space-y-8">
@@ -158,7 +167,6 @@ export default function OrderDetailsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="outline"><Printer className="mr-2 h-4 w-4" /> Print Label</Button>
              <Button><Save className="mr-2 h-4 w-4" /> Save Changes</Button>
         </div>
       </div>
@@ -166,10 +174,22 @@ export default function OrderDetailsPage() {
         {orderDetails.samples.map((sample, index) => (
             <Card key={sample.accessionNumber || index}>
                 <CardHeader>
-                    <CardTitle>Sample {index + 1}: {sample.sampleType}</CardTitle>
-                    <CardDescription>
-                        Accession Number: {sample.accessionNumber || 'Not yet accessioned'}
-                    </CardDescription>
+                  <div className='flex justify-between items-start'>
+                    <div>
+                      <CardTitle>Sample {index + 1}: {sample.sampleType}</CardTitle>
+                      <CardDescription>
+                          Accession Number: {sample.accessionNumber || 'Not yet accessioned'}
+                      </CardDescription>
+                    </div>
+                    <Button 
+                      variant="outline"
+                      disabled={!sample.accessionNumber}
+                      onClick={() => handlePrintLabel(sample.accessionNumber!)}
+                    >
+                      <Printer className="mr-2 h-4 w-4" /> 
+                      Print Label
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                     <Table>
