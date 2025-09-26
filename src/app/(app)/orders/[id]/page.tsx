@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ClipboardList, Printer, Save } from 'lucide-react';
+import { ClipboardList, Printer, Save, CreditCard, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -45,6 +45,11 @@ const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' } = {
   'Awaiting Validation': 'outline',
   'Pending': 'outline',
   'Verified': 'default',
+};
+const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outline' } = {
+  'Paid': 'default',
+  'Unpaid': 'destructive',
+  'Waived': 'outline',
 };
 const statuses = ['In-Progress', 'AwaitingVerification', 'Verified', 'Cancelled'];
 
@@ -166,7 +171,19 @@ export default function OrderDetailsPage() {
         printWindow.print();
         printWindow.close();
     }, 500);
-};
+  };
+  
+  const handleMarkAsPaid = async () => {
+      // In a real app this would call a PUT endpoint to update the order.
+      // For this prototype, we'll just optimistically update the UI.
+      if (orderDetails) {
+          setOrderDetails({ ...orderDetails, paymentStatus: 'Paid' });
+          toast({
+              title: "Payment Recorded",
+              description: `Order ${orderDetails.orderId} marked as Paid.`,
+          });
+      }
+  }
 
 
   if (isLoading) {
@@ -199,8 +216,7 @@ export default function OrderDetailsPage() {
 
   const totalOrderPrice = orderDetails.samples.reduce((sampleTotal, sample) => {
       const testsTotal = sample.tests.reduce((testTotal, test) => {
-          // This is a simplification. We'd need to look up the price from the catalog snapshot
-          return testTotal + 75; // Placeholder price per test
+          return testTotal + (test.price || 0); // Use the snapshotted price
       }, 0);
       return sampleTotal + testsTotal;
   }, 0);
@@ -313,7 +329,7 @@ export default function OrderDetailsPage() {
       
        <Card>
         <CardHeader>
-            <CardTitle>Order Summary</CardTitle>
+            <CardTitle>Order Summary & Billing</CardTitle>
         </CardHeader>
         <CardContent className="grid md:grid-cols-3 gap-4">
              <div>
@@ -326,7 +342,7 @@ export default function OrderDetailsPage() {
             </div>
              <div>
               <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-              <p>${totalOrderPrice.toFixed(2)}</p>
+              <p className="font-semibold text-lg">${totalOrderPrice.toFixed(2)}</p>
             </div>
              <div>
               <p className="text-sm font-medium text-muted-foreground">Overall Status</p>
@@ -334,7 +350,19 @@ export default function OrderDetailsPage() {
             </div>
              <div>
               <p className="text-sm font-medium text-muted-foreground">Payment Status</p>
-              <div><Badge variant="destructive">Unpaid</Badge></div>
+              <div className="flex items-center gap-2">
+                 <Badge variant={paymentStatusVariant[orderDetails.paymentStatus] || 'destructive'}>{orderDetails.paymentStatus}</Badge>
+                 {isReceptionist && orderDetails.paymentStatus === 'Unpaid' && (
+                     <Button size="sm" variant="outline" onClick={handleMarkAsPaid}>
+                        <CreditCard className="mr-2 h-4 w-4" /> Record Payment
+                    </Button>
+                 )}
+                  {orderDetails.paymentStatus === 'Paid' && (
+                     <div className="text-sm text-green-600 flex items-center gap-1">
+                        <CheckCircle className="h-4 w-4" /> Paid
+                    </div>
+                 )}
+              </div>
             </div>
         </CardContent>
        </Card>

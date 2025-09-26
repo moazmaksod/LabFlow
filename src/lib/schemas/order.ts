@@ -7,6 +7,7 @@ import { ReferenceRangeSchema } from './test-catalog';
 const SnapshottedTestSchema = z.object({
   testCode: z.string(),
   name: z.string(),
+  price: z.number(), // Snapshot the price at time of order
   status: z.enum(['Pending', 'In Progress', 'AwaitingVerification', 'Verified', 'Cancelled']).default('Pending'),
   resultValue: z.any().optional(),
   resultUnits: z.string().optional(),
@@ -46,6 +47,7 @@ export const OrderSchema = z.object({
   icd10Code: z.string(),
   orderStatus: z.enum(['Pending', 'Partially Complete', 'Complete', 'Cancelled']).default('Pending'),
   priority: z.enum(['Routine', 'STAT']).default('Routine'),
+  paymentStatus: z.enum(['Paid', 'Unpaid', 'Waived']).default('Unpaid'),
   clinicalJustification: z.string().optional(), // Required for STAT
   samples: z.array(SampleSchema),
   createdAt: z.date(),

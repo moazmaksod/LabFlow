@@ -91,6 +91,7 @@ export async function POST(request: Request) {
                 return {
                     testCode: test.testCode,
                     name: test.name,
+                    price: test.price, // Snapshot the price
                     status: 'Pending',
                     resultUnits: range?.units || test.specimenRequirements.units,
                     referenceRange: formattedRange,
@@ -105,6 +106,7 @@ export async function POST(request: Request) {
         ...orderData,
         samples: orderSamples,
         orderStatus: 'Pending',
+        paymentStatus: 'Unpaid',
         createdBy: user._id,
     };
     
