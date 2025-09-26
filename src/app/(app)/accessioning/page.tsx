@@ -86,56 +86,8 @@ export default function AccessioningPage() {
     };
 
     const handleAccessionSample = async (clientId: string, sampleIndex: number) => {
-        if (!searchedOrder || !token) return;
-
-        setAccessioningState(prev => ({ ...prev, [clientId]: 'loading' }));
-        
-        const payload = {
-            orderId: searchedOrder.orderId,
-            sampleIndex: sampleIndex, 
-        };
-
-        try {
-            const response = await fetch('/api/v1/samples/accession', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify(payload)
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                setSearchedOrder(prevOrder => {
-                    if (!prevOrder) return null;
-                    return {
-                        ...prevOrder,
-                        samples: prevOrder.samples.map(s => 
-                            s.clientId === clientId ? { ...s, status: 'InLab', accessionNumber: result.accessionNumber } : s
-                        )
-                    };
-                });
-                setAccessioningState(prev => ({ ...prev, [clientId]: 'accessioned' }));
-                toast({
-                    title: "Sample Accessioned",
-                    description: `Sample successfully received. Accession #: ${result.accessionNumber}`,
-                });
-            } else {
-                 const errorData = await response.json();
-                 toast({
-                    variant: 'destructive',
-                    title: 'Accession Failed',
-                    description: errorData.message || 'An unexpected error occurred.',
-                });
-                setAccessioningState(prev => ({ ...prev, [clientId]: undefined as any })); // Reset state on failure
-            }
-
-        } catch (error) {
-             toast({
-                variant: 'destructive',
-                title: 'Network Error',
-                description: 'Could not connect to the server.',
-            });
-            setAccessioningState(prev => ({ ...prev, [clientId]: undefined as any }));
-        }
+        // This will be implemented in the next step.
+        console.log('Accessioning sample:', clientId, sampleIndex);
     }
     
     const getButtonState = (sample: SampleWithClientSideId) => {
