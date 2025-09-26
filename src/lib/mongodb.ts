@@ -21,88 +21,106 @@ let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
 
 const initialUsers: Omit<User, '_id'>[] = [
-    {
-        fullName: 'Jane Doe',
-        email: 'jane.doe@labflow.med',
-        role: 'manager',
-    },
-    {
-        fullName: 'Sam Wilson',
-        email: 'sam.wilson@labflow.med',
-        role: 'receptionist',
-    },
-    {
-        fullName: 'Bruce Banner',
-        email: 'bruce.banner@labflow.med',
-        role: 'technician',
-    },
+    { fullName: 'Dr. Evelyn Reed', email: 'evelyn.reed@labflow.med', role: 'manager' },
+    { fullName: 'David Chen', email: 'david.chen@labflow.med', role: 'receptionist' },
+    { fullName: 'Maria Garcia', email: 'maria.garcia@labflow.med', role: 'technician' },
+    { fullName: 'Dr. Ben Carter', email: 'ben.carter@clinic.com', role: 'physician' },
+    { fullName: 'Sarah Johnson', email: 'sarah.johnson@email.com', role: 'patient' },
 ];
 
 const initialTests: Omit<TestCatalog, '_id'>[] = [
   {
     testCode: 'CBC',
-    name: 'Complete Blood Count',
-    description: 'A test that measures the cells that make up your blood.',
-    specimenRequirements: {
-      tubeType: 'Lavender Top',
-      minVolume: 3,
-      units: 'mL',
-    },
-    turnaroundTime: {
-      routine: { value: 4, units: 'hours' },
-      stat: { value: 1, units: 'hours' },
-    },
-    price: 50.0,
+    name: 'Complete Blood Count w/ Diff',
+    description: 'A comprehensive test that measures the cells that make up your blood: red blood cells, white blood cells, and platelets.',
+    specimenRequirements: { tubeType: 'Lavender Top', minVolume: 3, units: 'mL' },
+    turnaroundTime: { routine: { value: 4, units: 'hours' }, stat: { value: 1, units: 'hours' } },
+    price: 75.00,
     isPanel: false,
+    isActive: true,
+    referenceRanges: [
+        { ageMin: 18, ageMax: 99, gender: 'Any', rangeLow: 4.5, rangeHigh: 5.9, units: '10^6/µL', interpretiveText: 'RBC Count' },
+        { ageMin: 18, ageMax: 99, gender: 'Any', rangeLow: 150, rangeHigh: 450, units: '10^3/µL', interpretiveText: 'Platelet Count' }
+    ],
+    reflexRules: [],
+  },
+  {
+    testCode: 'BMP',
+    name: 'Basic Metabolic Panel',
+    description: 'Measures key electrolytes, kidney function, and glucose levels.',
+    specimenRequirements: { tubeType: 'Gold Top', minVolume: 5, units: 'mL' },
+    turnaroundTime: { routine: { value: 6, units: 'hours' }, stat: { value: 1, units: 'hours' } },
+    price: 125.0,
+    isPanel: true,
+    panelComponents: ['GLU', 'NA', 'K', 'CL', 'CO2', 'BUN', 'CREAT'],
     isActive: true,
     referenceRanges: [],
     reflexRules: [],
   },
-  {
-    testCode: 'LP',
-    name: 'Lipid Panel',
-    description: 'Measures fats and fatty substances used as a source of energy by your body.',
-    specimenRequirements: {
-      tubeType: 'Gold Top',
-      minVolume: 5,
-      units: 'mL',
-    },
-    turnaroundTime: {
-      routine: { value: 8, units: 'hours' },
-      stat: { value: 2, units: 'hours' },
-    },
-    price: 100.0,
-    isPanel: true,
-    panelComponents: ['CHOL', 'TRIG', 'HDL', 'LDL'],
+   {
+    testCode: 'GLU',
+    name: 'Glucose',
+    description: 'Measures the amount of sugar in your blood. Often used to check for diabetes.',
+    specimenRequirements: { tubeType: 'Gold Top', minVolume: 1, units: 'mL' },
+    turnaroundTime: { routine: { value: 6, units: 'hours' }, stat: { value: 1, units: 'hours' } },
+    price: 40.0,
+    isPanel: false,
     isActive: true,
-    referenceRanges: [],
+    referenceRanges: [
+         { ageMin: 0, ageMax: 99, gender: 'Any', rangeLow: 70, rangeHigh: 99, units: 'mg/dL', interpretiveText: 'Fasting Glucose' }
+    ],
     reflexRules: [],
   },
   {
     testCode: 'TSH',
     name: 'Thyroid Stimulating Hormone',
-    description: 'Checks your thyroid gland function.',
-    specimenRequirements: {
-      tubeType: 'Gold Top',
-      minVolume: 5,
-      units: 'mL',
-    },
-    turnaroundTime: {
-      routine: { value: 6, units: 'hours' },
-      stat: { value: 1, units: 'hours' },
-    },
-    price: 120.0,
+    description: 'Checks your thyroid gland function, which regulates metabolism.',
+    specimenRequirements: { tubeType: 'Gold Top', minVolume: 5, units: 'mL' },
+    turnaroundTime: { routine: { value: 8, units: 'hours' }, stat: { value: 2, units: 'hours' } },
+    price: 95.0,
     isPanel: false,
     isActive: true,
-    referenceRanges: [],
-    reflexRules: [],
+    referenceRanges: [
+        { ageMin: 18, ageMax: 99, gender: 'Any', rangeLow: 0.4, rangeHigh: 4.0, units: 'mIU/L' }
+    ],
+    reflexRules: [
+        { condition: { testCode: 'TSH', operator: 'gt', value: 4.0 }, action: { addTestCode: 'FT4' } }
+    ],
   },
+];
+
+const initialPatients: Omit<Patient, '_id' | 'createdAt' | 'updatedAt'>[] = [
+    {
+        mrn: 'SJ-0001',
+        fullName: 'Sarah Johnson',
+        dateOfBirth: new Date('1985-05-20T00:00:00.000Z'),
+        gender: 'Female',
+        contactInfo: {
+            phone: '555-0101',
+            email: 'sarah.johnson@email.com',
+            address: { street: '123 Maple St', city: 'Metropolis', state: 'NY', zipCode: '10001', country: 'USA' }
+        },
+        insuranceInfo: [{ providerName: 'MetroHealth Plus', policyNumber: 'MH456789', isPrimary: true }]
+    },
+    {
+        mrn: 'BW-0002',
+        fullName: 'Brian Williams',
+        dateOfBirth: new Date('1972-11-02T00:00:00.000Z'),
+        gender: 'Male',
+        contactInfo: {
+            phone: '555-0102',
+            email: 'brian.williams@email.com',
+            address: { street: '456 Oak Ave', city: 'Metropolis', state: 'NY', zipCode: '10002', country: 'USA' }
+        },
+        insuranceInfo: [{ providerName: 'National Health', policyNumber: 'NH123456', isPrimary: true }]
+    }
 ];
 
 
 async function seedDatabase(db: Db) {
     const usersCollection = db.collection('users');
     const testsCollection = db.collection('testCatalog');
+    const patientsCollection = db.collection('patients');
     const countersCollection = db.collection('counters');
 
     const userCount = await usersCollection.countDocuments();
@@ -115,6 +133,17 @@ async function seedDatabase(db: Db) {
     if (testCount === 0) {
         console.log('Seeding `testCatalog` collection with initial data...');
         await testsCollection.insertMany(initialTests as any[]);
+    }
+    
+    const patientCount = await patientsCollection.countDocuments();
+    if (patientCount === 0) {
+        console.log('Seeding `patients` collection with initial data...');
+        const patientsWithTimestamps = initialPatients.map(p => ({
+            ...p,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }));
+        await patientsCollection.insertMany(patientsWithTimestamps as any[]);
     }
 
     const accessionCounter = await countersCollection.findOne({ _id: 'accessionNumber' });
@@ -185,3 +214,5 @@ export const getOrdersCollection = () => getCollection<Order>('orders');
 export const getAppointmentsCollection = () => getCollection<Appointment>('appointments');
 export const getAuditLogsCollection = () => getCollection<AuditLog>('auditLogs');
 export const getCountersCollection = () => getCollection<any>('counters');
+
+    
