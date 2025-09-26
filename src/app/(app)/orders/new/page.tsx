@@ -15,8 +15,8 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Search, X } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import type { Patient } from '@/lib/schemas/patient';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +33,7 @@ type FormValues = CreateOrderInput & {
 export default function NewOrderPage() {
     const { user, token } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
 
     // UI State
@@ -57,6 +58,30 @@ export default function NewOrderPage() {
             notes: '',
         }
     });
+
+    // Handle pre-selecting a patient from query params
+    useEffect(() => {
+        const patientId = searchParams.get('patientId');
+        if (patientId && token && !selectedPatient) {
+            const fetchPatient = async () => {
+                try {
+                    const response = await fetch(`/api/v1/patients/${patientId}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        const result = await response.json();
+                        handleSelectPatient(result.data);
+                    } else {
+                        toast({ variant: 'destructive', title: 'Could not pre-load patient.'});
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch patient by ID", error);
+                }
+            };
+            fetchPatient();
+        }
+    }, [searchParams, token, selectedPatient]);
+
 
     // Debounced search for patients
     useEffect(() => {
