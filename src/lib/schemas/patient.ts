@@ -47,6 +47,11 @@ const DateOfBirthSchema = z.object({
     path: ["root"],
 });
 
+const ResponsiblePartySchema = z.object({
+    patientId: z.string(), // ObjectId of the guarantor patient
+    relationship: z.string().min(1, { message: "Relationship is required." }),
+});
+
 export const PatientSchema = z.object({
   _id: z.string(), // ObjectId will be a string
   mrn: z.string().min(1, { message: "MRN is required." }).describe("The patient's unique Medical Record Number."),
@@ -55,6 +60,7 @@ export const PatientSchema = z.object({
   gender: z.enum(['Male', 'Female', 'Other', 'Prefer not to say']),
   contactInfo: ContactInfoSchema,
   insuranceInfo: z.array(InsuranceInfoSchema).optional(),
+  responsibleParty: ResponsiblePartySchema.optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
   createdBy: z.string().optional(), // ObjectId as string

@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { CheckCircle, Loader2, PlusCircle, Search } from 'lucide-react';
+import { CheckCircle, Loader2, PlusCircle, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -36,11 +36,75 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 
+const PatientSearch = ({ onSelectPatient, placeholder }: { onSelectPatient: (patient: Patient) => void, placeholder?: string }) => {
+    const [patientSearchTerm, setPatientSearchTerm] = useState('');
+    const [patientSearchResults, setPatientSearchResults] = useState<Patient[]>([]);
+    const [isSearchingPatients, setIsSearchingPatients] = useState(false);
+    const { token } = useAuth();
+
+    useEffect(() => {
+        if (patientSearchTerm.length < 2) {
+            setPatientSearchResults([]);
+            return;
+        }
+        const handler = setTimeout(async () => {
+            if (!token) return;
+            setIsSearchingPatients(true);
+            try {
+                const response = await fetch(`/api/v1/patients?search=${patientSearchTerm}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (response.ok) {
+                    const result = await response.json();
+                    setPatientSearchResults(result.data);
+                }
+            } catch (error) {
+                console.error("Failed to search patients", error);
+            } finally {
+                setIsSearchingPatients(false);
+            }
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [patientSearchTerm, token]);
+
+    const handleSelect = (patient: Patient) => {
+        onSelectPatient(patient);
+        setPatientSearchTerm('');
+        setPatientSearchResults([]);
+    }
+
+    return (
+        <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+                placeholder={placeholder || "Search by Patient Name or MRN..."}
+                className="pl-8"
+                value={patientSearchTerm}
+                onChange={(e) => setPatientSearchTerm(e.target.value)}
+            />
+            {(isSearchingPatients || patientSearchResults.length > 0) && (
+                 <div className="absolute z-50 w-full mt-1 bg-card border rounded-md shadow-lg">
+                    {isSearchingPatients && <div className="p-2 text-sm text-muted-foreground">Searching...</div>}
+                    {patientSearchResults.map(p => (
+                        <li key={p._id} onClick={() => handleSelect(p)} className="p-2 hover:bg-accent cursor-pointer list-none">
+                            <p className="font-medium">{p.fullName}</p>
+                            <p className="text-sm text-muted-foreground">MRN: {p.mrn}</p>
+                        </li>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+
 const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: PatientFormData) => void, closeDialog: () => void, patientData?: Partial<PatientFormData> }) => {
     const { token } = useAuth();
     const { toast } = useToast();
 
     const [isSelfPay, setIsSelfPay] = useState(patientData?.insuranceInfo?.length === 0);
+    const [hasResponsibleParty, setHasResponsibleParty] = useState(!!patientData?.responsibleParty);
+    const [responsiblePartyPatient, setResponsiblePartyPatient] = useState<Patient | null>(null);
 
     const form = useForm<PatientFormData>({
         resolver: zodResolver(PatientFormSchema),
@@ -60,7 +124,15 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
 
     const [isVerifying, setIsVerifying] = useState(false);
     const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verifying' | 'verified' | 'failed'>('idle');
+    
+    // Effect to handle selecting a responsible party
+    useEffect(() => {
+        if (responsiblePartyPatient) {
+            form.setValue('responsibleParty.patientId', responsiblePartyPatient._id);
+        }
+    }, [responsiblePartyPatient, form]);
 
+    // Effect to toggle insurance info
     useEffect(() => {
         if(isSelfPay) {
             form.setValue('insuranceInfo', []);
@@ -68,6 +140,16 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
             form.setValue('insuranceInfo', patientData?.insuranceInfo || [{ providerName: '', policyNumber: '', groupNumber: '', isPrimary: true }]);
         }
     }, [isSelfPay, form, patientData]);
+
+    // Effect to toggle responsible party
+    useEffect(() => {
+        if (!hasResponsibleParty) {
+            form.setValue('responsibleParty', undefined);
+            setResponsiblePartyPatient(null);
+        } else if (!form.getValues('responsibleParty')) {
+             form.setValue('responsibleParty', { patientId: '', relationship: '' });
+        }
+    }, [hasResponsibleParty, form]);
 
 
     const watchedYear = form.watch("dateOfBirth.year");
@@ -173,7 +255,7 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
                         Fill in the details for the patient record.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-6">
+                <div className="grid gap-6 py-4 max-h-[70vh] overflow-y-auto px-6">
                     <Button type="button" variant="outline" onClick={handleSimulateScan}>Simulate ID/Insurance Card Scan</Button>
                     
                     <Separator />
@@ -328,6 +410,44 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
                             </div>
                         )}
                     </div>
+                    
+                    <Separator />
+
+                    <div className="space-y-4">
+                        <h4 className="font-medium text-sm">Billing</h4>
+                        <div className="flex items-center space-x-2">
+                           <Checkbox id="hasResponsibleParty" checked={hasResponsibleParty} onCheckedChange={(checked) => setHasResponsibleParty(!!checked)} />
+                           <label htmlFor="hasResponsibleParty" className="text-sm font-medium leading-none">
+                            Assign a different person as financially responsible.
+                           </label>
+                        </div>
+                        {hasResponsibleParty && (
+                           <div className="space-y-4 pl-2 border-l-2 ml-2">
+                             {responsiblePartyPatient ? (
+                                <>
+                                    <Label>Responsible Party</Label>
+                                    <div className="flex items-center gap-2 rounded-md border p-2 bg-muted/50">
+                                        <div className="flex-grow">
+                                            <p className="font-medium">{responsiblePartyPatient.fullName}</p>
+                                            <p className="text-sm text-muted-foreground">MRN: {responsiblePartyPatient.mrn}</p>
+                                        </div>
+                                        <Button variant="ghost" size="icon" onClick={() => setResponsiblePartyPatient(null)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </>
+                             ) : (
+                                <FormField control={form.control} name="responsibleParty.patientId" render={({ field }) => (
+                                    <FormItem><FormLabel>Find Responsible Party</FormLabel><FormControl><PatientSearch onSelectPatient={setResponsiblePartyPatient} placeholder="Search for guarantor..." /></FormControl><FormMessage /></FormItem>
+                                )} />
+                             )}
+                              <FormField control={form.control} name="responsibleParty.relationship" render={({ field }) => (
+                                    <FormItem><FormLabel>Relationship to Patient</FormLabel><FormControl><Input placeholder="e.g., Father, Mother, Guardian" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                           </div>
+                        )}
+                    </div>
+
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
@@ -443,7 +563,7 @@ export default function PatientsPage() {
                     Register New Patient
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-3xl">
                 <PatientForm onSave={handleRegisterPatient} closeDialog={() => setDialogOpen(false)} />
             </DialogContent>
         </Dialog>

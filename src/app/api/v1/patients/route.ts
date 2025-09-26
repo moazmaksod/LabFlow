@@ -56,7 +56,7 @@ export async function POST(request: Request) {
   const { dateOfBirth, ...rest } = validation.data;
   const dobDate = new Date(dateOfBirth.year, dateOfBirth.month - 1, dateOfBirth.day);
 
-  const patientWithTimestamps = {
+  const patientToCreate: any = {
       ...rest,
       dateOfBirth: dobDate,
       createdBy: new ObjectId(user._id),
@@ -64,7 +64,12 @@ export async function POST(request: Request) {
       updatedAt: new Date()
   };
 
-  const newPatient = await addPatient(patientWithTimestamps as any);
+  // Convert responsibleParty patientId to ObjectId if it exists
+  if (patientToCreate.responsibleParty?.patientId) {
+      patientToCreate.responsibleParty.patientId = new ObjectId(patientToCreate.responsibleParty.patientId);
+  }
+
+  const newPatient = await addPatient(patientToCreate);
   
   // Create an audit log for this event
   await createAuditLog({
@@ -82,5 +87,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ data: newPatient }, { status: 201 });
 }
-
-    
