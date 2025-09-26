@@ -119,33 +119,37 @@ const initialPatients: Omit<Patient, '_id' | 'createdAt' | 'updatedAt'>[] = [
 
 async function seedDatabase(db: Db) {
     const usersCollection = db.collection('users');
-    const testsCollection = db.collection('testCatalog');
-    const patientsCollection = db.collection('patients');
-    const countersCollection = db.collection('counters');
-
-    // Drop existing data to ensure a clean seed
-    console.log('Clearing existing seed data...');
-    await usersCollection.deleteMany({});
-    await testsCollection.deleteMany({});
-    await patientsCollection.deleteMany({});
-    await countersCollection.deleteMany({});
-
-    console.log('Seeding `users` collection with initial data...');
-    await usersCollection.insertMany(initialUsers as any[]);
-
-    console.log('Seeding `testCatalog` collection with initial data...');
-    await testsCollection.insertMany(initialTests as any[]);
+    const userCount = await usersCollection.countDocuments();
     
-    console.log('Seeding `patients` collection with initial data...');
-    const patientsWithTimestamps = initialPatients.map(p => ({
-        ...p,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
-    await patientsCollection.insertMany(patientsWithTimestamps as any[]);
+    // Only seed if the users collection is empty
+    if (userCount === 0) {
+        console.log('Empty `users` collection detected. Seeding database with initial data...');
+        
+        const testsCollection = db.collection('testCatalog');
+        const patientsCollection = db.collection('patients');
+        const countersCollection = db.collection('counters');
 
-    console.log('Seeding `counters` collection with initial accession number...');
-    await countersCollection.insertOne({ _id: 'accessionNumber', sequence_value: 0 });
+        await usersCollection.insertMany(initialUsers as any[]);
+        console.log('Seeded `users` collection.');
+
+        await testsCollection.insertMany(initialTests as any[]);
+        console.log('Seeded `testCatalog` collection.');
+        
+        const patientsWithTimestamps = initialPatients.map(p => ({
+            ...p,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        }));
+        await patientsCollection.insertMany(patientsWithTimestamps as any[]);
+        console.log('Seeded `patients` collection.');
+
+        await countersCollection.insertOne({ _id: 'accessionNumber', sequence_value: 0 });
+        console.log('Seeded `counters` collection.');
+
+        console.log('Database seeding complete.');
+    } else {
+        console.log('Database already contains data. Skipping seed process.');
+    }
 }
 
 async function applyIndexes(db: Db) {
@@ -185,7 +189,7 @@ async function connectToDatabase() {
   await client.connect();
   const db = client.db(dbName);
   
-  // Seed the database with initial data if it's empty
+  // Seed the database with initial data ONLY if it's empty
   await seedDatabase(db);
   // Ensure all required indexes are applied
   await applyIndexes(db);
