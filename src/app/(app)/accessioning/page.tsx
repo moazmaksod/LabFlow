@@ -23,87 +23,122 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import type { Order } from '@/lib/schemas/order';
+import { useAuth } from '@/hooks/use-auth';
 
-// Mock data representing what the API might return for an order
-const mockOrderData = {
-    orderId: 'ORD-2025-00001',
-    patient: {
-        fullName: 'John Doe',
-        mrn: 'MRN12345'
-    },
-    samples: [
-        { sampleId: 'S1', type: 'Lavender Top', status: 'AwaitingCollection' },
-        { sampleId: 'S2', type: 'Gold Top', status: 'AwaitingCollection' },
-    ]
+// Add a temporary unique identifier to each sample for the UI
+type SampleWithClientSideId = Order['samples'][0] & { clientId: string };
+type OrderWithClientSideSampleIds = Omit<Order, 'samples'> & {
+    samples: SampleWithClientSideId[];
 };
-
-type Sample = typeof mockOrderData.samples[0];
-
 
 export default function AccessioningPage() {
     const { toast } = useToast();
+    const { token } = useAuth();
     const [orderId, setOrderId] = useState('');
-    const [searchedOrder, setSearchedOrder] = useState<typeof mockOrderData | null>(null);
+    const [searchedOrder, setSearchedOrder] = useState<OrderWithClientSideSampleIds | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [accessioningState, setAccessioningState] = useState<Record<string, 'loading' | 'accessioned'>>({});
 
-    const handleSearch = (e: React.FormEvent) => {
+    const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!orderId) return;
+        if (!orderId || !token) return;
 
         setIsLoading(true);
         setSearchedOrder(null);
         setAccessioningState({});
-        // In a real app, this would be an API call:
-        // fetch(`/api/v1/orders/${orderId}`)
-        setTimeout(() => {
-            if (orderId === 'ORD-2025-00001') {
-                setSearchedOrder(JSON.parse(JSON.stringify(mockOrderData))); // Deep copy to allow modification
+        
+        try {
+            const response = await fetch(`/api/v1/orders/${orderId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (response.ok) {
+                const result = await response.json();
+                // Add a client-side unique ID to each sample for state tracking
+                const orderData = result.data as Order;
+                const orderWithClientIds: OrderWithClientSideSampleIds = {
+                    ...orderData,
+                    samples: orderData.samples.map((s, i) => ({...s, clientId: `${s.sampleType}-${i}`}))
+                };
+                setSearchedOrder(orderWithClientIds);
             } else {
                 setSearchedOrder(null);
+                const errorData = await response.json();
+                 toast({
+                    variant: 'destructive',
+                    title: 'Order Not Found',
+                    description: errorData.message || `No order found for ID "${orderId}".`,
+                });
             }
+        } catch (error) {
+             toast({
+                variant: 'destructive',
+                title: 'Network Error',
+                description: 'Could not connect to the server.',
+            });
+        } finally {
             setIsLoading(false);
-        }, 1000);
+        }
     };
 
-    const handleAccessionSample = (sampleId: string) => {
-        setAccessioningState(prev => ({ ...prev, [sampleId]: 'loading' }));
+    const handleAccessionSample = async (clientId: string) => {
+        if (!searchedOrder || !token) return;
+
+        setAccessioningState(prev => ({ ...prev, [clientId]: 'loading' }));
         
-        // In a real app, this would be an API call:
-        // const response = await fetch('/api/v1/samples/accession', {
-        //   method: 'POST',
-        //   body: JSON.stringify({ orderId: searchedOrder?.orderId, sampleId })
-        // });
-        setTimeout(() => {
-            setSearchedOrder(prevOrder => {
-                if (!prevOrder) return null;
-                return {
-                    ...prevOrder,
-                    samples: prevOrder.samples.map(s => 
-                        s.sampleId === sampleId ? { ...s, status: 'InLab' } : s
-                    )
-                };
+        const payload = {
+            orderId: searchedOrder.orderId,
+            clientId: clientId, 
+        };
+
+        try {
+            const response = await fetch('/api/v1/samples/accession', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify(payload)
             });
-            setAccessioningState(prev => ({ ...prev, [sampleId]: 'accessioned' }));
-            toast({
-                title: "Sample Accessioned",
-                description: `Sample ${sampleId} has been successfully received into the lab.`,
+
+            if (response.ok) {
+                const result = await response.json();
+                setSearchedOrder(prevOrder => {
+                    if (!prevOrder) return null;
+                    return {
+                        ...prevOrder,
+                        samples: prevOrder.samples.map(s => 
+                            s.clientId === clientId ? { ...s, status: 'InLab', accessionNumber: result.accessionNumber } : s
+                        )
+                    };
+                });
+                setAccessioningState(prev => ({ ...prev, [clientId]: 'accessioned' }));
+                toast({
+                    title: "Sample Accessioned",
+                    description: `Sample successfully received. Accession #: ${result.accessionNumber}`,
+                });
+            } else {
+                 const errorData = await response.json();
+                 toast({
+                    variant: 'destructive',
+                    title: 'Accession Failed',
+                    description: errorData.message || 'An unexpected error occurred.',
+                });
+                setAccessioningState(prev => ({ ...prev, [clientId]: undefined as any })); // Reset state on failure
+            }
+
+        } catch (error) {
+             toast({
+                variant: 'destructive',
+                title: 'Network Error',
+                description: 'Could not connect to the server.',
             });
-        }, 1500);
+            setAccessioningState(prev => ({ ...prev, [clientId]: undefined as any }));
+        }
     }
     
-    const getSampleStatus = (sample: Sample): string => {
-        const state = accessioningState[sample.sampleId];
-        if (state === 'accessioned') return 'InLab';
-        return sample.status;
-    };
-    
-    const getButtonState = (sample: Sample) => {
-        const state = accessioningState[sample.sampleId];
-        const status = getSampleStatus(sample);
+    const getButtonState = (sample: SampleWithClientSideId) => {
+        const state = accessioningState[sample.clientId];
 
         if (state === 'loading') return { text: 'Accessioning...', disabled: true, icon: <Loader2 className="mr-2 h-4 w-4 animate-spin" /> };
-        if (status === 'InLab') return { text: 'Accessioned', disabled: true, icon: <CheckCircle className="mr-2 h-4 w-4" /> };
+        if (sample.status !== 'AwaitingCollection') return { text: 'Accessioned', disabled: true, icon: <CheckCircle className="mr-2 h-4 w-4" /> };
         
         return { text: 'Accession Sample', disabled: false, icon: <CheckCircle className="mr-2 h-4 w-4" /> };
     };
@@ -153,7 +188,7 @@ export default function AccessioningPage() {
             <CardHeader>
                 <CardTitle>Order Details: {searchedOrder.orderId}</CardTitle>
                 <CardDescription>
-                    Patient: {searchedOrder.patient.fullName} (MRN: {searchedOrder.patient.mrn})
+                    Patient: {searchedOrder.patientDetails.fullName} (MRN: {searchedOrder.patientDetails.mrn})
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -161,27 +196,28 @@ export default function AccessioningPage() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Sample Type</TableHead>
+                             <TableHead>Accession #</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {searchedOrder.samples.map(sample => {
-                            const status = getSampleStatus(sample);
                             const buttonState = getButtonState(sample);
                             return (
-                                <TableRow key={sample.sampleId}>
-                                    <TableCell className="font-medium">{sample.type}</TableCell>
+                                <TableRow key={sample.clientId}>
+                                    <TableCell className="font-medium">{sample.sampleType}</TableCell>
+                                    <TableCell className="font-code">{sample.accessionNumber || 'N/A'}</TableCell>
                                     <TableCell>
-                                        <Badge variant={status === 'AwaitingCollection' ? 'outline' : 'default'}>
-                                            {status}
+                                        <Badge variant={sample.status === 'AwaitingCollection' ? 'outline' : 'default'}>
+                                            {sample.status}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Button
                                             variant={buttonState.disabled ? 'secondary' : 'default'}
                                             disabled={buttonState.disabled}
-                                            onClick={() => handleAccessionSample(sample.sampleId)}
+                                            onClick={() => handleAccessionSample(sample.clientId)}
                                         >
                                             {buttonState.icon}
                                             {buttonState.text}

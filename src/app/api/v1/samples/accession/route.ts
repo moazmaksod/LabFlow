@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 const AccessionInputSchema = z.object({
   orderId: z.string(), // This is the human-readable orderId like ORD-2025-00001
-  sampleId: z.string(), // This is the mock sampleId like 'S1', we'll use it to find the sample.
+  clientId: z.string(), // This is a temporary client-side ID to identify the sample object in the array
 });
 
 // POST /api/v1/samples/accession
@@ -24,34 +24,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Validation failed', errors: validation.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  const { orderId, sampleId } = validation.data;
+  const { orderId, clientId } = validation.data;
   const ordersCollection = await getOrdersCollection();
 
-  // In a real app with proper IDs, we might find the sample directly.
-  // Here, we find the order first.
   const order = await ordersCollection.findOne({ "orderId": orderId });
 
   if (!order) {
     return NextResponse.json({ message: `Order with ID ${orderId} not found.` }, { status: 404 });
   }
 
-  // Find the index and the sample itself. The `sampleId` from the frontend is a mock property.
-  // We need to find the correct object in the 'samples' array.
-  let sampleToUpdate;
-  let sampleIndex = -1;
+  // Find the index of the sample using the temporary clientId.
+  // The clientId is in the format `sampleType-index`.
+  const sampleIndex = parseInt(clientId.split('-').pop() || '-1', 10);
+  const sampleToUpdate = order.samples[sampleIndex];
 
-  for (let i = 0; i < order.samples.length; i++) {
-    // This is a mock property from the frontend to identify which sample to accession.
-    // In a real DB, each sample would have its own persistent unique ID.
-    if ((order.samples[i] as any).sampleId === sampleId) {
-        sampleToUpdate = order.samples[i];
-        sampleIndex = i;
-        break;
-    }
-  }
-  
-  if (!sampleToUpdate || sampleIndex === -1) {
-    return NextResponse.json({ message: `Sample with identifier ${sampleId} not found in order ${orderId}` }, { status: 404 });
+  if (!sampleToUpdate) {
+    return NextResponse.json({ message: `Sample with identifier ${clientId} not found in order ${orderId}` }, { status: 404 });
   }
   
   // Verify that the sample has not already been accessioned

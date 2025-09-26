@@ -51,6 +51,12 @@ export const OrderSchema = z.object({
   createdAt: z.date(),
   createdBy: z.string(), // ObjectId as string
   updatedAt: z.date(),
+  // This is a temporary field for the frontend to easily join patient data
+  patientDetails: z.object({
+    _id: z.string(),
+    fullName: z.string(),
+    mrn: z.string(),
+  }).optional(),
 });
 export type Order = z.infer<typeof OrderSchema>;
 
