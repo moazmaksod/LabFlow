@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Scan, CheckCircle, Info, ScanLine, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -44,8 +44,7 @@ export default function AccessioningPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [accessioningState, setAccessioningState] = useState<Record<string, 'loading' | 'accessioned'>>({});
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSearch = useCallback(async () => {
         if (!orderId || !token) return;
 
         setIsLoading(true);
@@ -61,7 +60,7 @@ export default function AccessioningPage() {
                 const orderData = result.data as Order;
                 const orderWithClientIds: OrderWithClientSideSampleIds = {
                     ...orderData,
-                    samples: orderData.samples.map((s, i) => ({...s, clientId: `${s.sampleType}-${i}`})),
+                    samples: orderData.samples.map((s, i) => ({...s, clientId: `${orderData.orderId}-${i}`})),
                     patientDetails: result.data.patientDetails || { fullName: 'N/A', mrn: 'N/A' }
                 };
                 setSearchedOrder(orderWithClientIds);
@@ -83,7 +82,22 @@ export default function AccessioningPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [orderId, token, toast]);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            if (orderId) {
+                handleSearch();
+            } else {
+                setSearchedOrder(null);
+            }
+        }, 500); // 500ms debounce delay
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [orderId, handleSearch]);
+
 
     const handleAccessionSample = async (clientId: string, sampleIndex: number) => {
         // This will be implemented in the next step.
@@ -98,6 +112,11 @@ export default function AccessioningPage() {
         
         return { text: 'Accession Sample', disabled: false, icon: <CheckCircle className="mr-2 h-4 w-4" /> };
     };
+    
+    const onFormSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      handleSearch();
+    }
 
   return (
     <div className="flex flex-col gap-8">
@@ -119,7 +138,7 @@ export default function AccessioningPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSearch}>
+          <form onSubmit={onFormSubmit}>
              <div className="flex w-full max-w-lg items-center space-x-2">
                 <div className="relative flex-grow">
                   <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
