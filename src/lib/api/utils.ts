@@ -62,18 +62,38 @@ export async function getNextSequenceValue(sequenceName: string): Promise<number
     return newCounter?.sequence_value || 1;
 }
 
+const mapUserDocument = (userDoc: any): User | null => {
+    if (!userDoc) return null;
+
+    // Handle legacy users with firstName/lastName
+    if (!userDoc.fullName && userDoc.firstName && userDoc.lastName) {
+        userDoc.fullName = `${userDoc.firstName} ${userDoc.lastName}`;
+    }
+    
+    const { _id, ...rest } = userDoc;
+
+    return {
+        _id: _id.toString(),
+        ...rest,
+    } as User;
+}
+
+
 // --- User Data Access ---
 export const getUsers = async (): Promise<User[]> => {
     const collection = await getUsersCollection();
-    return await collection.find({}).toArray() as User[];
+    const userDocs = await collection.find({}).toArray();
+    return userDocs.map(mapUserDocument).filter(Boolean) as User[];
 };
 export const findUserById = async (id: string): Promise<User | null> => {
     const collection = await getUsersCollection();
-    return await collection.findOne({ _id: new ObjectId(id) as any }) as User | null;
+    const userDoc = await collection.findOne({ _id: new ObjectId(id) as any });
+    return mapUserDocument(userDoc);
 };
 export const findUserByEmail = async (email: string): Promise<User | null> => {
     const collection = await getUsersCollection();
-    return await collection.findOne({ email: email }) as User | null;
+    const userDoc = await collection.findOne({ email: email });
+    return mapUserDocument(userDoc);
 };
 export const addUser = async (user: Omit<User, '_id'>): Promise<User> => {
     const collection = await getUsersCollection();

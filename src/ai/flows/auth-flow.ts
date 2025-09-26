@@ -24,14 +24,14 @@ export async function login(input: AuthLoginInput): Promise<string | null> {
   }
 
   // Use the findUserByEmail function to get the user from the database
-  const userFromDb: any = await findUserByEmail(validatedInput.data.email);
+  const userFromDb = await findUserByEmail(validatedInput.data.email);
 
   // In a real app, you'd also check the password hash here.
   if (userFromDb) {
-    // Construct the final user object for the token, ensuring fullName exists.
+    // The findUserByEmail function now guarantees fullName exists if the user is found.
     const userForToken: User = {
         _id: userFromDb._id.toString(),
-        fullName: userFromDb.fullName, // The DB should always have fullName now
+        fullName: userFromDb.fullName,
         email: userFromDb.email,
         role: userFromDb.role,
     }
