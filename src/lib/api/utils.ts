@@ -80,9 +80,9 @@ const mapUserDocument = (userDoc: any): User | null => {
 
 
 // --- User Data Access ---
-export const getUsers = async (): Promise<User[]> => {
+export const getUsers = async (query: any = {}): Promise<User[]> => {
     const collection = await getUsersCollection();
-    const userDocs = await collection.find({}).toArray();
+    const userDocs = await collection.find(query).toArray();
     return userDocs.map(mapUserDocument).filter(Boolean) as User[];
 };
 export const findUserById = async (id: string): Promise<User | null> => {

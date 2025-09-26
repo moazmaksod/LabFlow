@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, findPatientById, findTestByCode, addOrder, getOrders } from '@/lib/api/utils';
 import { CreateOrderInputSchema } from '@/lib/schemas/order';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
+import { ObjectId } from 'mongodb';
 
 // GET /api/v1/orders
 // Retrieves all orders
@@ -16,21 +17,16 @@ export async function GET(request: Request) {
     let query: any = {};
     if (user.role === 'receptionist') {
         // Receptionists can only see orders they created
-        query = { createdBy: user._id };
+        query = { createdBy: new ObjectId(user._id) };
     } else if (user.role === 'physician') {
         // Physicians can only see orders they are assigned to
-        query = { physicianId: user._id };
+        query = { physicianId: new ObjectId(user._id) };
     } else if (user.role === 'patient') {
-        // Patients should use a different mechanism or have orders linked to their patient ID
-        // For now, prevent access to the full list.
+        // Patients can only see orders linked to their patient ID.
+        // This requires a separate lookup not implemented here for simplicity.
         return NextResponse.json({ data: [] });
     }
     // Managers and Technicians can see all orders (no query filter)
-
-
-    if (!['receptionist', 'manager', 'technician'].includes(user.role)) {
-         return NextResponse.json({ message: 'Forbidden: You do not have permission to view all orders.' }, { status: 403 });
-    }
 
     const orders = await getOrders(query);
     return NextResponse.json({ data: orders });
