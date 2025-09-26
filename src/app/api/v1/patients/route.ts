@@ -8,6 +8,7 @@ import { z } from 'zod';
 // Lists all patients, or searches if query params are provided
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
+  // Allow technicians to search for patients as well.
   if (!user || !['receptionist', 'technician', 'manager'].includes(user.role)) {
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
