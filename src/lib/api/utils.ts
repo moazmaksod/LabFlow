@@ -128,7 +128,7 @@ export const getPatients = async (query: any = {}): Promise<Patient[]> => {
 };
 export const findPatientById = async (id: string): Promise<Patient | null> => {
     const collection = await getPatientsCollection();
-    return await collection.findOne({ _id: new ObjectId(d) as any }) as Patient | null;
+    return await collection.findOne({ _id: new ObjectId(id) as any }) as Patient | null;
 };
 export const findPatientByMrn = async (mrn: string): Promise<Patient | null> => {
     const collection = await getPatientsCollection();
