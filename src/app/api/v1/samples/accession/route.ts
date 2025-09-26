@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, getNextSequenceValue } from '@/lib/api/utils';
+import { getAuthenticatedUser, getNextSequenceValue, createAuditLog } from '@/lib/api/utils';
 import { getOrdersCollection } from '@/lib/mongodb';
 import { z } from 'zod';
 
@@ -67,8 +67,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Failed to update sample. It may have been recently updated.' }, { status: 409 });
   }
   
-  // As per requirements, we would create an audit log entry here.
-  // e.g., createAuditLog({ action: 'SAMPLE_ACCESSIONED', userId: user._id, ... });
+  // Create an audit log for this event
+  await createAuditLog({
+    action: 'SAMPLE_ACCESSIONED',
+    userId: user._id,
+    entity: {
+      collectionName: 'orders',
+      documentId: order._id.toHexString(),
+    },
+    details: {
+      orderId: order.orderId,
+      sampleIndex: sampleIndex,
+      newAccessionNumber: accessionNumber,
+      newState: 'InLab',
+    },
+  });
 
   return NextResponse.json({
     message: 'Sample accessioned successfully.',

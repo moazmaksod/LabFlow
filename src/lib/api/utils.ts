@@ -4,8 +4,9 @@ import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import type { Patient } from '@/lib/schemas/patient';
 import type { Order } from '@/lib/schemas/order';
 import type { Appointment } from '@/lib/schemas/appointment';
+import type { AuditLog } from '@/lib/schemas/audit-log';
 import { headers } from 'next/headers';
-import { getAppointmentsCollection, getCountersCollection, getOrdersCollection, getPatientsCollection, getUsersCollection, getTestsCollection } from '@/lib/mongodb';
+import { getAppointmentsCollection, getAuditLogsCollection, getCountersCollection, getOrdersCollection, getPatientsCollection, getUsersCollection, getTestsCollection } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 
@@ -128,6 +129,7 @@ export const getPatients = async (query: any = {}): Promise<Patient[]> => {
 };
 export const findPatientById = async (id: string): Promise<Patient | null> => {
     const collection = await getPatientsCollection();
+    if (!ObjectId.isValid(id)) return null;
     return await collection.findOne({ _id: new ObjectId(id) as any }) as Patient | null;
 };
 export const findPatientByMrn = async (mrn: string): Promise<Patient | null> => {
@@ -285,3 +287,23 @@ export const removeAppointment = async (id: string): Promise<boolean> => {
     const result = await collection.deleteOne({ _id: new ObjectId(id) as any });
     return result.deletedCount > 0;
 };
+
+
+// --- Audit Log Data Access ---
+export const createAuditLog = async (entry: Omit<AuditLog, '_id' | 'timestamp' | 'ipAddress'>): Promise<AuditLog> => {
+    const collection = await getAuditLogsCollection();
+    
+    const finalEntry = {
+        ...entry,
+        userId: new ObjectId(entry.userId) as any,
+        entity: {
+            ...entry.entity,
+            documentId: new ObjectId(entry.entity.documentId) as any,
+        },
+        timestamp: new Date(),
+        ipAddress: headers().get('x-forwarded-for') ?? 'Unknown',
+    };
+
+    const result = await collection.insertOne(finalEntry as any);
+    return { ...finalEntry, _id: result.insertedId.toHexString() } as unknown as AuditLog;
+}
