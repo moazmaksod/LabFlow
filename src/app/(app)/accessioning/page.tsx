@@ -297,8 +297,8 @@ export default function AccessioningPage() {
        {isLoading && !searchedOrder && (
           <Card>
               <CardHeader>
-                  <CardTitle><div className='h-8 w-48 bg-muted animate-pulse rounded-md'></div></CardTitle>
-                  <CardDescription><div className='h-5 w-64 bg-muted animate-pulse rounded-md'></div></CardDescription>
+                  <CardTitle><span className='inline-block h-8 w-48 bg-muted animate-pulse rounded-md'></span></CardTitle>
+                  <CardDescription><span className='inline-block h-5 w-64 bg-muted animate-pulse rounded-md'></span></CardDescription>
               </CardHeader>
               <CardContent>
                   <div className='h-32 w-full bg-muted animate-pulse rounded-md'></div>
