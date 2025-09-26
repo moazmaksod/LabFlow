@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Scan, CheckCircle, Info } from 'lucide-react';
+import { Scan, CheckCircle, Info, ScanLine } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -81,12 +81,15 @@ export default function AccessioningPage() {
         <CardContent>
           <form onSubmit={handleSearch}>
              <div className="flex w-full max-w-lg items-center space-x-2">
-                <Input 
-                    placeholder="Scan or enter Order ID..." 
-                    className="h-12 text-lg"
-                    value={orderId}
-                    onChange={(e) => setOrderId(e.target.value)}
-                />
+                <div className="relative flex-grow">
+                  <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input 
+                      placeholder="Scan or enter Order ID..." 
+                      className="h-12 text-lg pl-10"
+                      value={orderId}
+                      onChange={(e) => setOrderId(e.target.value)}
+                  />
+                </div>
                 <Button type="submit" size="lg" disabled={isLoading || !orderId}>
                     {isLoading ? 'Searching...' : 'Find Order'}
                 </Button>
