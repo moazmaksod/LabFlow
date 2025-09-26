@@ -12,13 +12,27 @@ export async function GET(request: Request) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    // In a real app, you might filter by physician or patient role
-    // For now, managers and receptionists can see all
+    // Filter orders based on user role
+    let query: any = {};
+    if (user.role === 'receptionist') {
+        // Receptionists can only see orders they created
+        query = { createdBy: user._id };
+    } else if (user.role === 'physician') {
+        // Physicians can only see orders they are assigned to
+        query = { physicianId: user._id };
+    } else if (user.role === 'patient') {
+        // Patients should use a different mechanism or have orders linked to their patient ID
+        // For now, prevent access to the full list.
+        return NextResponse.json({ data: [] });
+    }
+    // Managers and Technicians can see all orders (no query filter)
+
+
     if (!['receptionist', 'manager', 'technician'].includes(user.role)) {
-         return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+         return NextResponse.json({ message: 'Forbidden: You do not have permission to view all orders.' }, { status: 403 });
     }
 
-    const orders = await getOrders();
+    const orders = await getOrders(query);
     return NextResponse.json({ data: orders });
 }
 
