@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 const AccessionInputSchema = z.object({
   orderId: z.string(), // This is the human-readable orderId like ORD-2025-00001
-  clientId: z.string(), // This is a temporary client-side ID to identify the sample object in the array
+  sampleIndex: z.number().int(), // The index of the sample in the order's samples array
 });
 
 // POST /api/v1/samples/accession
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Validation failed', errors: validation.error.flatten().fieldErrors }, { status: 400 });
   }
 
-  const { orderId, clientId } = validation.data;
+  const { orderId, sampleIndex } = validation.data;
   const ordersCollection = await getOrdersCollection();
 
   const order = await ordersCollection.findOne({ "orderId": orderId });
@@ -32,14 +32,11 @@ export async function POST(request: Request) {
   if (!order) {
     return NextResponse.json({ message: `Order with ID ${orderId} not found.` }, { status: 404 });
   }
-
-  // Find the index of the sample using the temporary clientId.
-  // The clientId is in the format `sampleType-index`.
-  const sampleIndex = parseInt(clientId.split('-').pop() || '-1', 10);
+  
   const sampleToUpdate = order.samples[sampleIndex];
 
   if (!sampleToUpdate) {
-    return NextResponse.json({ message: `Sample with identifier ${clientId} not found in order ${orderId}` }, { status: 404 });
+    return NextResponse.json({ message: `Sample at index ${sampleIndex} not found in order ${orderId}` }, { status: 404 });
   }
   
   // Verify that the sample has not already been accessioned

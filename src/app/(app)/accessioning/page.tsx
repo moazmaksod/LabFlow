@@ -28,8 +28,12 @@ import { useAuth } from '@/hooks/use-auth';
 
 // Add a temporary unique identifier to each sample for the UI
 type SampleWithClientSideId = Order['samples'][0] & { clientId: string };
-type OrderWithClientSideSampleIds = Omit<Order, 'samples'> & {
+type OrderWithClientSideSampleIds = Omit<Order, 'samples' | 'patientDetails'> & {
     samples: SampleWithClientSideId[];
+    patientDetails: {
+        fullName: string;
+        mrn: string;
+    }
 };
 
 export default function AccessioningPage() {
@@ -54,11 +58,11 @@ export default function AccessioningPage() {
             });
             if (response.ok) {
                 const result = await response.json();
-                // Add a client-side unique ID to each sample for state tracking
                 const orderData = result.data as Order;
                 const orderWithClientIds: OrderWithClientSideSampleIds = {
                     ...orderData,
-                    samples: orderData.samples.map((s, i) => ({...s, clientId: `${s.sampleType}-${i}`}))
+                    samples: orderData.samples.map((s, i) => ({...s, clientId: `${s.sampleType}-${i}`})),
+                    patientDetails: result.data.patientDetails || { fullName: 'N/A', mrn: 'N/A' }
                 };
                 setSearchedOrder(orderWithClientIds);
             } else {
@@ -81,14 +85,14 @@ export default function AccessioningPage() {
         }
     };
 
-    const handleAccessionSample = async (clientId: string) => {
+    const handleAccessionSample = async (clientId: string, sampleIndex: number) => {
         if (!searchedOrder || !token) return;
 
         setAccessioningState(prev => ({ ...prev, [clientId]: 'loading' }));
         
         const payload = {
             orderId: searchedOrder.orderId,
-            clientId: clientId, 
+            sampleIndex: sampleIndex, 
         };
 
         try {
@@ -202,7 +206,7 @@ export default function AccessioningPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {searchedOrder.samples.map(sample => {
+                        {searchedOrder.samples.map((sample, index) => {
                             const buttonState = getButtonState(sample);
                             return (
                                 <TableRow key={sample.clientId}>
@@ -217,7 +221,7 @@ export default function AccessioningPage() {
                                         <Button
                                             variant={buttonState.disabled ? 'secondary' : 'default'}
                                             disabled={buttonState.disabled}
-                                            onClick={() => handleAccessionSample(sample.clientId)}
+                                            onClick={() => handleAccessionSample(sample.clientId, index)}
                                         >
                                             {buttonState.icon}
                                             {buttonState.text}
@@ -231,17 +235,6 @@ export default function AccessioningPage() {
             </CardContent>
          </Card>
       )}
-
-      {!searchedOrder && !isLoading && orderId && (
-        <Alert variant="destructive">
-            <Info className="h-4 w-4" />
-            <AlertTitle>Order Not Found</AlertTitle>
-            <AlertDescription>
-                No order found for ID "{orderId}". Please check the ID and try again.
-            </AlertDescription>
-        </Alert>
-      )}
-
     </div>
   );
 }
