@@ -100,15 +100,67 @@ export default function AccessioningPage() {
 
 
     const handleAccessionSample = async (clientId: string, sampleIndex: number) => {
-        // This will be implemented in the next step.
-        console.log('Accessioning sample:', clientId, sampleIndex);
+        if (!searchedOrder?.orderId || !token) return;
+
+        setAccessioningState(prev => ({ ...prev, [clientId]: 'loading' }));
+
+        try {
+            const response = await fetch('/api/v1/samples/accession', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    orderId: searchedOrder.orderId,
+                    sampleIndex: sampleIndex,
+                }),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                toast({
+                    title: 'Sample Accessioned',
+                    description: `Accession Number: ${result.accessionNumber}`,
+                });
+
+                // Update the UI optimistically
+                setSearchedOrder(prevOrder => {
+                    if (!prevOrder) return null;
+                    const newSamples = [...prevOrder.samples];
+                    newSamples[sampleIndex] = {
+                        ...newSamples[sampleIndex],
+                        status: 'InLab',
+                        accessionNumber: result.accessionNumber,
+                    };
+                    return { ...prevOrder, samples: newSamples };
+                });
+                setAccessioningState(prev => ({ ...prev, [clientId]: 'accessioned' }));
+
+            } else {
+                const errorData = await response.json();
+                toast({
+                    variant: 'destructive',
+                    title: 'Accession Failed',
+                    description: errorData.message || 'An unexpected error occurred.',
+                });
+                 setAccessioningState(prev => ({ ...prev, [clientId]: undefined }));
+            }
+        } catch (error) {
+             toast({
+                variant: 'destructive',
+                title: 'Network Error',
+                description: 'Could not connect to the server.',
+            });
+            setAccessioningState(prev => ({ ...prev, [clientId]: undefined }));
+        }
     }
     
     const getButtonState = (sample: SampleWithClientSideId) => {
         const state = accessioningState[sample.clientId];
 
         if (state === 'loading') return { text: 'Accessioning...', disabled: true, icon: <Loader2 className="mr-2 h-4 w-4 animate-spin" /> };
-        if (sample.status !== 'AwaitingCollection') return { text: 'Accessioned', disabled: true, icon: <CheckCircle className="mr-2 h-4 w-4" /> };
+        if (state === 'accessioned' || sample.status !== 'AwaitingCollection') return { text: 'Accessioned', disabled: true, icon: <CheckCircle className="mr-2 h-4 w-4" /> };
         
         return { text: 'Accession Sample', disabled: false, icon: <CheckCircle className="mr-2 h-4 w-4" /> };
     };
