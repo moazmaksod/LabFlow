@@ -63,12 +63,12 @@ export type Patient = z.infer<typeof PatientSchema>;
 
 // Schema for form validation (omits server-generated fields)
 export const PatientFormSchema = PatientSchema.omit({
-    _id: true,
     createdAt: true,
     updatedAt: true,
     dateOfBirth: true,
 }).extend({
     dateOfBirth: DateOfBirthSchema,
+    _id: z.string().optional(), // Make _id optional for creation
 });
 
 export type PatientFormData = z.infer<typeof PatientFormSchema>;

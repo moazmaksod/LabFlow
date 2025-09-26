@@ -26,7 +26,7 @@ import type { Patient } from '@/lib/schemas/patient';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PatientFormSchema, type PatientFormData } from '@/lib/schemas/patient';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -47,7 +47,7 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
             contactInfo: {
                 phone: '',
                 email: '',
-                address: { street: '', city: '', state: '', zipCode: '', country: 'Saudi Arabia' }
+                address: { street: '', city: '', state: '', zipCode: '', country: 'USA' }
             },
             insuranceInfo: [{ providerName: '', policyNumber: '', groupNumber: '', isPrimary: true }]
         }
@@ -87,9 +87,9 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
             dateOfBirth: { day: 15, month: 5, year: 1990 },
             gender: 'Male',
             contactInfo: {
-                phone: '+966501234567',
+                phone: '555-0199',
                 email: 'john.doe@example.com',
-                address: { street: '123 Main St', city: 'Riyadh', state: 'Riyadh', zipCode: '11564', country: 'Saudi Arabia' }
+                address: { street: '123 Main St', city: 'Anytown', state: 'NY', zipCode: '12345', country: 'USA' }
             },
             insuranceInfo: [{ providerName: 'Bupa', policyNumber: 'BUPA-98765', groupNumber: 'GRP-XYZ', isPrimary: true }]
         });
