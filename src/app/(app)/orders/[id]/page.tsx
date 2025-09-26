@@ -70,6 +70,11 @@ type OrderWithDetails = Order & {
     physicianDetails?: {
         _id: string;
         fullName: string;
+    },
+    guarantorDetails?: {
+        _id: string;
+        fullName: string;
+        mrn: string;
     }
 }
 
@@ -446,7 +451,17 @@ export default function OrderDetailsPage() {
               <p className="text-sm font-medium text-muted-foreground">Referring Doctor</p>
               <p>{orderDetails.physicianDetails?.fullName || 'N/A'}</p>
             </div>
-            <div>
+             <div>
+              <p className="text-sm font-medium text-muted-foreground">Responsible Party</p>
+               {orderDetails.guarantorDetails ? (
+                <Link href={`/patients/${orderDetails.guarantorDetails._id}`} className="text-primary hover:underline">
+                    {orderDetails.guarantorDetails.fullName} ({orderDetails.responsibleParty?.relationship})
+                </Link>
+               ) : (
+                <p>Self (Patient)</p>
+               )}
+            </div>
+             <div>
               <p className="text-sm font-medium text-muted-foreground">Billing Type</p>
               <p>{orderDetails.billingType}</p>
             </div>

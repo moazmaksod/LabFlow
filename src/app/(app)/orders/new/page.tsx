@@ -27,6 +27,8 @@ import { CreateOrderInput, CreateOrderInputSchema } from '@/lib/schemas/order';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { PatientSearch } from '@/app/(app)/patients/page';
 
 type FormValues = CreateOrderInput & {
     physicianSearch?: string;
@@ -49,6 +51,9 @@ export default function NewOrderPage() {
 
     const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
     const [selectedTests, setSelectedTests] = useState<TestCatalog[]>([]);
+
+    const [hasResponsibleParty, setHasResponsibleParty] = useState(false);
+    const [responsiblePartyPatient, setResponsiblePartyPatient] = useState<Patient | null>(null);
     
     const form = useForm<FormValues>({
         resolver: zodResolver(CreateOrderInputSchema),
@@ -143,6 +148,23 @@ export default function NewOrderPage() {
 
          return () => clearTimeout(handler);
     }, [testSearchTerm, token, selectedTests]);
+
+     // Effect to handle selecting a responsible party
+    useEffect(() => {
+        if (responsiblePartyPatient) {
+            form.setValue('responsibleParty.patientId', responsiblePartyPatient._id);
+        }
+    }, [responsiblePartyPatient, form]);
+
+    // Effect to toggle responsible party
+    useEffect(() => {
+        if (!hasResponsibleParty) {
+            form.setValue('responsibleParty', undefined);
+            setResponsiblePartyPatient(null);
+        } else if (!form.getValues('responsibleParty')) {
+             form.setValue('responsibleParty', { patientId: '', relationship: '' });
+        }
+    }, [hasResponsibleParty, form]);
 
 
     const handleSelectPatient = (patient: Patient) => {
@@ -316,6 +338,45 @@ export default function NewOrderPage() {
                     )}
                 />
 
+                <Separator />
+                 <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox id="hasResponsibleParty" checked={hasResponsibleParty} onCheckedChange={(checked) => setHasResponsibleParty(!!checked)} disabled={!selectedPatient} />
+                        <label htmlFor="hasResponsibleParty" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Assign a different person as financially responsible for this order.
+                        </label>
+                    </div>
+                    {hasResponsibleParty && (
+                        <div className="space-y-4 pl-6 border-l-2 ml-3">
+                            {responsiblePartyPatient ? (
+                            <>
+                                <Label>Responsible Party</Label>
+                                <div className="flex items-center gap-2 rounded-md border p-2 bg-muted/50">
+                                    <div className="flex-grow">
+                                        <p className="font-medium">{responsiblePartyPatient.fullName}</p>
+                                        <p className="text-sm text-muted-foreground">MRN: {responsiblePartyPatient.mrn}</p>
+                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => setResponsiblePartyPatient(null)}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </>
+                            ) : (
+                                <FormField control={form.control} name="responsibleParty.patientId" render={({ field }) => (
+                                    <FormItem><FormLabel>Find Responsible Party</FormLabel><FormControl>
+                                       <PatientSearch onSelectPatient={setResponsiblePartyPatient} placeholder="Search for guarantor..." />
+                                    </FormControl><FormMessage /></FormItem>
+                                )} />
+                            )}
+                            <FormField control={form.control} name="responsibleParty.relationship" render={({ field }) => (
+                                <FormItem><FormLabel>Relationship to Patient</FormLabel><FormControl><Input placeholder="e.g., Father, Mother, Guardian" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
+                    )}
+                 </div>
+
+
+                <Separator />
 
                 {/* Referring Physician */}
                 <FormField
@@ -436,6 +497,12 @@ export default function NewOrderPage() {
                             <span className="text-muted-foreground">Tests</span>
                             <span>{selectedTests.length}</span>
                         </div>
+                         {responsiblePartyPatient && (
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Guarantor</span>
+                                <span className="truncate max-w-40">{responsiblePartyPatient?.fullName}</span>
+                            </div>
+                         )}
                         <Separator />
                         <div className="flex justify-between font-semibold text-lg">
                             <span>Total</span>

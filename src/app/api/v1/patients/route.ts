@@ -64,11 +64,6 @@ export async function POST(request: Request) {
       updatedAt: new Date()
   };
 
-  // Convert responsibleParty patientId to ObjectId if it exists
-  if (patientToCreate.responsibleParty?.patientId) {
-      patientToCreate.responsibleParty.patientId = new ObjectId(patientToCreate.responsibleParty.patientId);
-  }
-
   const newPatient = await addPatient(patientToCreate);
   
   // Create an audit log for this event

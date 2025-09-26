@@ -203,7 +203,8 @@ export const findOrderById = async (orderId: string): Promise<any | null> => {
         {
           $addFields: {
             "patientObjectId": { "$toObjectId": "$patientId" },
-            "physicianObjectId": { "$toObjectId": "$physicianId" }
+            "physicianObjectId": { "$toObjectId": "$physicianId" },
+            "guarantorObjectId": { "$toObjectId": "$responsibleParty.patientId" }
           }
         },
         {
@@ -223,6 +224,14 @@ export const findOrderById = async (orderId: string): Promise<any | null> => {
             }
         },
         {
+            $lookup: {
+                from: 'patients',
+                localField: 'guarantorObjectId',
+                foreignField: '_id',
+                as: 'guarantorDetails'
+            }
+        },
+        {
             $unwind: {
                 path: '$patientDetails',
                 preserveNullAndEmptyArrays: true
@@ -231,6 +240,12 @@ export const findOrderById = async (orderId: string): Promise<any | null> => {
         {
             $unwind: {
                 path: '$physicianDetails',
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $unwind: {
+                path: '$guarantorDetails',
                 preserveNullAndEmptyArrays: true
             }
         },
@@ -248,6 +263,7 @@ export const findOrderById = async (orderId: string): Promise<any | null> => {
           $project: {
             patientObjectId: 0,
             physicianObjectId: 0,
+            guarantorObjectId: 0,
             "physicianDetails.passwordHash": 0,
             "physicianDetails.role": 0,
           }

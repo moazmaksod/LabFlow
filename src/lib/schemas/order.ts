@@ -47,6 +47,11 @@ const PaymentSchema = z.object({
   recordedBy: z.string(), // ObjectId as string
 });
 
+const ResponsiblePartySchema = z.object({
+    patientId: z.string(), // ObjectId of the guarantor patient
+    relationship: z.string().min(1, { message: "Relationship is required." }),
+});
+
 
 export const OrderSchema = z.object({
   _id: z.string(), // ObjectId as string
@@ -58,6 +63,7 @@ export const OrderSchema = z.object({
   priority: z.enum(['Routine', 'STAT']).default('Routine'),
   billingType: z.enum(['Insurance', 'Self-Pay']).default('Insurance'),
   paymentStatus: z.enum(['Paid', 'Unpaid', 'Partially Paid', 'Waived']).default('Unpaid'),
+  responsibleParty: ResponsiblePartySchema.optional(),
   clinicalJustification: z.string().optional(), // Required for STAT
   samples: z.array(SampleSchema),
   payments: z.array(PaymentSchema).default([]),
@@ -82,6 +88,7 @@ export const CreateOrderInputSchema = z.object({
     priority: z.enum(['Routine', 'STAT']).default('Routine'),
     billingType: z.enum(['Insurance', 'Self-Pay']).default('Insurance'),
     testCodes: z.array(z.string()).min(1, 'At least one test must be selected'),
+    responsibleParty: ResponsiblePartySchema.optional(),
     notes: z.string().optional(),
 });
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;

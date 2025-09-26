@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     });
     
     // --- Generate ID and Save Order ---
-    const orderToCreate = {
+    const orderToCreate: any = {
         patientId,
         ...orderData,
         samples: orderSamples,
@@ -110,6 +110,11 @@ export async function POST(request: Request) {
         createdBy: user._id,
         payments: [],
     };
+
+    // Convert responsibleParty patientId to ObjectId if it exists
+    if (orderToCreate.responsibleParty?.patientId) {
+        orderToCreate.responsibleParty.patientId = new ObjectId(orderToCreate.responsibleParty.patientId);
+    }
     
     const newOrder = await addOrder(orderToCreate);
     
@@ -124,7 +129,7 @@ export async function POST(request: Request) {
         details: {
             orderId: newOrder.orderId,
             patientId: newOrder.patientId,
-            testCount: newOrder.samples.reduce((acc, s) => acc + s.tests.length, 0),
+            testCount: newOrder.samples.reduce((acc: number, s: any) => acc + s.tests.length, 0),
         },
     });
 

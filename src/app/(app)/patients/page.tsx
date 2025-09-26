@@ -37,7 +37,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
-const PatientSearch = ({ onSelectPatient, placeholder }: { onSelectPatient: (patient: Patient) => void, placeholder?: string }) => {
+export const PatientSearch = ({ onSelectPatient, placeholder }: { onSelectPatient: (patient: Patient) => void, placeholder?: string }) => {
     const [patientSearchTerm, setPatientSearchTerm] = useState('');
     const [patientSearchResults, setPatientSearchResults] = useState<Patient[]>([]);
     const [isSearchingPatients, setIsSearchingPatients] = useState(false);
@@ -104,8 +104,6 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
     const { toast } = useToast();
 
     const [isSelfPay, setIsSelfPay] = useState(patientData?.insuranceInfo?.length === 0);
-    const [hasResponsibleParty, setHasResponsibleParty] = useState(!!patientData?.responsibleParty);
-    const [responsiblePartyPatient, setResponsiblePartyPatient] = useState<Patient | null>(null);
 
     const form = useForm<PatientFormData>({
         resolver: zodResolver(PatientFormSchema),
@@ -126,13 +124,6 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
     const [isVerifying, setIsVerifying] = useState(false);
     const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verifying' | 'verified' | 'failed'>('idle');
     
-    // Effect to handle selecting a responsible party
-    useEffect(() => {
-        if (responsiblePartyPatient) {
-            form.setValue('responsibleParty.patientId', responsiblePartyPatient._id);
-        }
-    }, [responsiblePartyPatient, form]);
-
     // Effect to toggle insurance info
     useEffect(() => {
         if(isSelfPay) {
@@ -141,16 +132,6 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
             form.setValue('insuranceInfo', patientData?.insuranceInfo || [{ providerName: '', policyNumber: '', groupNumber: '', isPrimary: true }]);
         }
     }, [isSelfPay, form, patientData]);
-
-    // Effect to toggle responsible party
-    useEffect(() => {
-        if (!hasResponsibleParty) {
-            form.setValue('responsibleParty', undefined);
-            setResponsiblePartyPatient(null);
-        } else if (!form.getValues('responsibleParty')) {
-             form.setValue('responsibleParty', { patientId: '', relationship: '' });
-        }
-    }, [hasResponsibleParty, form]);
 
 
     const watchedYear = form.watch("dateOfBirth.year");
@@ -411,44 +392,6 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
                             </div>
                         )}
                     </div>
-                    
-                    <Separator />
-
-                    <div className="space-y-4">
-                        <h4 className="font-medium text-sm">Billing</h4>
-                        <div className="flex items-center space-x-2">
-                           <Checkbox id="hasResponsibleParty" checked={hasResponsibleParty} onCheckedChange={(checked) => setHasResponsibleParty(!!checked)} />
-                           <label htmlFor="hasResponsibleParty" className="text-sm font-medium leading-none">
-                            Assign a different person as financially responsible.
-                           </label>
-                        </div>
-                        {hasResponsibleParty && (
-                           <div className="space-y-4 pl-2 border-l-2 ml-2">
-                             {responsiblePartyPatient ? (
-                                <>
-                                    <Label>Responsible Party</Label>
-                                    <div className="flex items-center gap-2 rounded-md border p-2 bg-muted/50">
-                                        <div className="flex-grow">
-                                            <p className="font-medium">{responsiblePartyPatient.fullName}</p>
-                                            <p className="text-sm text-muted-foreground">MRN: {responsiblePartyPatient.mrn}</p>
-                                        </div>
-                                        <Button variant="ghost" size="icon" onClick={() => setResponsiblePartyPatient(null)}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </>
-                             ) : (
-                                <FormField control={form.control} name="responsibleParty.patientId" render={({ field }) => (
-                                    <FormItem><FormLabel>Find Responsible Party</FormLabel><FormControl><PatientSearch onSelectPatient={setResponsiblePartyPatient} placeholder="Search for guarantor..." /></FormControl><FormMessage /></FormItem>
-                                )} />
-                             )}
-                              <FormField control={form.control} name="responsibleParty.relationship" render={({ field }) => (
-                                    <FormItem><FormLabel>Relationship to Patient</FormLabel><FormControl><Input placeholder="e.g., Father, Mother, Guardian" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                           </div>
-                        )}
-                    </div>
-
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
