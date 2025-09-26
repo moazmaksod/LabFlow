@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Scan, CheckCircle, Info, ScanLine, Loader2 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { Scan, CheckCircle, Info, ScanLine, Loader2, CircleDashed } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -43,6 +43,7 @@ export default function AccessioningPage() {
     const [searchedOrder, setSearchedOrder] = useState<OrderWithClientSideSampleIds | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [accessioningState, setAccessioningState] = useState<Record<string, 'loading' | 'accessioned'>>({});
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const handleSearch = useCallback(async () => {
         if (!orderId || !token) return;
@@ -83,6 +84,11 @@ export default function AccessioningPage() {
             setIsLoading(false);
         }
     }, [orderId, token, toast]);
+    
+    useEffect(() => {
+        // Focus the input on page load for a barcode-scanner-first workflow
+        inputRef.current?.focus();
+    }, [])
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -97,6 +103,26 @@ export default function AccessioningPage() {
             clearTimeout(handler);
         };
     }, [orderId, handleSearch]);
+    
+    useEffect(() => {
+        if (!searchedOrder) return;
+        
+        const allAccessioned = searchedOrder.samples.every(s => s.status !== 'AwaitingCollection');
+
+        if(allAccessioned) {
+            toast({
+                title: 'All Samples Accessioned',
+                description: `Order ${searchedOrder.orderId} is fully accessioned. Ready for next scan.`,
+            });
+            const timer = setTimeout(() => {
+                setOrderId('');
+                setSearchedOrder(null);
+                inputRef.current?.focus();
+            }, 1500); // Wait 1.5 seconds before clearing
+            return () => clearTimeout(timer);
+        }
+
+    }, [searchedOrder, toast]);
 
 
     const handleAccessionSample = async (clientId: string, sampleIndex: number) => {
@@ -144,7 +170,11 @@ export default function AccessioningPage() {
                     title: 'Accession Failed',
                     description: errorData.message || 'An unexpected error occurred.',
                 });
-                 setAccessioningState(prev => ({ ...prev, [clientId]: undefined }));
+                 setAccessioningState(prev => {
+                     const newState = {...prev};
+                     delete newState[clientId];
+                     return newState;
+                 });
             }
         } catch (error) {
              toast({
@@ -152,7 +182,11 @@ export default function AccessioningPage() {
                 title: 'Network Error',
                 description: 'Could not connect to the server.',
             });
-            setAccessioningState(prev => ({ ...prev, [clientId]: undefined }));
+            setAccessioningState(prev => {
+                const newState = {...prev};
+                delete newState[clientId];
+                return newState;
+            });
         }
     }
     
@@ -173,7 +207,7 @@ export default function AccessioningPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-4">
-        <Scan className="size-10 text-muted-foreground" />
+        <CircleDashed className="size-10 text-muted-foreground" />
         <div>
           <h1 className="font-headline text-3xl font-semibold">Accessioning</h1>
           <p className="text-muted-foreground">
@@ -195,6 +229,7 @@ export default function AccessioningPage() {
                 <div className="relative flex-grow">
                   <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input 
+                      ref={inputRef}
                       placeholder="Scan or enter Order ID..." 
                       className="h-12 text-lg pl-10"
                       value={orderId}
@@ -257,6 +292,18 @@ export default function AccessioningPage() {
                 </Table>
             </CardContent>
          </Card>
+      )}
+
+       {isLoading && !searchedOrder && (
+          <Card>
+              <CardHeader>
+                  <CardTitle><div className='h-8 w-48 bg-muted animate-pulse rounded-md'></div></CardTitle>
+                  <CardDescription><div className='h-5 w-64 bg-muted animate-pulse rounded-md'></div></CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <div className='h-32 w-full bg-muted animate-pulse rounded-md'></div>
+              </CardContent>
+          </Card>
       )}
     </div>
   );

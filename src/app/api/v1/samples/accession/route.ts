@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api/utils';
 import { getOrdersCollection } from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 
 const AccessionInputSchema = z.object({
