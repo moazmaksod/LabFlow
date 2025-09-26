@@ -34,6 +34,10 @@ import type { Order } from '@/lib/schemas/order';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { useParams } from 'next/navigation';
+import { RequisitionForm } from '@/components/label/requisition-form';
+import { renderToString } from 'react-dom/server';
+import { SampleLabel } from '@/components/label/sample-label';
+
 
 const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' } = {
   Completed: 'default',
@@ -49,6 +53,8 @@ type OrderWithDetails = Order & {
         _id: string;
         fullName: string;
         mrn: string;
+        dateOfBirth: string | Date;
+        gender: string;
     };
     physicianDetails?: {
         _id: string;
@@ -102,21 +108,65 @@ export default function OrderDetailsPage() {
     fetchOrder();
   }, [id, token, toast]);
 
-  const handlePrint = (barcodeValue: string, type: 'accession' | 'order') => {
-    const printUrl = `/print/orders/${id}/print?${type}=${barcodeValue}`;
-    const printWindow = window.open(printUrl, '_blank', 'width=400,height=250');
-    
-    // Pass the token to the new window via sessionStorage
-    if (printWindow && token) {
-      printWindow.onload = () => {
-          printWindow.sessionStorage.setItem('labflow.auth.token', token);
-          // Small delay to ensure sessionStorage is set before the page tries to fetch.
-          setTimeout(() => {
-            printWindow.print();
-          }, 500);
-      };
+  const handlePrint = (type: 'requisition' | 'label', barcodeValue: string) => {
+    if (!orderDetails) return;
+
+    const printWindow = window.open('', '_blank', 'width=800,height=900');
+    if (!printWindow) {
+      toast({ variant: 'destructive', title: 'Could not open print window. Please disable pop-up blockers.' });
+      return;
     }
-  };
+
+    let printContent: string;
+    if (type === 'requisition') {
+        printContent = renderToString(<RequisitionForm order={orderDetails} />);
+    } else {
+        const sample = orderDetails.samples.find(s => s.accessionNumber === barcodeValue);
+        if (!sample) {
+            toast({ variant: 'destructive', title: 'Sample not found for label printing.' });
+            return;
+        }
+        printContent = renderToString(
+            <SampleLabel
+                patientName={orderDetails.patientDetails.fullName}
+                mrn={orderDetails.patientDetails.mrn}
+                orderId={orderDetails.orderId}
+                barcodeValue={barcodeValue}
+                sampleType={sample.sampleType}
+                isRequisition={false}
+            />
+        );
+    }
+    
+    const pageTitle = type === 'requisition' ? `Requisition - ${orderDetails.orderId}` : `Label - ${barcodeValue}`;
+
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>${pageTitle}</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <style>
+                    body { font-family: sans-serif; }
+                    @media print {
+                        @page { size: A4; margin: 0; }
+                        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    }
+                </style>
+            </head>
+            <body class="bg-gray-100 flex items-center justify-center">
+                ${printContent}
+            </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    // Use a timeout to ensure content is fully loaded before printing
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+};
 
 
   if (isLoading) {
@@ -178,7 +228,7 @@ export default function OrderDetailsPage() {
         </div>
         <div className="flex items-center gap-2">
             {isReceptionist && (
-              <Button onClick={() => handlePrint(orderDetails.orderId, 'order')}>
+              <Button onClick={() => handlePrint('requisition', orderDetails.orderId)}>
                 <Printer className="mr-2 h-4 w-4" /> Print Requisition
               </Button>
             )}
@@ -200,7 +250,7 @@ export default function OrderDetailsPage() {
                       <Button 
                         variant="outline"
                         disabled={!sample.accessionNumber}
-                        onClick={() => handlePrint(sample.accessionNumber!, 'accession')}
+                        onClick={() => handlePrint('label', sample.accessionNumber!)}
                       >
                         <Printer className="mr-2 h-4 w-4" /> 
                         Print Label
