@@ -123,34 +123,29 @@ async function seedDatabase(db: Db) {
     const patientsCollection = db.collection('patients');
     const countersCollection = db.collection('counters');
 
-    const userCount = await usersCollection.countDocuments();
-    if (userCount === 0) {
-        console.log('Seeding `users` collection with initial data...');
-        await usersCollection.insertMany(initialUsers as any[]);
-    }
+    // Drop existing data to ensure a clean seed
+    console.log('Clearing existing seed data...');
+    await usersCollection.deleteMany({});
+    await testsCollection.deleteMany({});
+    await patientsCollection.deleteMany({});
+    await countersCollection.deleteMany({});
 
-    const testCount = await testsCollection.countDocuments();
-    if (testCount === 0) {
-        console.log('Seeding `testCatalog` collection with initial data...');
-        await testsCollection.insertMany(initialTests as any[]);
-    }
+    console.log('Seeding `users` collection with initial data...');
+    await usersCollection.insertMany(initialUsers as any[]);
+
+    console.log('Seeding `testCatalog` collection with initial data...');
+    await testsCollection.insertMany(initialTests as any[]);
     
-    const patientCount = await patientsCollection.countDocuments();
-    if (patientCount === 0) {
-        console.log('Seeding `patients` collection with initial data...');
-        const patientsWithTimestamps = initialPatients.map(p => ({
-            ...p,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        }));
-        await patientsCollection.insertMany(patientsWithTimestamps as any[]);
-    }
+    console.log('Seeding `patients` collection with initial data...');
+    const patientsWithTimestamps = initialPatients.map(p => ({
+        ...p,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    }));
+    await patientsCollection.insertMany(patientsWithTimestamps as any[]);
 
-    const accessionCounter = await countersCollection.findOne({ _id: 'accessionNumber' });
-    if (!accessionCounter) {
-        console.log('Seeding `counters` collection with initial accession number...');
-        await countersCollection.insertOne({ _id: 'accessionNumber', sequence_value: 0 });
-    }
+    console.log('Seeding `counters` collection with initial accession number...');
+    await countersCollection.insertOne({ _id: 'accessionNumber', sequence_value: 0 });
 }
 
 async function applyIndexes(db: Db) {
