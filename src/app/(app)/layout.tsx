@@ -28,23 +28,16 @@ import { Icons } from '@/components/icons';
 import {
   Bell,
   BarChart3,
-  FlaskConical,
   Users,
   ClipboardList,
-  FileText,
-  LifeBuoy,
   User,
   Settings,
   LogOut,
   Warehouse,
-  FileBox,
   LayoutDashboard,
   CalendarClock,
   Scan,
-  TestTube,
-  FileCheck,
   ShieldCheck,
-  Package,
   History,
   UserCog,
   Beaker,
@@ -106,21 +99,6 @@ function AppSidebar() {
           <Link href="/accessioning"><Scan /><span>Accessioning</span></Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname.startsWith('/testing')} tooltip="Testing">
-          <Link href="/testing"><TestTube /><span>Testing</span></Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname.startsWith('/quality-control')} tooltip="Quality">
-          <Link href="/quality-control"><ShieldCheck /><span>Quality</span></Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory/search')} tooltip="Inventory">
-          <Link href="/inventory/search"><Package /><span>Inventory</span></Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
     </>
   );
 
@@ -131,24 +109,9 @@ function AppSidebar() {
           <Link href="/dashboard"><LayoutDashboard /><span>KPI Dashboard</span></Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
-       <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname.startsWith('/reports')} tooltip="Reports & Analytics">
-          <Link href="/reports"><BarChart3 /><span>Reports & Analytics</span></Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
       <SidebarMenuItem>
         <SidebarMenuButton asChild isActive={pathname.startsWith('/accessioning')} tooltip="Accessioning">
           <Link href="/accessioning"><Scan /><span>Accessioning</span></Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname.startsWith('/inventory')} tooltip="Inventory Management">
-          <Link href="/inventory"><Warehouse /><span>Inventory Management</span></Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname.startsWith('/quality')} tooltip="Quality Assurance">
-          <Link href="/quality"><ShieldCheck /><span>Quality Assurance</span></Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
@@ -217,18 +180,6 @@ function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-2">
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === '/support'}
-              tooltip="Support"
-            >
-              <Link href="/support">
-                <LifeBuoy />
-                <span>Support</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
