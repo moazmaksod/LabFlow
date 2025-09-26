@@ -10,9 +10,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Scan, CheckCircle, Info, ScanLine, Loader2, CircleDashed } from 'lucide-react';
+import { CheckCircle, Loader2, CircleDashed, ScanLine } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -115,8 +114,7 @@ export default function AccessioningPage() {
                 description: `Order ${searchedOrder.orderId} is fully accessioned. Ready for next scan.`,
             });
             const timer = setTimeout(() => {
-                setOrderId('');
-                setSearchedOrder(null);
+                setOrderId(''); // Only clear the input field, not the whole order
                 inputRef.current?.focus();
             }, 1500); // Wait 1.5 seconds before clearing
             return () => clearTimeout(timer);
@@ -207,7 +205,7 @@ export default function AccessioningPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-4">
-        <CircleDashed className="size-10 text-muted-foreground" />
+        <CircleDashed className="size-10 text-muted-foreground animate-spin [animation-duration:5s]" />
         <div>
           <h1 className="font-headline text-3xl font-semibold">Accessioning</h1>
           <p className="text-muted-foreground">
@@ -308,3 +306,5 @@ export default function AccessioningPage() {
     </div>
   );
 }
+
+    
