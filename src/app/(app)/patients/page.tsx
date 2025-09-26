@@ -35,6 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 const PatientSearch = ({ onSelectPatient, placeholder }: { onSelectPatient: (patient: Patient) => void, placeholder?: string }) => {
     const [patientSearchTerm, setPatientSearchTerm] = useState('');
