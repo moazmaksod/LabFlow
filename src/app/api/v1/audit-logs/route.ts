@@ -56,11 +56,23 @@ export async function GET(request: Request) {
       }
     },
     { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: true } },
+    {
+      $addFields: {
+        'userDetails.fullName': {
+          $ifNull: [
+            '$userDetails.fullName',
+            { $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName'] }
+          ]
+        }
+      }
+    },
     { 
       $project: { 
         "userObjectId": 0, 
         "userDetails.passwordHash": 0,
-        "userDetails.role": 0
+        "userDetails.role": 0,
+        "userDetails.firstName": 0,
+        "userDetails.lastName": 0,
       } 
     }
   ]).limit(50).toArray();
