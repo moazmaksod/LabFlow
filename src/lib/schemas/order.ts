@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 import { ReferenceRangeSchema } from './test-catalog';
 
@@ -59,7 +60,7 @@ export const OrderSchema = z.object({
   paymentStatus: z.enum(['Paid', 'Unpaid', 'Partially Paid', 'Waived']).default('Unpaid'),
   clinicalJustification: z.string().optional(), // Required for STAT
   samples: z.array(SampleSchema),
-  payments: z.array(PaymentSchema).optional(),
+  payments: z.array(PaymentSchema).default([]),
   createdAt: z.date(),
   createdBy: z.string(), // ObjectId as string
   updatedAt: z.date(),
