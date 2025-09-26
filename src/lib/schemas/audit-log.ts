@@ -10,6 +10,7 @@ export const AuditLogActionSchema = z.enum([
     'RESULT_ENTERED',
     'RESULT_MODIFIED',
     'RESULT_VERIFIED',
+    'PAYMENT_RECORDED',
 ]);
 
 export const AuditLogEntitySchema = z.object({

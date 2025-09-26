@@ -108,6 +108,7 @@ export async function POST(request: Request) {
         orderStatus: 'Pending',
         paymentStatus: orderData.billingType === 'Self-Pay' ? 'Unpaid' : 'Waived', // Waived for insurance, Unpaid for self-pay
         createdBy: user._id,
+        payments: [],
     };
     
     const newOrder = await addOrder(orderToCreate);

@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ClipboardList, Printer, Save, CreditCard, CheckCircle } from 'lucide-react';
+import { ClipboardList, Printer, Save, CreditCard, CheckCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -37,7 +37,12 @@ import { useParams } from 'next/navigation';
 import { RequisitionForm } from '@/components/label/requisition-form';
 import { renderToString } from 'react-dom/server';
 import { SampleLabel } from '@/components/label/sample-label';
-
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { RecordPaymentInput, RecordPaymentSchema } from '@/lib/schemas/order';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' } = {
   Completed: 'default',
@@ -46,9 +51,10 @@ const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' } = {
   'Pending': 'outline',
   'Verified': 'default',
 };
-const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outline' } = {
+const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outline' | 'secondary' } = {
   'Paid': 'default',
   'Unpaid': 'destructive',
+  'Partially Paid': 'secondary',
   'Waived': 'outline',
 };
 const statuses = ['In-Progress', 'AwaitingVerification', 'Verified', 'Cancelled'];
@@ -67,6 +73,110 @@ type OrderWithDetails = Order & {
     }
 }
 
+const RecordPaymentForm = ({ order, onPaymentSuccess }: { order: OrderWithDetails; onPaymentSuccess: (newOrderData: Partial<Order>) => void }) => {
+    const { token } = useAuth();
+    const { toast } = useToast();
+    
+    const totalOrderPrice = order.samples.reduce((sampleTotal, sample) => {
+        const testsTotal = sample.tests.reduce((testTotal, test) => {
+            return testTotal + (test.price || 0);
+        }, 0);
+        return sampleTotal + testsTotal;
+    }, 0);
+    const totalPaid = (order.payments || []).reduce((sum, p) => sum + p.amount, 0);
+    const balanceDue = totalOrderPrice - totalPaid;
+
+    const form = useForm<RecordPaymentInput>({
+        resolver: zodResolver(RecordPaymentSchema),
+        defaultValues: {
+            amount: balanceDue,
+            method: 'Credit Card',
+        }
+    });
+
+    const onSubmit = async (values: RecordPaymentInput) => {
+        try {
+            const response = await fetch(`/api/v1/orders/${order.orderId}/payments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify(values),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                toast({
+                    title: "Payment Recorded",
+                    description: `$${values.amount.toFixed(2)} recorded successfully.`
+                });
+                onPaymentSuccess({
+                    paymentStatus: result.newStatus,
+                    payments: [...(order.payments || []), result.newPayment]
+                });
+            } else {
+                const error = await response.json();
+                toast({ variant: 'destructive', title: 'Payment Failed', description: error.message });
+            }
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Network Error', description: 'Could not connect to the server.' });
+        }
+    }
+
+    return (
+         <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <DialogHeader>
+                    <DialogTitle>Record Payment for Order {order.orderId}</DialogTitle>
+                    <DialogDescription>
+                        Total amount: ${totalOrderPrice.toFixed(2)}. Balance Due: <span className="font-bold">${balanceDue.toFixed(2)}</span>
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <FormField
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Amount to Pay</FormLabel>
+                                <FormControl>
+                                    <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="method"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Payment Method</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="Credit Card">Credit Card</SelectItem>
+                                        <SelectItem value="Cash">Cash</SelectItem>
+                                        <SelectItem value="Other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                <DialogFooter>
+                    <Button type="submit" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Record Payment
+                    </Button>
+                </DialogFooter>
+            </form>
+         </Form>
+    );
+};
+
+
 export default function OrderDetailsPage() {
   const params = useParams();
   const id = params.id as string;
@@ -74,6 +184,7 @@ export default function OrderDetailsPage() {
   const { toast } = useToast();
   const [orderDetails, setOrderDetails] = useState<OrderWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPaymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const canEditResults = user?.role === 'technician' || user?.role === 'manager';
   const isReceptionist = user?.role === 'receptionist';
@@ -116,7 +227,7 @@ export default function OrderDetailsPage() {
   const handlePrint = (type: 'requisition' | 'label', barcodeValue: string) => {
     if (!orderDetails) return;
 
-    const printWindow = window.open('', '_blank', 'width=800,height=900');
+    const printWindow = window.open('/print/orders/[id]/print', '_blank', 'width=800,height=900');
     if (!printWindow) {
       toast({ variant: 'destructive', title: 'Could not open print window. Please disable pop-up blockers.' });
       return;
@@ -138,18 +249,17 @@ export default function OrderDetailsPage() {
                 orderId={orderDetails.orderId}
                 barcodeValue={barcodeValue}
                 sampleType={sample.sampleType}
-                isRequisition={false}
             />
         );
     }
     
     const pageTitle = type === 'requisition' ? `Requisition - ${orderDetails.orderId}` : `Label - ${barcodeValue}`;
-
-    printWindow.document.write(`
+    
+    const html = `
         <html>
             <head>
                 <title>${pageTitle}</title>
-                <script src="https://cdn.tailwindcss.com"></script>
+                <script src="https://cdn.tailwindcss.com"><\/script>
                 <style>
                     body { font-family: sans-serif; }
                     @media print {
@@ -162,29 +272,23 @@ export default function OrderDetailsPage() {
                 ${printContent}
             </body>
         </html>
-    `);
+    `;
 
+    printWindow.document.open();
+    printWindow.document.write(html);
     printWindow.document.close();
-    printWindow.focus();
-    // Use a timeout to ensure content is fully loaded before printing
-    setTimeout(() => {
+    
+    printWindow.onload = () => {
+        printWindow.focus();
         printWindow.print();
         printWindow.close();
-    }, 500);
+    };
   };
   
-  const handleMarkAsPaid = async () => {
-      // In a real app this would call a PUT endpoint to update the order.
-      // For this prototype, we'll just optimistically update the UI.
-      if (orderDetails) {
-          setOrderDetails({ ...orderDetails, paymentStatus: 'Paid' });
-          toast({
-              title: "Payment Recorded",
-              description: `Order ${orderDetails.orderId} marked as Paid.`,
-          });
-      }
+  const handlePaymentSuccess = (newOrderData: Partial<Order>) => {
+      setOrderDetails(prev => prev ? { ...prev, ...newOrderData } : null);
+      setPaymentDialogOpen(false);
   }
-
 
   if (isLoading) {
     return (
@@ -221,6 +325,8 @@ export default function OrderDetailsPage() {
       return sampleTotal + testsTotal;
   }, 0);
 
+  const totalPaid = (orderDetails.payments || []).reduce((sum, p) => sum + p.amount, 0);
+  const balanceDue = totalOrderPrice - totalPaid;
 
   return (
     <div className="flex flex-col gap-8">
@@ -331,7 +437,7 @@ export default function OrderDetailsPage() {
         <CardHeader>
             <CardTitle>Order Summary & Billing</CardTitle>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-3 gap-4">
+        <CardContent className="grid md:grid-cols-3 gap-y-4 gap-x-8">
              <div>
               <p className="text-sm font-medium text-muted-foreground">Order Date</p>
               <p>{format(new Date(orderDetails.createdAt), 'MMMM d, yyyy')}</p>
@@ -349,21 +455,36 @@ export default function OrderDetailsPage() {
               <p className="font-semibold text-lg">${totalOrderPrice.toFixed(2)}</p>
             </div>
              <div>
+              <p className="text-sm font-medium text-muted-foreground">Amount Paid</p>
+              <p className="font-semibold text-lg text-green-600">${totalPaid.toFixed(2)}</p>
+            </div>
+             <div>
+              <p className="text-sm font-medium text-muted-foreground">Balance Due</p>
+              <p className="font-semibold text-lg">${balanceDue.toFixed(2)}</p>
+            </div>
+             <div>
               <p className="text-sm font-medium text-muted-foreground">Overall Status</p>
               <div><Badge variant={statusVariant[orderDetails.orderStatus] || 'default'}>{orderDetails.orderStatus}</Badge></div>
             </div>
-             <div>
+             <div className="md:col-span-2">
               <p className="text-sm font-medium text-muted-foreground">Payment Status</p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-1">
                  <Badge variant={paymentStatusVariant[orderDetails.paymentStatus] || 'destructive'}>{orderDetails.paymentStatus}</Badge>
-                 {isReceptionist && orderDetails.paymentStatus === 'Unpaid' && (
-                     <Button size="sm" variant="outline" onClick={handleMarkAsPaid}>
-                        <CreditCard className="mr-2 h-4 w-4" /> Record Payment
-                    </Button>
+                 {isReceptionist && orderDetails.paymentStatus !== 'Paid' && orderDetails.paymentStatus !== 'Waived' && (
+                     <Dialog open={isPaymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                                <CreditCard className="mr-2 h-4 w-4" /> Record Payment
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <RecordPaymentForm order={orderDetails} onPaymentSuccess={handlePaymentSuccess} />
+                        </DialogContent>
+                     </Dialog>
                  )}
                   {orderDetails.paymentStatus === 'Paid' && (
                      <div className="text-sm text-green-600 flex items-center gap-1">
-                        <CheckCircle className="h-4 w-4" /> Paid
+                        <CheckCircle className="h-4 w-4" /> Fully Paid
                     </div>
                  )}
               </div>

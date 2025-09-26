@@ -38,6 +38,14 @@ const SampleSchema = z.object({
   tests: z.array(SnapshottedTestSchema),
 });
 
+const PaymentSchema = z.object({
+  _id: z.string(),
+  amount: z.number(),
+  date: z.date(),
+  method: z.enum(['Cash', 'Credit Card', 'Other']),
+  recordedBy: z.string(), // ObjectId as string
+});
+
 
 export const OrderSchema = z.object({
   _id: z.string(), // ObjectId as string
@@ -48,9 +56,10 @@ export const OrderSchema = z.object({
   orderStatus: z.enum(['Pending', 'Partially Complete', 'Complete', 'Cancelled']).default('Pending'),
   priority: z.enum(['Routine', 'STAT']).default('Routine'),
   billingType: z.enum(['Insurance', 'Self-Pay']).default('Insurance'),
-  paymentStatus: z.enum(['Paid', 'Unpaid', 'Waived']).default('Unpaid'),
+  paymentStatus: z.enum(['Paid', 'Unpaid', 'Partially Paid', 'Waived']).default('Unpaid'),
   clinicalJustification: z.string().optional(), // Required for STAT
   samples: z.array(SampleSchema),
+  payments: z.array(PaymentSchema).optional(),
   createdAt: z.date(),
   createdBy: z.string(), // ObjectId as string
   updatedAt: z.date(),
@@ -75,3 +84,10 @@ export const CreateOrderInputSchema = z.object({
     notes: z.string().optional(),
 });
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;
+
+
+export const RecordPaymentSchema = z.object({
+  amount: z.number().positive('Payment amount must be positive.'),
+  method: z.enum(['Cash', 'Credit Card', 'Other']),
+});
+export type RecordPaymentInput = z.infer<typeof RecordPaymentSchema>;
