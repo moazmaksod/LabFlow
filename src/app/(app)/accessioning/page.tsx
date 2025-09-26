@@ -1,0 +1,153 @@
+
+'use client';
+
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Scan, CheckCircle, Info } from 'lucide-react';
+import { useState } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+
+// Mock data representing what the API might return for an order
+const mockOrderData = {
+    orderId: 'ORD-2025-00001',
+    patient: {
+        fullName: 'John Doe',
+        mrn: 'MRN12345'
+    },
+    samples: [
+        { sampleId: 'S1', type: 'Lavender Top', status: 'AwaitingCollection' },
+        { sampleId: 'S2', type: 'Gold Top', status: 'AwaitingCollection' },
+    ]
+};
+
+
+export default function AccessioningPage() {
+    const [orderId, setOrderId] = useState('');
+    const [searchedOrder, setSearchedOrder] = useState<typeof mockOrderData | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!orderId) return;
+
+        setIsLoading(true);
+        // In a real app, this would be an API call:
+        // fetch(`/api/v1/orders/${orderId}`)
+        setTimeout(() => {
+            if (orderId === 'ORD-2025-00001') {
+                setSearchedOrder(mockOrderData);
+            } else {
+                setSearchedOrder(null);
+            }
+            setIsLoading(false);
+        }, 1000);
+    };
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center gap-4">
+        <Scan className="size-10 text-muted-foreground" />
+        <div>
+          <h1 className="font-headline text-3xl font-semibold">Accessioning</h1>
+          <p className="text-muted-foreground">
+            Receive and log new samples into the laboratory workflow.
+          </p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Scan Order Requisition</CardTitle>
+          <CardDescription>
+            Scan the barcode on the sample requisition form to find the order.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSearch}>
+             <div className="flex w-full max-w-lg items-center space-x-2">
+                <Input 
+                    placeholder="Scan or enter Order ID..." 
+                    className="h-12 text-lg"
+                    value={orderId}
+                    onChange={(e) => setOrderId(e.target.value)}
+                />
+                <Button type="submit" size="lg" disabled={isLoading || !orderId}>
+                    {isLoading ? 'Searching...' : 'Find Order'}
+                </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+      
+      {searchedOrder && (
+         <Card>
+            <CardHeader>
+                <CardTitle>Order Details: {searchedOrder.orderId}</CardTitle>
+                <CardDescription>
+                    Patient: {searchedOrder.patient.fullName} (MRN: {searchedOrder.patient.mrn})
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Sample Type</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {searchedOrder.samples.map(sample => (
+                            <TableRow key={sample.sampleId}>
+                                <TableCell className="font-medium">{sample.type}</TableCell>
+                                <TableCell>
+                                    <Badge variant={sample.status === 'AwaitingCollection' ? 'outline' : 'default'}>
+                                        {sample.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button
+                                        variant={sample.status === 'AwaitingCollection' ? 'default' : 'secondary'}
+                                        disabled={sample.status !== 'AwaitingCollection'}
+                                    >
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        Accession Sample
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+         </Card>
+      )}
+
+      {!searchedOrder && !isLoading && orderId && (
+        <Alert variant="destructive">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Order Not Found</AlertTitle>
+            <AlertDescription>
+                No order found for ID "{orderId}". Please check the ID and try again.
+            </AlertDescription>
+        </Alert>
+      )}
+
+    </div>
+  );
+}
