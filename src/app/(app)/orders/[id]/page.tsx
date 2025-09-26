@@ -101,11 +101,19 @@ export default function OrderDetailsPage() {
   }, [id, token, toast]);
 
   const handlePrintLabel = (sampleAccessionNumber: string) => {
-    const printUrl = `/orders/${id}/print?accessionNumber=${sampleAccessionNumber}`;
+    const printUrl = `/print/orders/${id}/print?accessionNumber=${sampleAccessionNumber}`;
     const printWindow = window.open(printUrl, '_blank', 'width=400,height=200');
-    printWindow?.addEventListener('load', () => {
-        printWindow.print();
-    });
+    
+    // Pass the token to the new window via sessionStorage
+    if (printWindow && token) {
+      printWindow.onload = () => {
+          printWindow.sessionStorage.setItem('labflow.auth.token', token);
+          // Small delay to ensure sessionStorage is set before the page tries to fetch.
+          setTimeout(() => {
+            printWindow.print();
+          }, 500);
+      };
+    }
   };
 
 
