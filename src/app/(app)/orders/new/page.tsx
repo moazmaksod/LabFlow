@@ -59,6 +59,7 @@ export default function NewOrderPage() {
         resolver: zodResolver(CreateOrderInputSchema),
         defaultValues: {
             patientId: '',
+            physicianId: '',
             icd10Code: '',
             testCodes: [],
             priority: 'Routine',
