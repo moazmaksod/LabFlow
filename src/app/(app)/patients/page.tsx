@@ -34,10 +34,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, useForm
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: PatientFormData) => void, closeDialog: () => void, patientData?: Partial<PatientFormData> }) => {
     const { token } = useAuth();
     const { toast } = useToast();
+
+    const [isSelfPay, setIsSelfPay] = useState(patientData?.insuranceInfo?.length === 0);
+
     const form = useForm<PatientFormData>({
         resolver: zodResolver(PatientFormSchema),
         defaultValues: patientData || {
@@ -56,6 +60,14 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
 
     const [isVerifying, setIsVerifying] = useState(false);
     const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verifying' | 'verified' | 'failed'>('idle');
+
+    useEffect(() => {
+        if(isSelfPay) {
+            form.setValue('insuranceInfo', []);
+        } else {
+            form.setValue('insuranceInfo', patientData?.insuranceInfo || [{ providerName: '', policyNumber: '', groupNumber: '', isPrimary: true }]);
+        }
+    }, [isSelfPay, form, patientData]);
 
 
     const watchedYear = form.watch("dateOfBirth.year");
@@ -94,6 +106,7 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
             },
             insuranceInfo: [{ providerName: 'Bupa', policyNumber: 'BUPA-98765', groupNumber: 'GRP-XYZ', isPrimary: true }]
         });
+        setIsSelfPay(false);
     };
 
     const handleVerifyEligibility = async () => {
@@ -259,52 +272,62 @@ const PatientForm = ({ onSave, closeDialog, patientData }: { onSave: (data: Pati
                     </div>
 
                     <Separator />
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                            <h4 className="font-medium text-sm">Primary Insurance</h4>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        {/* The button is wrapped in a span for the tooltip to work when disabled */}
-                                        <span tabIndex={isVerifyButtonDisabled ? 0 : -1}>
-                                            <Button type="button" variant="secondary" size="sm" onClick={handleVerifyEligibility} disabled={isVerifyButtonDisabled}>
-                                                {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                Verify Eligibility
-                                            </Button>
-                                        </span>
-                                    </TooltipTrigger>
-                                    {isVerifyButtonDisabled && !isVerifying && (
-                                        <TooltipContent>
-                                            <p>Please save the patient record first to enable eligibility checks.</p>
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            </TooltipProvider>
+                     <div className="space-y-4">
+                         <h4 className="font-medium text-sm">Insurance Information</h4>
+                        <div className="flex items-center space-x-2">
+                           <Checkbox id="isSelfPay" checked={isSelfPay} onCheckedChange={(checked) => setIsSelfPay(!!checked)} />
+                           <label htmlFor="isSelfPay" className="text-sm font-medium leading-none">
+                            Patient is self-pay (no insurance)
+                           </label>
                         </div>
-                        {verificationStatus === 'verified' && (
-                            <div className="flex items-center gap-2 text-sm text-green-600 p-2 bg-green-500/10 rounded-md">
-                                <CheckCircle className="h-4 w-4" />
-                                <span>Eligibility Verified: Active Coverage. Co-pay: $25.00</span>
-                            </div>
-                        )}
-                        {verificationStatus === 'verifying' && (
-                             <div className="flex items-center gap-2 text-sm text-muted-foreground p-2">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Verifying eligibility with provider...</span>
+                    
+                        {!isSelfPay && (
+                            <div className="space-y-4 pl-2 border-l-2 ml-2">
+                                <div className="flex justify-between items-center">
+                                    <h5 className="font-medium text-sm">Primary Insurance</h5>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                {/* The button is wrapped in a span for the tooltip to work when disabled */}
+                                                <span tabIndex={isVerifyButtonDisabled ? 0 : -1}>
+                                                    <Button type="button" variant="secondary" size="sm" onClick={handleVerifyEligibility} disabled={isVerifyButtonDisabled}>
+                                                        {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                        Verify Eligibility
+                                                    </Button>
+                                                </span>
+                                            </TooltipTrigger>
+                                            {isVerifyButtonDisabled && !isVerifying && (
+                                                <TooltipContent>
+                                                    <p>Please save the patient record first to enable eligibility checks.</p>
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                                {verificationStatus === 'verified' && (
+                                    <div className="flex items-center gap-2 text-sm text-green-600 p-2 bg-green-500/10 rounded-md">
+                                        <CheckCircle className="h-4 w-4" />
+                                        <span>Eligibility Verified: Active Coverage. Co-pay: $25.00</span>
+                                    </div>
+                                )}
+                                {verificationStatus === 'verifying' && (
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground p-2">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <span>Verifying eligibility with provider...</span>
+                                    </div>
+                                )}
+                                <FormField control={form.control} name="insuranceInfo.0.providerName" render={({ field }) => (
+                                    <FormItem><FormLabel>Provider Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name="insuranceInfo.0.policyNumber" render={({ field }) => (
+                                    <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={form.control} name="insuranceInfo.0.groupNumber" render={({ field }) => (
+                                    <FormItem><FormLabel>Group Number (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
                             </div>
                         )}
                     </div>
-                    
-                     <FormField control={form.control} name="insuranceInfo.0.providerName" render={({ field }) => (
-                        <FormItem><FormLabel>Provider Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                     <FormField control={form.control} name="insuranceInfo.0.policyNumber" render={({ field }) => (
-                        <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                     <FormField control={form.control} name="insuranceInfo.0.groupNumber" render={({ field }) => (
-                        <FormItem><FormLabel>Group Number (Optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
