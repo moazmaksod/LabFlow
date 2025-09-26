@@ -26,12 +26,36 @@ import { History, Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { AuditLog } from '@/lib/schemas/audit-log';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 type AuditLogWithUser = AuditLog & {
   userDetails?: {
     fullName: string;
   }
 }
+
+// A component to render details in a readable format
+const AuditDetails = ({ details, action }: { details: any, action: string }) => {
+    if (!details) {
+        return <span className="text-muted-foreground">N/A</span>;
+    }
+
+    switch (action) {
+        case 'SAMPLE_ACCESSIONED':
+            return (
+                <div className='flex flex-col text-xs'>
+                    <span className="font-medium">New Accession #: <span className='font-code'>{details.newAccessionNumber}</span></span>
+                    <span className="text-muted-foreground">For Order: <span className='font-code'>{details.orderId}</span></span>
+                </div>
+            );
+        case 'USER_LOGIN':
+             return <Badge variant="secondary">Successful Login</Badge>
+        // Add more cases for other actions as they are implemented
+        default:
+            return <pre className="text-xs font-code bg-muted p-2 rounded-md">{JSON.stringify(details, null, 2)}</pre>;
+    }
+};
+
 
 export default function AuditTrailPage() {
   const { user, token } = useAuth();
@@ -56,10 +80,7 @@ export default function AuditTrailPage() {
     setIsLoading(true);
     setLogs([]);
     try {
-      // We are searching by Accession Number, which is part of the 'details' in the audit log.
-      // A real API would support more complex queries, but for now we search by entityId.
-      // This is a simplification; a full implementation might search details.newAccessionNumber.
-      // For now, let's assume we search by a related ID.
+      // The API supports searching by MRN, Order ID, or Accession Number
       const response = await fetch(`/api/v1/audit-logs?searchTerm=${searchTerm}`, {
          headers: { Authorization: `Bearer ${token}` },
       });
@@ -146,17 +167,19 @@ export default function AuditTrailPage() {
               {isLoading ? (
                  Array.from({ length: 3 }).map((_, i) => (
                     <TableRow key={i}>
-                        <TableCell colSpan={4}><Skeleton className="h-6 w-full" /></TableCell>
+                        <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
                     </TableRow>
                   ))
               ) : logs.length > 0 ? (
                  logs.map((log) => (
                     <TableRow key={log._id}>
-                      <TableCell>{format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm:ss')}</TableCell>
+                      <TableCell className="text-sm">{format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm:ss')}</TableCell>
                       <TableCell>{log.userDetails?.fullName || log.userId}</TableCell>
-                      <TableCell className="font-medium">{log.action}</TableCell>
-                      <TableCell className="font-code text-xs">
-                        {log.details ? JSON.stringify(log.details) : 'N/A'}
+                      <TableCell>
+                        <Badge variant='outline'>{log.action}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <AuditDetails details={log.details} action={log.action} />
                       </TableCell>
                     </TableRow>
                   ))

@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api/utils';
-import { getAuditLogsCollection } from '@/lib/mongodb';
+import { getAuditLogsCollection, getOrdersCollection, getPatientsCollection } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
 // GET /api/v1/audit-logs
@@ -21,22 +21,30 @@ export async function GET(request: Request) {
   
   const collection = await getAuditLogsCollection();
   
-  // This is a simplified search for the prototype. A real implementation would have
-  // a more robust search mechanism (e.g., full-text search or specific field queries).
-  // We'll search for matches in details.orderId, details.newAccessionNumber, or entity.documentId
-  let query: any = {
-    $or: [
-        { "details.orderId": searchTerm },
-        { "details.newAccessionNumber": searchTerm },
-    ]
-  };
+  // This search is designed to find logs related to a patient, order, or sample.
+  // We first find the document IDs related to the search term, then find logs for those IDs.
+  const patientsCollection = await getPatientsCollection();
+  const ordersCollection = await getOrdersCollection();
 
+  // Find patients by MRN
+  const patient = await patientsCollection.findOne({ mrn: searchTerm });
+  // Find orders by Order ID or Accession Number
+  const order = await ordersCollection.findOne({ $or: [{ orderId: searchTerm }, { "samples.accessionNumber": searchTerm }] });
+
+  const entityIdsToSearch = [];
+  if(patient) entityIdsToSearch.push(patient._id);
+  if(order) entityIdsToSearch.push(order._id);
+  // If the search term is a valid ObjectId, search for it directly.
   if (ObjectId.isValid(searchTerm)) {
-    query.$or.push({ "entity.documentId": new ObjectId(searchTerm) });
+    entityIdsToSearch.push(new ObjectId(searchTerm));
   }
-
+  
+  if (entityIdsToSearch.length === 0) {
+      return NextResponse.json({ data: [] });
+  }
+  
   const logs = await collection.aggregate([
-    { $match: query },
+    { $match: { "entity.documentId": { $in: entityIdsToSearch } } },
     { $sort: { timestamp: -1 } },
     { $addFields: { "userObjectId": { "$toObjectId": "$userId" } } },
     {
@@ -48,7 +56,13 @@ export async function GET(request: Request) {
       }
     },
     { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: true } },
-    { $project: { "userDetails.role": 0, userObjectId: 0 } }
+    { 
+      $project: { 
+        "userObjectId": 0, 
+        "userDetails.passwordHash": 0,
+        "userDetails.role": 0
+      } 
+    }
   ]).limit(50).toArray();
 
   return NextResponse.json({ data: logs });
