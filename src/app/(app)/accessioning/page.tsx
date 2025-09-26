@@ -93,8 +93,6 @@ export default function AccessioningPage() {
         const handler = setTimeout(() => {
             if (orderId) {
                 handleSearch();
-            } else {
-                setSearchedOrder(null);
             }
         }, 500); // 500ms debounce delay
 
@@ -306,5 +304,7 @@ export default function AccessioningPage() {
     </div>
   );
 }
+
+    
 
     
