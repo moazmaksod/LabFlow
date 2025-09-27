@@ -320,7 +320,7 @@ export default function SchedulingPage() {
         <CardContent>
            <div className="flex w-full">
             {/* Time column */}
-            <div className="w-16 pr-2 text-right">
+            <div className="w-16 pr-2 text-right pt-4">
               {timeSlots.map((time) => {
                 if (time.endsWith(':00')) {
                   return (
@@ -338,7 +338,7 @@ export default function SchedulingPage() {
             </div>
 
             {/* Calendar grid */}
-            <div className="relative grid flex-1 h-full border-l">
+            <div className="relative grid flex-1 h-full border-l pt-4">
                 {/* Grid lines as drop zones */}
                 {timeSlots.map((time) => (
                     <div 
@@ -373,7 +373,8 @@ export default function SchedulingPage() {
                         const heightInSlots = Math.max(app.durationMinutes / 15, 1);
                         
                         const topPosition = topIndex * SLOT_HEIGHT_REM;
-                        const height = heightInSlots * SLOT_HEIGHT_REM - 0.25; // 0.25rem margin
+                        const height = heightInSlots * SLOT_HEIGHT_REM;
+                        const isCompact = app.durationMinutes < 30;
 
                         return (
                             <div key={app._id} 
@@ -381,25 +382,40 @@ export default function SchedulingPage() {
                                  onDragStart={(e) => handleDragStart(e, app._id)}
                                  onClick={() => openEditAppointmentDialog(app)}
                                  className={cn(
-                                    "absolute left-2 right-2 p-2 rounded-lg border flex flex-col",
+                                    "absolute left-2 right-2 p-2 rounded-lg border",
                                     statusColors[app.status] || 'bg-gray-500/20',
                                     app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed"
                                  )}
                                  style={{ top: `${topPosition}rem`, height: `calc(${height}rem - 2px)`, transition: 'top 0.3s ease-out'}}>
                                  
-                                <div className="flex-grow flex items-start gap-2">
-                                     <Avatar className="h-6 w-6">
-                                        {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
-                                        <AvatarFallback>{app.patientDetails?.fullName?.charAt(0) || '?'}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="min-w-0">
-                                        <p className="font-medium truncate text-sm">{app.patientDetails?.fullName || 'Unknown Patient'}</p>
-                                        <p className="text-xs font-code">MRN: {app.patientDetails?.mrn || 'N/A'}</p>
+                                {isCompact ? (
+                                    <div className="flex items-center justify-between h-full text-xs">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <Avatar className="h-5 w-5">
+                                                {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
+                                                <AvatarFallback className="text-xs">{app.patientDetails?.fullName?.charAt(0) || '?'}</AvatarFallback>
+                                            </Avatar>
+                                            <span className="font-medium truncate">{app.patientDetails?.fullName}</span>
+                                        </div>
+                                        <Badge variant="secondary" className="opacity-80 whitespace-nowrap">{app.status}</Badge>
                                     </div>
-                                </div>
-                                 <Badge variant="secondary" className="opacity-80 whitespace-nowrap self-end mt-auto">
-                                   {app.status}
-                                 </Badge>
+                                ) : (
+                                    <div className="flex flex-col justify-between h-full">
+                                        <div className="flex items-start gap-2">
+                                            <Avatar className="h-6 w-6">
+                                                {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
+                                                <AvatarFallback>{app.patientDetails?.fullName?.charAt(0) || '?'}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="min-w-0">
+                                                <p className="font-medium truncate text-sm">{app.patientDetails?.fullName || 'Unknown Patient'}</p>
+                                                <p className="text-xs font-code">MRN: {app.patientDetails?.mrn || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                        <Badge variant="secondary" className="opacity-80 whitespace-nowrap self-end">
+                                            {app.status}
+                                        </Badge>
+                                    </div>
+                                )}
                             </div>
                         );
                     })
@@ -507,5 +523,3 @@ export default function SchedulingPage() {
     </div>
   );
 }
-
-    
