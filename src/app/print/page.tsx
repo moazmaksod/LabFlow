@@ -31,7 +31,7 @@ export default function PrintPage() {
         if (!isLoading && printData) {
             setTimeout(() => {
                 window.print();
-            }, 500); // Delay to ensure rendering
+            }, 500); // Delay to ensure rendering, especially for barcodes
         }
     }, [isLoading, printData]);
 

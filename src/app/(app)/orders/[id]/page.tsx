@@ -267,7 +267,7 @@ export default function OrderDetailsPage() {
     
     sessionStorage.setItem('labflow_print_data', JSON.stringify(printData));
     
-    const printWindow = window.open('/print', '_blank', 'width=800,height=900,noopener,noreferrer');
+    window.open('/print', '_blank', 'width=800,height=900,noopener,noreferrer');
   };
   
   const handlePaymentSuccess = (newOrderData: Partial<Order>) => {
