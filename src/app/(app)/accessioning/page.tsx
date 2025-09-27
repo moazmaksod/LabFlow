@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { CheckCircle, Loader2, CircleDashed, ScanLine } from 'lucide-react';
+import { CheckCircle, Loader2, CircleDashed, ScanLine, Printer } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -223,15 +223,6 @@ export default function AccessioningPage() {
         }
     }
     
-    const getButtonState = (sample: SampleWithClientSideId) => {
-        const state = accessioningState[sample.clientId];
-
-        if (state === 'loading') return { text: 'Accessioning...', disabled: true, icon: <Loader2 className="mr-2 h-4 w-4 animate-spin" /> };
-        if (state === 'accessioned' || sample.status !== 'AwaitingCollection') return { text: 'Accessioned', disabled: true, icon: <CheckCircle className="mr-2 h-4 w-4" /> };
-        
-        return { text: 'Accession Sample', disabled: false, icon: <CheckCircle className="mr-2 h-4 w-4" /> };
-    };
-    
     const onFormSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       handleSearch();
@@ -298,25 +289,41 @@ export default function AccessioningPage() {
                     </TableHeader>
                     <TableBody>
                         {searchedOrder.samples.map((sample, index) => {
-                            const buttonState = getButtonState(sample);
+                            const isAccessioning = accessioningState[sample.clientId] === 'loading';
+                            const isAccessioned = sample.status !== 'AwaitingCollection' && sample.accessionNumber;
+                            
                             return (
                                 <TableRow key={sample.clientId}>
                                     <TableCell className="font-medium">{sample.sampleType}</TableCell>
                                     <TableCell className="font-code">{sample.accessionNumber || 'N/A'}</TableCell>
                                     <TableCell>
-                                        <Badge variant={sample.status === 'AwaitingCollection' ? 'outline' : 'default'}>
-                                            {sample.status}
+                                        <Badge variant={isAccessioned ? 'default' : 'outline'}>
+                                            {isAccessioned ? 'In Lab' : sample.status}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button
-                                            variant={buttonState.disabled ? 'secondary' : 'default'}
-                                            disabled={buttonState.disabled}
-                                            onClick={() => handleAccessionSample(sample.clientId, index)}
-                                        >
-                                            {buttonState.icon}
-                                            {buttonState.text}
-                                        </Button>
+                                        {isAccessioning ? (
+                                            <Button variant="secondary" disabled>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Accessioning...
+                                            </Button>
+                                        ) : isAccessioned ? (
+                                            <Button 
+                                                variant="outline"
+                                                onClick={() => handlePrintLabel(sample.accessionNumber!, sample)}
+                                            >
+                                                <Printer className="mr-2 h-4 w-4" />
+                                                Reprint Label
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="default"
+                                                onClick={() => handleAccessionSample(sample.clientId, index)}
+                                            >
+                                                <CheckCircle className="mr-2 h-4 w-4" />
+                                                Accession Sample
+                                            </Button>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             )
@@ -341,7 +348,3 @@ export default function AccessioningPage() {
     </div>
   );
 }
-
-    
-
-    
