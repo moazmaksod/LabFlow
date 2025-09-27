@@ -4,22 +4,13 @@ import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
 
-// Function to get the value safely on client side
-const getIsMobile = () => {
-    if (typeof window === "undefined") {
-        return undefined;
-    }
-    return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches;
-}
-
-
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(getIsMobile());
+  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
 
   React.useEffect(() => {
     // Handler to call on window resize
     const handleResize = () => {
-      setIsMobile(getIsMobile());
+        setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     }
 
     // Add event listener
@@ -30,7 +21,7 @@ export function useIsMobile() {
     
     // Remove event listener on cleanup
     return () => window.removeEventListener("resize", handleResize);
-  }, []); // Empty array ensures that effect is only run on mount and unmount
+  }, []); // Empty array ensures that effect is only run on mount
 
   return isMobile
 }
