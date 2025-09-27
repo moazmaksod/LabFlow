@@ -9,7 +9,6 @@ interface SampleLabelProps {
     orderId: string;
     barcodeValue: string;
     sampleType: string;
-    isRequisition: boolean;
 }
 
 export const SampleLabel: React.FC<SampleLabelProps> = ({
@@ -18,7 +17,6 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
     orderId,
     barcodeValue,
     sampleType,
-    isRequisition,
 }) => {
     return (
         <div style={{ width: '4in', height: '2.5in', fontFamily: 'sans-serif', fontSize: '12pt', border: '1px solid #ccc', padding: '0.2in' }} className="flex flex-col justify-between bg-white text-black">
@@ -28,12 +26,12 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
                     <p className="text-base">MRN: {mrn}</p>
                 </div>
                 <div>
-                     <p className='text-right font-semibold text-lg'>{isRequisition ? 'REQUISITION' : 'SAMPLE'}</p>
+                     <p className='text-right font-semibold text-lg'>SAMPLE</p>
                      <p className='text-right text-base'>{sampleType}</p>
                 </div>
             </div>
             <div className="text-center -mt-4">
-                <Barcode 
+                 <Barcode 
                     value={barcodeValue} 
                     format="CODE128"
                     width={2}

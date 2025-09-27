@@ -34,9 +34,6 @@ import type { Order } from '@/lib/schemas/order';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { useParams } from 'next/navigation';
-import { RequisitionForm } from '@/components/label/requisition-form';
-import { renderToString } from 'react-dom/server';
-import { SampleLabel } from '@/components/label/sample-label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RecordPaymentInput, RecordPaymentSchema } from '@/lib/schemas/order';
@@ -237,73 +234,19 @@ export default function OrderDetailsPage() {
     fetchOrder();
   }, [id, token, toast]);
 
-  const handlePrint = (type: 'requisition' | 'label', printIdentifier: string) => {
+  const handlePrint = (type: 'requisition' | 'label', sampleClientId?: string) => {
     if (!orderDetails) return;
 
-    const printWindow = window.open('', '_blank', 'width=800,height=900');
-    if (!printWindow) {
-      toast({ variant: 'destructive', title: 'Could not open print window. Please disable pop-up blockers.' });
-      return;
-    }
-
-    let printContent: string;
-    let pageTitle: string;
-
-    if (type === 'requisition') {
-        printContent = renderToString(<RequisitionForm order={orderDetails} />);
-        pageTitle = `Requisition - ${orderDetails.orderId}`;
-    } else {
-        const sample = orderDetails.samples.find(s => s.clientId === printIdentifier);
-        if (!sample) {
-            toast({ variant: 'destructive', title: 'Sample not found for label printing.' });
+    let url = `/print/orders/${orderDetails.orderId}`;
+    if (type === 'label') {
+        if(!sampleClientId) {
+            toast({variant: 'destructive', title: 'Sample ID missing for label printing.'})
             return;
         }
-        const barcodeValue = sample.accessionNumber || orderDetails.orderId;
-        pageTitle = `Label - ${barcodeValue} - ${sample.sampleType}`;
-        printContent = renderToString(
-            <SampleLabel
-                patientName={orderDetails.patientDetails.fullName}
-                mrn={orderDetails.patientDetails.mrn}
-                orderId={orderDetails.orderId}
-                barcodeValue={barcodeValue}
-                sampleType={sample.sampleType}
-                isRequisition={false}
-            />
-        );
+      url += `?sampleClientId=${sampleClientId}`;
     }
-    
-    const html = `
-        <html>
-            <head>
-                <title>${pageTitle}</title>
-                <script src="https://cdn.tailwindcss.com"><\/script>
-                <style>
-                    body { font-family: sans-serif; }
-                    @media print {
-                        @page { size: auto; margin: 0; }
-                        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                    }
-                </style>
-            </head>
-            <body class="bg-gray-100 flex items-center justify-center">
-                ${printContent}
-                 <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"><\/script>
-                 <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"><\/script>
-                 <script src="https://cdn.jsdelivr.net/npm/react-barcode@1.5.1/dist/react-barcode.min.js"><\/script>
-                 <script>
-                    // Manually trigger re-render of barcode
-                    setTimeout(() => {
-                        window.print();
-                        window.close();
-                    }, 250);
-                 <\/script>
-            </body>
-        </html>
-    `;
 
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
+    window.open(url, '_blank', 'width=800,height=900');
   };
   
   const handlePaymentSuccess = (newOrderData: Partial<Order>) => {
@@ -371,7 +314,7 @@ export default function OrderDetailsPage() {
         </div>
         <div className="flex items-center gap-2">
             {isReceptionist && (
-              <Button onClick={() => handlePrint('requisition', orderDetails.orderId)}>
+              <Button onClick={() => handlePrint('requisition')}>
                 <Printer className="mr-2 h-4 w-4" /> Print Requisition
               </Button>
             )}

@@ -115,38 +115,12 @@ export const RequisitionForm: React.FC<RequisitionFormProps> = ({ order }) => {
                     ))}
                  </div>
             </section>
-            
-            <div className="mt-8 grid grid-cols-3 gap-4">
-                {order.samples.map((sample, index) => (
-                    <div key={index} className="break-inside-avoid-column">
-                        <SampleLabel 
-                            patientName={order.patientDetails.fullName}
-                            mrn={order.patientDetails.mrn}
-                            orderId={order.orderId}
-                            barcodeValue={order.orderId}
-                            sampleType={sample.sampleType}
-                            isRequisition={false}
-                        />
-                    </div>
-                ))}
-            </div>
-
 
             {/* Footer */}
             <footer className="mt-16 text-center text-xs text-gray-500 absolute bottom-8 left-8 right-8">
                 <p>Thank you for choosing LabFlow Diagnostics.</p>
             </footer>
              <style jsx global>{`
-                @media print {
-                    @page {
-                        size: A4;
-                        margin: 0.5in;
-                    }
-                    body {
-                        -webkit-print-color-adjust: exact;
-                         print-color-adjust: exact;
-                    }
-                }
                 .a4-page {
                     width: 210mm;
                     min-height: 297mm;
