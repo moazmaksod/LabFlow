@@ -1,24 +1,36 @@
+
+"use client"
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
 
+// Function to get the value safely on client side
+const getIsMobile = () => {
+    if (typeof window === "undefined") {
+        return undefined;
+    }
+    return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches;
+}
+
+
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(getIsMobile());
 
   React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    
-    const onChange = () => {
-      setIsMobile(mql.matches)
+    // Handler to call on window resize
+    const handleResize = () => {
+      setIsMobile(getIsMobile());
     }
 
-    // Set the initial value
-    onChange();
+    // Add event listener
+    window.addEventListener("resize", handleResize);
 
-    mql.addEventListener("change", onChange)
+    // Call handler right away so state is updated with initial window size
+    handleResize();
     
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
+    // Remove event listener on cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []); // Empty array ensures that effect is only run on mount and unmount
 
   return isMobile
 }
