@@ -320,7 +320,7 @@ export default function SchedulingPage() {
         <CardContent>
            <div className="flex w-full">
             {/* Time column */}
-            <div className="w-16 pr-2 text-right">
+            <div className="w-16 pr-2 text-right pt-4">
               {timeSlots.map((time) => {
                 if (time.endsWith(':00')) {
                   return (
