@@ -1,4 +1,5 @@
 
+
 import { User, UserSchema } from '@/lib/schemas/auth';
 import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import type { Patient } from '@/lib/schemas/patient';
@@ -150,7 +151,61 @@ export const getPatients = async (query: any = {}): Promise<Patient[]> => {
 export const findPatientById = async (id: string): Promise<Patient | null> => {
     const collection = await getPatientsCollection();
     if (!ObjectId.isValid(id)) return null;
-    return await collection.findOne({ _id: new ObjectId(id) as any }) as Patient | null;
+    
+    const patientPipeline = [
+      { $match: { _id: new ObjectId(id) } },
+      // Find orders where this patient is the main patient
+      {
+        $lookup: {
+          from: 'orders',
+          localField: '_id',
+          foreignField: 'patientId',
+          as: 'orders'
+        }
+      },
+      // Find orders where this patient is the guarantor
+      {
+        $lookup: {
+          from: 'orders',
+          localField: '_id',
+          foreignField: 'responsibleParty.patientId',
+          as: 'guaranteedOrders'
+        }
+      },
+      {
+        $addFields: {
+          guaranteedPatientIds: {
+            $map: {
+              input: "$guaranteedOrders",
+              as: "order",
+              in: "$$order.patientId"
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'patients',
+          localField: 'guaranteedPatientIds',
+          foreignField: '_id',
+          as: 'guaranteedPatientDetails'
+        }
+      },
+    ];
+
+    const results = await collection.aggregate(patientPipeline).toArray();
+    
+    if (results.length > 0) {
+        // Manually convert ObjectId to string for consistency
+        const patient = results[0];
+        patient._id = patient._id.toString();
+        if (patient.orders) {
+            patient.orders.forEach((o: any) => o._id = o._id.toString());
+        }
+        return patient as Patient;
+    }
+    
+    return null;
 };
 export const findPatientByMrn = async (mrn: string): Promise<Patient | null> => {
     const collection = await getPatientsCollection();
@@ -299,7 +354,7 @@ export const addOrder = async (order: Omit<Order, '_id' | 'orderId'>): Promise<O
     const count = await collection.countDocuments();
     const orderId = `ORD-${new Date().getFullYear()}-${(count + 1).toString().padStart(5, '0')}`;
     
-    const finalOrder = {
+    const finalOrder: any = {
         ...order,
         orderId: orderId,
         patientId: new ObjectId(order.patientId),
@@ -307,6 +362,10 @@ export const addOrder = async (order: Omit<Order, '_id' | 'orderId'>): Promise<O
         createdAt: new Date(),
         updatedAt: new Date(),
     };
+
+    if (finalOrder.responsibleParty?.patientId) {
+        finalOrder.responsibleParty.patientId = new ObjectId(finalOrder.responsibleParty.patientId);
+    }
     
     const result = await collection.insertOne(finalOrder as any);
     return { ...finalOrder, _id: result.insertedId.toHexString() } as unknown as Order;
