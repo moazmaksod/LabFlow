@@ -57,13 +57,13 @@ export async function POST(request: Request) {
   };
 
   // Determine the new overall order status
-  const allSamplesAccessioned = updatedSamples.every(s => s.status !== 'AwaitingCollection');
-  const someSamplesAccessioned = updatedSamples.some(s => s.status !== 'AwaitingCollection');
+  const allSamplesInLab = updatedSamples.every(s => s.status !== 'AwaitingCollection');
   
   let newOrderStatus = order.orderStatus;
-  if (allSamplesAccessioned) {
+  if (allSamplesInLab) {
     newOrderStatus = 'In-Progress'; // All samples are in lab, ready for testing
-  } else if (someSamplesAccessioned) {
+  } else {
+    // If some are in lab but not all, it's partially complete
     newOrderStatus = 'Partially Complete';
   }
 
