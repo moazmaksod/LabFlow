@@ -53,7 +53,7 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
             backgroundColor: 'white',
             color: 'black'
         }} >
-           <div className="flex justify-between items-start" style={{fontSize: '7pt', lineHeight: '1.2'}}>
+           <div className="flex justify-between items-start" style={{fontSize: '6pt', lineHeight: '1.2'}}>
                 <div className='max-w-[75%]'>
                     <p className="font-bold truncate">{patientName}</p>
                     <p>MRN: {mrn}</p>
@@ -63,19 +63,19 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
                      <p className='font-semibold'>{sampleType}</p>
                 </div>
             </div>
-            <div className="text-center -my-1">
+            <div className="text-center -my-2">
                  <Barcode 
                     value={barcodeValue} 
                     format="CODE128"
-                    width={1}
-                    height={25}
-                    fontSize={10}
+                    width={0.8}
+                    height={20}
+                    fontSize={8}
                     margin={0}
                     textMargin={0}
                     displayValue={true}
                 />
             </div>
-            <div className='flex justify-between items-end' style={{fontSize: '6pt'}}>
+            <div className='flex justify-between items-end' style={{fontSize: '5pt'}}>
                 <p className="truncate max-w-[70%]">{tests}</p>
                 <p>{currentTime}</p>
             </div>
