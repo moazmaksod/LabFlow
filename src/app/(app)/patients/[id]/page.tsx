@@ -29,10 +29,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
+type OrderWithDetails = Order & {
+    patientDetails?: {
+        _id: string;
+        fullName: string;
+        mrn: string;
+    }
+}
+
 type PatientWithOrders = Patient & {
-  orders: Order[];
-  guaranteedOrders?: Order[];
-  guaranteedPatientDetails?: Patient[];
+  orders: OrderWithDetails[];
+  guaranteedOrders?: OrderWithDetails[];
 }
 
 const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outline' | 'secondary' } = {
@@ -92,21 +99,29 @@ export default function PatientDetailsPage() {
     }, [id, token, toast]);
 
     const financialSummary = useMemo(() => {
-        if (!patientData?.orders) return { totalDue: 0, ordersWithBalance: [], guarantor: null };
-
-        const guarantor = patientData.orders.find(o => o.guarantorDetails)?.guarantorDetails || null;
+        if (!patientData) return { totalDue: 0, ordersWithBalance: [], primaryGuarantor: null };
         
-        const ordersWithBalance = patientData.orders.map(order => ({
+        const selfOrders = patientData.orders || [];
+        const guaranteedOrders = patientData.guaranteedOrders || [];
+
+        const allOrders = [
+            ...selfOrders.map(o => ({ ...o, isGuaranteed: false })),
+            ...guaranteedOrders.map(o => ({ ...o, isGuaranteed: true }))
+        ];
+
+        const ordersWithBalance = allOrders.map(order => ({
             ...order,
             balance: calculateOrderBalance(order)
         })).filter(order => order.balance > 0 && order.paymentStatus !== 'Waived');
 
         const totalDue = ordersWithBalance.reduce((acc, order) => acc + order.balance, 0);
+        
+        const primaryGuarantor = selfOrders.find(o => o.guarantorDetails)?.guarantorDetails || null;
 
         return {
             totalDue,
             ordersWithBalance,
-            guarantor,
+            primaryGuarantor
         }
     }, [patientData]);
 
@@ -198,29 +213,6 @@ export default function PatientDetailsPage() {
                 </div>
                 </CardContent>
             </Card>
-            
-            {patientData.guaranteedPatientDetails && patientData.guaranteedPatientDetails.length > 0 && (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Patients Guaranteed By {patientData.fullName}</CardTitle>
-                    <CardDescription>This patient is the guarantor for the following people.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        {patientData.guaranteedPatientDetails.map(p => (
-                            <Link key={p._id} href={`/patients/${p._id}`} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent">
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="font-medium">{p.fullName}</p>
-                                    <p className="text-sm text-muted-foreground">MRN: {p.mrn}</p>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
-            )}
-
         </div>
         <div className="lg:col-span-1">
              <Card>
@@ -230,9 +222,9 @@ export default function PatientDetailsPage() {
                 <CardContent className="space-y-4">
                      <div>
                         <p className="text-sm font-medium text-muted-foreground">Guarantor for this Patient</p>
-                        {financialSummary.guarantor ? (
-                            <Link href={`/patients/${financialSummary.guarantor._id}`} className="text-primary hover:underline">
-                                {financialSummary.guarantor.fullName} (MRN: {financialSummary.guarantor.mrn})
+                        {financialSummary.primaryGuarantor ? (
+                            <Link href={`/patients/${financialSummary.primaryGuarantor._id}`} className="text-primary hover:underline">
+                                {financialSummary.primaryGuarantor.fullName} (MRN: {financialSummary.primaryGuarantor.mrn})
                             </Link>
                         ) : (
                             <p>Self</p>
@@ -243,6 +235,7 @@ export default function PatientDetailsPage() {
                         <p className={`font-bold text-2xl ${financialSummary.totalDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
                             ${financialSummary.totalDue.toFixed(2)}
                         </p>
+                        <p className="text-xs text-muted-foreground">Includes balance for self and guaranteed accounts.</p>
                     </div>
                     {financialSummary.ordersWithBalance.length > 0 && (
                         <div>
@@ -253,7 +246,12 @@ export default function PatientDetailsPage() {
                                         <Link href={`/orders/${order.orderId}`} className="text-primary hover:underline font-code">
                                             {order.orderId}
                                         </Link>
-                                        <span className="font-medium">${order.balance.toFixed(2)}</span>
+                                        <div className='text-right'>
+                                            <span className="font-medium">${order.balance.toFixed(2)}</span>
+                                            {order.isGuaranteed && order.patientDetails && (
+                                                <p className='text-xs text-muted-foreground truncate max-w-28'>For {order.patientDetails.fullName}</p>
+                                            )}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>

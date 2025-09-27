@@ -172,25 +172,45 @@ export const findPatientById = async (id: string): Promise<Patient | null> => {
           as: 'guaranteedOrders'
         }
       },
+       // For guaranteed orders, we need to join the patient details for those orders
       {
-        $addFields: {
-          guaranteedPatientIds: {
-            $map: {
-              input: "$guaranteedOrders",
-              as: "order",
-              in: "$$order.patientId"
-            }
-          }
+        $unwind: {
+          path: '$guaranteedOrders',
+          preserveNullAndEmptyArrays: true
         }
       },
       {
         $lookup: {
           from: 'patients',
-          localField: 'guaranteedPatientIds',
+          localField: 'guaranteedOrders.patientId',
           foreignField: '_id',
-          as: 'guaranteedPatientDetails'
+          as: 'guaranteedOrders.patientDetails'
         }
       },
+      {
+        $unwind: {
+          path: '$guaranteedOrders.patientDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      // Group back to reconstruct the patient document
+      {
+        $group: {
+          _id: '$_id',
+          doc: { $first: '$$ROOT' },
+          guaranteedOrders: { $push: '$guaranteedOrders' }
+        }
+      },
+      {
+        $replaceRoot: {
+          newRoot: {
+            $mergeObjects: [
+              '$doc',
+              { guaranteedOrders: '$guaranteedOrders' }
+            ]
+          }
+        }
+      }
     ];
 
     const results = await collection.aggregate(patientPipeline).toArray();
@@ -201,6 +221,11 @@ export const findPatientById = async (id: string): Promise<Patient | null> => {
         patient._id = patient._id.toString();
         if (patient.orders) {
             patient.orders.forEach((o: any) => o._id = o._id.toString());
+        }
+        if (patient.guaranteedOrders && patient.guaranteedOrders[0]?._id) { // Check if guaranteedOrders is not just an empty object
+            patient.guaranteedOrders.forEach((o: any) => o._id = o._id.toString());
+        } else {
+            patient.guaranteedOrders = [];
         }
         return patient as Patient;
     }
