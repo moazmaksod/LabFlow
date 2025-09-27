@@ -270,9 +270,9 @@ export const findOrderById = async (orderId: string): Promise<any | null> => {
         }
     ];
     
-    const order = await collection.aggregate(pipeline).next();
+    const results = await collection.aggregate(pipeline).toArray();
 
-    return order;
+    return results[0] || null;
 };
 
 export const addOrder = async (order: Omit<Order, '_id' | 'orderId'>): Promise<Order> => {
