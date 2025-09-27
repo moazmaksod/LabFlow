@@ -11,7 +11,7 @@ function PrintLabel() {
     // Safely get all params
     const patientName = searchParams.get('patientName') || '';
     const mrn = searchParams.get('mrn') || '';
-    const dob = searchParams.get('dob') || '';
+    const age = searchParams.get('age') || '';
     const gender = searchParams.get('gender') || '';
     const barcodeValue = searchParams.get('barcodeValue') || '';
     const sampleType = searchParams.get('sampleType') || '';
@@ -36,7 +36,7 @@ function PrintLabel() {
             <SampleLabel 
                 patientName={patientName}
                 mrn={mrn}
-                dob={dob}
+                age={age}
                 gender={gender}
                 orderId={orderId}
                 barcodeValue={barcodeValue}

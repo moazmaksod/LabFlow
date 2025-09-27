@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 interface SampleLabelProps {
     patientName: string;
     mrn: string;
-    dob: string | Date;
+    age: string;
     gender: string;
     orderId: string;
     barcodeValue: string;
@@ -18,7 +18,7 @@ interface SampleLabelProps {
 export const SampleLabel: React.FC<SampleLabelProps> = ({
     patientName,
     mrn,
-    dob,
+    age,
     gender,
     barcodeValue,
     sampleType,
@@ -30,16 +30,6 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
       // This code will only run on the client, after hydration is complete
       setCurrentTime(format(new Date(), 'HH:mm'));
     }, []);
-
-
-    const formatDateSafe = (date: any) => {
-        try {
-            if (!date) return 'N/A';
-            return format(new Date(date), 'yyyy-MM-dd');
-        } catch {
-            return 'Invalid Date';
-        }
-    }
 
     return (
         <div style={{ 
@@ -60,7 +50,7 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
                 </div>
                 <div>
                     <p>MRN: {mrn}</p>
-                    <p>DOB: {formatDateSafe(dob)} ({gender.charAt(0)})</p>
+                    <p>Age: {age} ({gender.charAt(0)})</p>
                 </div>
             </div>
             <div className="text-center -my-2">

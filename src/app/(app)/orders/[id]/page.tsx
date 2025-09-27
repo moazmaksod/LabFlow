@@ -236,6 +236,18 @@ export default function OrderDetailsPage() {
 
   const handlePrint = (type: 'requisition' | 'label', sampleClientId?: string) => {
     if (!orderDetails) return;
+    
+    function calculateAge(dob: string | Date): number {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDifference = today.getMonth() - birthDate.getMonth();
+      if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    }
+
 
     if (type === 'label' && sampleClientId) {
         const sample = orderDetails.samples.find(s => s.clientId === sampleClientId);
@@ -244,10 +256,12 @@ export default function OrderDetailsPage() {
             return;
         }
         
+        const patientAge = calculateAge(orderDetails.patientDetails.dateOfBirth);
+
         const params = new URLSearchParams({
             patientName: orderDetails.patientDetails.fullName,
             mrn: orderDetails.patientDetails.mrn,
-            dob: orderDetails.patientDetails.dateOfBirth.toString(),
+            age: patientAge.toString(),
             gender: orderDetails.patientDetails.gender,
             orderId: orderDetails.orderId,
             barcodeValue: sample.accessionNumber || orderDetails.orderId,
@@ -485,5 +499,3 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
-
-    
