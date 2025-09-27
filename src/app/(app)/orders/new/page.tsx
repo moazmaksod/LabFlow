@@ -148,26 +148,6 @@ export default function NewOrderPage() {
          return () => clearTimeout(handler);
     }, [testSearchTerm, token, selectedTests]);
 
-     // Effect to handle selecting a responsible party
-    useEffect(() => {
-        if (responsiblePartyPatient) {
-            form.setValue('responsibleParty.patientId', responsiblePartyPatient._id);
-        } else if (hasResponsibleParty) {
-            form.setValue('responsibleParty.patientId', '');
-        }
-    }, [responsiblePartyPatient, hasResponsibleParty, form]);
-
-    // Effect to toggle responsible party
-    useEffect(() => {
-        if (!hasResponsibleParty) {
-            form.setValue('responsibleParty', undefined);
-            form.clearErrors('responsibleParty');
-            setResponsiblePartyPatient(null);
-        } else {
-             form.setValue('responsibleParty', { patientId: '', relationship: '' });
-        }
-    }, [hasResponsibleParty, form]);
-
 
     const handleSelectPatient = (patient: Patient) => {
         setSelectedPatient(patient);
@@ -242,6 +222,26 @@ export default function NewOrderPage() {
             });
         }
     };
+
+    const handleResponsiblePartyToggle = (checked: boolean) => {
+        setHasResponsibleParty(checked);
+        if (checked) {
+            // Register the fields with default values to make them controlled
+            form.register('responsibleParty.patientId', { value: '' });
+            form.register('responsibleParty.relationship', { value: '' });
+        } else {
+            // Unregister to remove them from the form state
+            form.unregister('responsibleParty');
+            setResponsiblePartyPatient(null);
+        }
+    };
+    
+    useEffect(() => {
+        if (responsiblePartyPatient) {
+            form.setValue('responsibleParty.patientId', responsiblePartyPatient._id);
+            form.clearErrors('responsibleParty.patientId');
+        }
+    }, [responsiblePartyPatient, form]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -350,7 +350,7 @@ export default function NewOrderPage() {
                 <Separator />
                  <div className="space-y-4">
                     <div className="flex items-center space-x-2">
-                        <Checkbox id="hasResponsibleParty" checked={hasResponsibleParty} onCheckedChange={(checked) => setHasResponsibleParty(!!checked)} disabled={!selectedPatient} />
+                        <Checkbox id="hasResponsibleParty" checked={hasResponsibleParty} onCheckedChange={(checked) => handleResponsiblePartyToggle(!!checked)} disabled={!selectedPatient} />
                         <label htmlFor="hasResponsibleParty" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                             Assign a different person as financially responsible for this order.
                         </label>
@@ -536,3 +536,5 @@ export default function NewOrderPage() {
     </div>
   );
 }
+
+    
