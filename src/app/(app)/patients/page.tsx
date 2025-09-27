@@ -461,9 +461,11 @@ export default function PatientsPage() {
             });
 
             if (response.ok) {
+                const result = await response.json();
+                const newPatient: Patient = result.data;
                 toast({ title: 'Patient registered successfully!' });
                 setDialogOpen(false);
-                fetchPatients(); // Refresh the list
+                router.push(`/patients/${newPatient._id}`); // Navigate to the new patient's page
             } else {
                  const errorData = await response.json();
                  if (response.status === 409) {
@@ -577,3 +579,5 @@ export default function PatientsPage() {
     </div>
   );
 }
+
+    
