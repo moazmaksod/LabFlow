@@ -30,9 +30,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PatientSearch } from '@/app/(app)/patients/page';
 
-type FormValues = CreateOrderInput & {
-    physicianSearch?: string;
-};
+type FormValues = CreateOrderInput;
 
 export default function NewOrderPage() {
     const { user, token } = useAuth();
@@ -154,15 +152,18 @@ export default function NewOrderPage() {
     useEffect(() => {
         if (responsiblePartyPatient) {
             form.setValue('responsibleParty.patientId', responsiblePartyPatient._id);
+        } else if (hasResponsibleParty) {
+            form.setValue('responsibleParty.patientId', '');
         }
-    }, [responsiblePartyPatient, form]);
+    }, [responsiblePartyPatient, hasResponsibleParty, form]);
 
     // Effect to toggle responsible party
     useEffect(() => {
         if (!hasResponsibleParty) {
             form.setValue('responsibleParty', undefined);
+            form.clearErrors('responsibleParty');
             setResponsiblePartyPatient(null);
-        } else if (!form.getValues('responsibleParty')) {
+        } else {
              form.setValue('responsibleParty', { patientId: '', relationship: '' });
         }
     }, [hasResponsibleParty, form]);
@@ -171,6 +172,7 @@ export default function NewOrderPage() {
     const handleSelectPatient = (patient: Patient) => {
         setSelectedPatient(patient);
         form.setValue('patientId', patient._id);
+        form.clearErrors('patientId');
         // Default billing type based on patient's insurance info
         const hasInsurance = patient.insuranceInfo && patient.insuranceInfo.length > 0;
         form.setValue('billingType', hasInsurance ? 'Insurance' : 'Self-Pay');
@@ -188,6 +190,7 @@ export default function NewOrderPage() {
         const newSelectedTests = [...selectedTests, test];
         setSelectedTests(newSelectedTests);
         form.setValue('testCodes', newSelectedTests.map(t => t.testCode));
+        form.clearErrors('testCodes');
       }
       setTestSearchTerm('');
       setTestSearchResults([]);
@@ -204,11 +207,16 @@ export default function NewOrderPage() {
     const handleCreateOrder = async (values: FormValues) => {
         if (!token) return;
 
+        const payload = { ...values };
+        if (!hasResponsibleParty) {
+            delete payload.responsibleParty;
+        }
+
         try {
             const response = await fetch('/api/v1/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify(values),
+                body: JSON.stringify(payload),
             });
 
             if (response.ok) {

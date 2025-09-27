@@ -48,7 +48,7 @@ const PaymentSchema = z.object({
 });
 
 const ResponsiblePartySchema = z.object({
-    patientId: z.string(), // ObjectId of the guarantor patient
+    patientId: z.string().min(1, { message: "A responsible party must be selected."}),
     relationship: z.string().min(1, { message: "Relationship is required." }),
 });
 
@@ -82,13 +82,13 @@ export type Order = z.infer<typeof OrderSchema>;
 
 // Schema for the API request body when creating a new order
 export const CreateOrderInputSchema = z.object({
-    patientId: z.string(),
+    patientId: z.string().min(1, "A patient must be selected."),
     physicianId: z.string().optional(),
     icd10Code: z.string().min(1, 'ICD-10 code is required'),
     priority: z.enum(['Routine', 'STAT']).default('Routine'),
     billingType: z.enum(['Insurance', 'Self-Pay']).default('Insurance'),
     testCodes: z.array(z.string()).min(1, 'At least one test must be selected'),
-    responsibleParty: ResponsiblePartySchema.optional(),
+    responsibleParty: ResponsiblePartySchema.optional().default(undefined),
     notes: z.string().optional(),
 });
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;
