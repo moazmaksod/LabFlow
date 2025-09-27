@@ -320,7 +320,7 @@ export default function SchedulingPage() {
         <CardContent>
            <div className="flex w-full">
             {/* Time column */}
-            <div className="w-16 pr-2 text-right">
+            <div className="w-16 pr-2 text-right pt-4">
               {timeSlots.map((time) => {
                 if (time.endsWith(':00')) {
                   return (
@@ -329,7 +329,7 @@ export default function SchedulingPage() {
                       className="relative"
                       style={{ height: `${SLOT_HEIGHT_REM * 4}rem`}}
                     >
-                      <span className="absolute -top-1.5 right-2 text-xs text-muted-foreground">{time}</span>
+                      <span className="absolute -top-2 right-2 text-xs text-muted-foreground">{time}</span>
                     </div>
                   );
                 }
@@ -338,7 +338,7 @@ export default function SchedulingPage() {
             </div>
 
             {/* Calendar grid */}
-            <div className="relative grid flex-1 h-full border-l pb-4">
+            <div className="relative grid flex-1 h-full border-l pt-4">
                 {/* Grid lines as drop zones */}
                 {timeSlots.map((time) => (
                     <div 
@@ -351,6 +351,8 @@ export default function SchedulingPage() {
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, time)}
                       onClick={() => openNewAppointmentDialog(time)}
+                      draggable="false"
+                      onDragStart={(e) => e.preventDefault()}
                     />
                 ))}
 
@@ -379,23 +381,26 @@ export default function SchedulingPage() {
                                  onDragStart={(e) => handleDragStart(e, app._id)}
                                  onClick={() => openEditAppointmentDialog(app)}
                                  className={cn(
-                                    "absolute left-2 right-2 p-2 rounded-lg border flex flex-col items-start",
+                                    "absolute left-2 right-2 p-2 rounded-lg border flex flex-col",
                                     statusColors[app.status] || 'bg-gray-500/20',
                                     app.status !== 'Completed' ? "cursor-grab" : "cursor-not-allowed",
                                     "hover:ring-2 hover:ring-primary"
                                  )}
-                                 style={{ top: `${topPosition}rem`, height: `${height}rem`, transition: 'top 0.3s ease-out'}}>
-                                 <div className="flex items-start gap-2 flex-wrap w-full">
-                                    <Avatar className="h-6 w-6">
+                                 style={{ top: `calc(${topPosition}rem + 2px)`, height: `calc(${height}rem - 2px)`, transition: 'top 0.3s ease-out'}}>
+                                 
+                                <div className="flex-grow flex items-start gap-2">
+                                     <Avatar className="h-6 w-6">
                                         {userAvatar && <AvatarImage src={userAvatar.imageUrl} data-ai-hint={userAvatar.imageHint}/>}
                                         <AvatarFallback>{app.patientDetails?.fullName?.charAt(0) || '?'}</AvatarFallback>
                                     </Avatar>
-                                    <div className="min-w-0 flex-grow">
+                                    <div className="min-w-0">
                                         <p className="font-medium truncate text-sm">{app.patientDetails?.fullName || 'Unknown Patient'}</p>
-                                        <p className="text-xs">{appTime}</p>
+                                        <p className="text-xs font-code">MRN: {app.patientDetails?.mrn || 'N/A'}</p>
                                     </div>
-                                    <Badge variant="secondary" className="ml-auto opacity-80 whitespace-nowrap self-start flex-shrink-0">{app.status}</Badge>
                                 </div>
+                                 <Badge variant="secondary" className="opacity-80 whitespace-nowrap self-end mt-auto">
+                                   {app.status}
+                                 </Badge>
                             </div>
                         );
                     })
