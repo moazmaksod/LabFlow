@@ -235,9 +235,9 @@ export default function OrderDetailsPage() {
   }, [id, token, toast]);
 
   const handlePrint = (type: 'requisition' | 'label', sampleClientId?: string) => {
-    if (!orderDetails) return;
+    if (!orderDetails || !token) return;
 
-    const url = `/orders/${orderDetails.orderId}/print?type=${type}${sampleClientId ? `&sampleClientId=${sampleClientId}` : ''}`;
+    const url = `/print/orders/${orderDetails.orderId}?token=${token}&type=${type}${sampleClientId ? `&sampleClientId=${sampleClientId}` : ''}`;
     const printWindow = window.open(url, '_blank', 'width=800,height=900,noopener,noreferrer');
   };
   
@@ -460,5 +460,3 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
-
-    

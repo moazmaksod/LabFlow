@@ -1,7 +1,7 @@
 
 'use client';
 import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useParams, useRouter } from 'next/navigation';
+import { useSearchParams, useParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import type { Order } from '@/lib/schemas/order';
 import { SampleLabel } from '@/components/label/sample-label';
@@ -26,25 +26,31 @@ type OrderWithDetails = Order & {
 function PrintPageContent() {
     const params = useParams();
     const searchParams = useSearchParams();
-    const router = useRouter();
-    const { token } = useAuth();
+    const { login } = useAuth();
     const { toast } = useToast();
     
     const orderId = params.id as string;
     const printType = searchParams.get('type');
     const sampleClientId = searchParams.get('sampleClientId');
+    const authToken = searchParams.get('token');
     
     const [order, setOrder] = useState<OrderWithDetails | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!orderId || !token) return;
+        if (authToken) {
+            login(authToken);
+        }
+    }, [authToken, login]);
+
+    useEffect(() => {
+        if (!orderId || !authToken) return;
 
         const fetchOrder = async () => {
             setIsLoading(true);
             try {
                 const response = await fetch(`/api/v1/orders/${orderId}`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: { Authorization: `Bearer ${authToken}` },
                 });
                 if (response.ok) {
                     const result = await response.json();
@@ -64,7 +70,7 @@ function PrintPageContent() {
         };
 
         fetchOrder();
-    }, [orderId, token, toast]);
+    }, [orderId, authToken, toast]);
 
     useEffect(() => {
         // Automatically trigger print dialog once data is loaded
@@ -121,5 +127,3 @@ export default function PrintPage() {
         </Suspense>
     )
 }
-
-    
