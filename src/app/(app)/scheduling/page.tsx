@@ -320,7 +320,7 @@ export default function SchedulingPage() {
         <CardContent>
            <div className="flex w-full">
             {/* Time column */}
-            <div className="w-16 pr-2 text-right pt-4">
+            <div className="w-16 pr-2 text-right">
               {timeSlots.map((time) => {
                 if (time.endsWith(':00')) {
                   return (
@@ -338,7 +338,7 @@ export default function SchedulingPage() {
             </div>
 
             {/* Calendar grid */}
-            <div className="relative grid flex-1 h-full border-l pt-4">
+            <div className="relative grid flex-1 h-full border-l">
                 {/* Grid lines as drop zones */}
                 {timeSlots.map((time) => (
                     <div 
@@ -358,7 +358,7 @@ export default function SchedulingPage() {
 
                 {/* Appointments */}
                 {isLoading ? (
-                    <div className="absolute inset-0 pt-4 px-2 space-y-2">
+                    <div className="absolute inset-0 px-2 space-y-2">
                         <Skeleton className="h-12 w-full" />
                         <Skeleton className="h-24 w-full" />
                         <Skeleton className="h-16 w-full" />
@@ -523,3 +523,5 @@ export default function SchedulingPage() {
     </div>
   );
 }
+
+    
