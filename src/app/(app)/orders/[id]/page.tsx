@@ -237,16 +237,8 @@ export default function OrderDetailsPage() {
   const handlePrint = (type: 'requisition' | 'label', sampleClientId?: string) => {
     if (!orderDetails) return;
 
-    let url = `/print/orders/${orderDetails.orderId}`;
-    if (type === 'label') {
-        if(!sampleClientId) {
-            toast({variant: 'destructive', title: 'Sample ID missing for label printing.'})
-            return;
-        }
-      url += `?sampleClientId=${sampleClientId}`;
-    }
-
-    window.open(url, '_blank', 'width=800,height=900');
+    const url = `/orders/${orderDetails.orderId}/print?type=${type}${sampleClientId ? `&sampleClientId=${sampleClientId}` : ''}`;
+    const printWindow = window.open(url, '_blank', 'width=800,height=900,noopener,noreferrer');
   };
   
   const handlePaymentSuccess = (newOrderData: Partial<Order>) => {
@@ -468,3 +460,5 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
+
+    
