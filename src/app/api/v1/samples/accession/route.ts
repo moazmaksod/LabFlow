@@ -48,16 +48,34 @@ export async function POST(request: Request) {
   const nextId = await getNextSequenceValue('accessionNumber');
   const accessionNumber = `ACC-${new Date().getFullYear()}-${nextId.toString().padStart(5, '0')}`;
 
+  const updatedSamples = [...order.samples];
+  updatedSamples[sampleIndex] = {
+    ...sampleToUpdate,
+    status: 'InLab',
+    accessionNumber: accessionNumber,
+    receivedTimestamp: new Date(),
+  };
+
+  // Determine the new overall order status
+  const allSamplesAccessioned = updatedSamples.every(s => s.status !== 'AwaitingCollection');
+  const someSamplesAccessioned = updatedSamples.some(s => s.status !== 'AwaitingCollection');
+  
+  let newOrderStatus = order.orderStatus;
+  if (allSamplesAccessioned) {
+    newOrderStatus = 'In-Progress'; // All samples are in lab, ready for testing
+  } else if (someSamplesAccessioned) {
+    newOrderStatus = 'Partially Complete';
+  }
+
 
   // Update the sample's status, add the accession number and timestamp
   const updateResult = await ordersCollection.updateOne(
     { _id: order._id, [`samples.${sampleIndex}.status`]: 'AwaitingCollection' }, // Ensure we're not in a race condition
     {
       $set: {
-        [`samples.${sampleIndex}.status`]: 'InLab',
-        [`samples.${sampleIndex}.accessionNumber`]: accessionNumber,
-        [`samples.${sampleIndex}.receivedTimestamp`]: new Date(),
-        'updatedAt': new Date(),
+        samples: updatedSamples, // Update the whole array
+        orderStatus: newOrderStatus,
+        updatedAt: new Date(),
       }
     }
   );
@@ -80,6 +98,7 @@ export async function POST(request: Request) {
       sampleIndex: sampleIndex,
       newAccessionNumber: accessionNumber,
       newState: 'InLab',
+      newOrderStatus: newOrderStatus,
     },
   });
 
@@ -87,5 +106,8 @@ export async function POST(request: Request) {
     message: 'Sample accessioned successfully.',
     accessionNumber: accessionNumber,
     newStatus: 'InLab',
+    newOrderStatus: newOrderStatus
   });
 }
+
+    

@@ -47,6 +47,17 @@ type OrderWithPatient = Order & {
     }
 }
 
+const formatStatus = (status?: string) => {
+    if (!status) return '';
+    return status.replace(/([A-Z])/g, ' $1').trim();
+}
+
+const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' | 'destructive' } = {
+    'Pending': 'outline',
+    'Partially Complete': 'secondary',
+    'In-Progress': 'secondary',
+};
+
 export default function AccessioningPage() {
     const { toast } = useToast();
     const { token } = useAuth();
@@ -114,12 +125,18 @@ export default function AccessioningPage() {
         if (!token) return;
         setIsPendingLoading(true);
         try {
-            const response = await fetch('/api/v1/orders?status=Pending', {
+            const response = await fetch('/api/v1/orders?status=Pending,Partially Complete', {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (response.ok) {
                 const result = await response.json();
-                setPendingOrders(result.data);
+                // Sort orders to put 'Pending' ones first
+                const sortedOrders = result.data.sort((a: Order, b: Order) => {
+                  if (a.orderStatus === 'Pending' && b.orderStatus !== 'Pending') return -1;
+                  if (a.orderStatus !== 'Pending' && b.orderStatus === 'Pending') return 1;
+                  return 0;
+                });
+                setPendingOrders(sortedOrders);
             } else {
                  toast({ variant: 'destructive', title: 'Could not load pending orders.' });
             }
@@ -227,6 +244,9 @@ export default function AccessioningPage() {
                     title: 'Sample Accessioned',
                     description: `Accession Number: ${result.accessionNumber}`,
                 });
+                
+                // Refresh pending list as status might have changed
+                fetchPendingOrders(); 
 
                 // Update the UI optimistically
                 setSearchedOrder(prevOrder => {
@@ -237,7 +257,7 @@ export default function AccessioningPage() {
                         status: 'InLab',
                         accessionNumber: result.accessionNumber,
                     };
-                    return { ...prevOrder, samples: newSamples };
+                    return { ...prevOrder, samples: newSamples, orderStatus: result.newOrderStatus };
                 });
                 setAccessioningState(prev => ({ ...prev, [clientId]: 'accessioned' }));
                 
@@ -321,10 +341,15 @@ export default function AccessioningPage() {
       {searchedOrder && (
          <Card id="order-details-card">
             <CardHeader>
-                <CardTitle>Order Details: {searchedOrder.orderId}</CardTitle>
-                <CardDescription>
-                    Patient: {searchedOrder.patientDetails.fullName} (MRN: {searchedOrder.patientDetails.mrn})
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle>Order Details: {searchedOrder.orderId}</CardTitle>
+                        <CardDescription>
+                            Patient: {searchedOrder.patientDetails.fullName} (MRN: {searchedOrder.patientDetails.mrn})
+                        </CardDescription>
+                    </div>
+                    <Badge variant={statusVariant[searchedOrder.orderStatus] || 'default'}>{formatStatus(searchedOrder.orderStatus)}</Badge>
+                </div>
             </CardHeader>
             <CardContent>
                  <Table>
@@ -407,6 +432,7 @@ export default function AccessioningPage() {
                         <TableHead>Order ID</TableHead>
                         <TableHead>Patient</TableHead>
                         <TableHead>Date Created</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead className="text-right">Action</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -414,7 +440,7 @@ export default function AccessioningPage() {
                     {isPendingLoading ? (
                         Array.from({ length: 3 }).map((_, i) => (
                             <TableRow key={i}>
-                                <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                                <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
                             </TableRow>
                         ))
                     ) : pendingOrders.length > 0 ? (
@@ -423,6 +449,9 @@ export default function AccessioningPage() {
                                 <TableCell className="font-medium font-code">{order.orderId}</TableCell>
                                 <TableCell>{order.patientDetails?.fullName || 'N/A'}</TableCell>
                                 <TableCell>{format(new Date(order.createdAt), 'yyyy-MM-dd HH:mm')}</TableCell>
+                                <TableCell>
+                                    <Badge variant={statusVariant[order.orderStatus] || 'default'}>{formatStatus(order.orderStatus)}</Badge>
+                                </TableCell>
                                 <TableCell className="text-right">
                                     <Button variant="outline" size="sm" onClick={() => handleSearch(order.orderId)}>
                                         Select
@@ -432,7 +461,7 @@ export default function AccessioningPage() {
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={4} className="text-center h-24">No pending orders found.</TableCell>
+                            <TableCell colSpan={5} className="text-center h-24">No pending orders found.</TableCell>
                         </TableRow>
                     )}
                 </TableBody>
@@ -442,3 +471,5 @@ export default function AccessioningPage() {
     </div>
   );
 }
+
+    

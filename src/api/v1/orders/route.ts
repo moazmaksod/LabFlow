@@ -14,14 +14,19 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
+    const statusParam = searchParams.get('status');
 
     // Base query
     let query: any = {};
 
-    // Filter by status if provided
-    if (status) {
-        query.orderStatus = status;
+    // Filter by status if provided. Can be a comma-separated list.
+    if (statusParam) {
+        const statuses = statusParam.split(',').map(s => s.trim());
+        if (statuses.length > 1) {
+            query.orderStatus = { $in: statuses };
+        } else {
+            query.orderStatus = statuses[0];
+        }
     }
 
     // Filter orders based on user role
@@ -125,3 +130,5 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ data: newOrder }, { status: 201 });
 }
+
+    
