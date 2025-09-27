@@ -22,10 +22,7 @@ export async function GET(request: Request) {
     // Filter by status if provided. Can be a comma-separated list.
     if (statusParam) {
         const statuses = statusParam.split(',').map(s => s.trim());
-        // Special handling for accessioning page to only get what's needed
-        if (statuses.includes('Pending') && statuses.includes('Partially Complete')) {
-             query['samples.status'] = 'AwaitingCollection';
-        } else if (statuses.length > 1) {
+        if (statuses.length > 1) {
             query.orderStatus = { $in: statuses };
         } else {
             query.orderStatus = statuses[0];
@@ -154,3 +151,5 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ data: newOrder }, { status: 201 });
 }
+
+    

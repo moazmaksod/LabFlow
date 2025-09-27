@@ -55,7 +55,7 @@ const formatStatus = (status?: string) => {
 const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' | 'destructive' } = {
     'Pending': 'outline',
     'Partially Complete': 'secondary',
-    'In-Progress': 'secondary',
+    'In-Progress': 'default',
 };
 
 export default function AccessioningPage() {
@@ -125,16 +125,22 @@ export default function AccessioningPage() {
         if (!token) return;
         setIsPendingLoading(true);
         try {
-            const response = await fetch('/api/v1/orders?status=Pending,Partially Complete', {
+            const response = await fetch('/api/v1/orders?status=Pending,Partially Complete,In-Progress', {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (response.ok) {
                 const result = await response.json();
-                // Sort orders to put 'Pending' ones first
+                
+                const statusOrder: Record<string, number> = {
+                  'Pending': 1,
+                  'Partially Complete': 2,
+                  'In-Progress': 3,
+                };
+
                 const sortedOrders = result.data.sort((a: Order, b: Order) => {
-                  if (a.orderStatus === 'Pending' && b.orderStatus !== 'Pending') return -1;
-                  if (a.orderStatus !== 'Pending' && b.orderStatus === 'Pending') return 1;
-                  return 0;
+                  const orderA = statusOrder[a.orderStatus] || 99;
+                  const orderB = statusOrder[b.orderStatus] || 99;
+                  return orderA - orderB;
                 });
                 setPendingOrders(sortedOrders);
             } else {
@@ -471,3 +477,5 @@ export default function AccessioningPage() {
     </div>
   );
 }
+
+    
