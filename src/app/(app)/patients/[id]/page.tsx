@@ -99,7 +99,7 @@ export default function PatientDetailsPage() {
     }, [id, token, toast]);
 
     const financialSummary = useMemo(() => {
-        if (!patientData) return { totalDue: 0, ordersWithBalance: [], primaryGuarantor: null };
+        if (!patientData) return { totalDue: 0, ordersWithBalance: [] };
         
         const selfOrders = patientData.orders || [];
         const guaranteedOrders = patientData.guaranteedOrders || [];
@@ -116,12 +116,9 @@ export default function PatientDetailsPage() {
 
         const totalDue = ordersWithBalance.reduce((acc, order) => acc + order.balance, 0);
         
-        const primaryGuarantor = selfOrders.find(o => o.guarantorDetails)?.guarantorDetails || null;
-
         return {
             totalDue,
             ordersWithBalance,
-            primaryGuarantor
         }
     }, [patientData]);
 
@@ -220,16 +217,6 @@ export default function PatientDetailsPage() {
                     <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Financial Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">Guarantor for this Patient</p>
-                        {financialSummary.primaryGuarantor ? (
-                            <Link href={`/patients/${financialSummary.primaryGuarantor._id}`} className="text-primary hover:underline">
-                                {financialSummary.primaryGuarantor.fullName} (MRN: {financialSummary.primaryGuarantor.mrn})
-                            </Link>
-                        ) : (
-                            <p>Self</p>
-                        )}
-                    </div>
                      <div>
                         <p className="text-sm font-medium text-muted-foreground">Total Amount Due</p>
                         <p className={`font-bold text-2xl ${financialSummary.totalDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
