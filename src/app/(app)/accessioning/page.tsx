@@ -24,6 +24,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { Order } from '@/lib/schemas/order';
 import { useAuth } from '@/hooks/use-auth';
+import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Add a temporary unique identifier to each sample for the UI
 type SampleWithClientSideId = Order['samples'][0] & { clientId: string };
@@ -37,6 +39,14 @@ type OrderWithClientSideSampleIds = Omit<Order, 'samples' | 'patientDetails'> & 
     }
 };
 
+type OrderWithPatient = Order & {
+    patientDetails: {
+        _id: string;
+        fullName: string;
+        mrn: string;
+    }
+}
+
 export default function AccessioningPage() {
     const { toast } = useToast();
     const { token } = useAuth();
@@ -45,16 +55,20 @@ export default function AccessioningPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [accessioningState, setAccessioningState] = useState<Record<string, 'loading' | 'accessioned'>>({});
     const inputRef = useRef<HTMLInputElement>(null);
+    
+    const [pendingOrders, setPendingOrders] = useState<OrderWithPatient[]>([]);
+    const [isPendingLoading, setIsPendingLoading] = useState(true);
 
-    const handleSearch = useCallback(async () => {
-        if (!orderId || !token) return;
+    const handleSearch = useCallback(async (idToSearch?: string) => {
+        const currentId = idToSearch || orderId;
+        if (!currentId || !token) return;
 
         setIsLoading(true);
         setSearchedOrder(null);
         setAccessioningState({});
         
         try {
-            const response = await fetch(`/api/v1/orders/${orderId}`, {
+            const response = await fetch(`/api/v1/orders/${currentId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (response.ok) {
@@ -72,7 +86,7 @@ export default function AccessioningPage() {
                  toast({
                     variant: 'destructive',
                     title: 'Order Not Found',
-                    description: errorData.message || `No order found for ID "${orderId}".`,
+                    description: errorData.message || `No order found for ID "${currentId}".`,
                 });
             }
         } catch (error) {
@@ -85,15 +99,38 @@ export default function AccessioningPage() {
             setIsLoading(false);
         }
     }, [orderId, token, toast]);
-    
-    useEffect(() => {
-        // Focus the input on page load for a barcode-scanner-first workflow
-        inputRef.current?.focus();
-    }, [])
 
+    const fetchPendingOrders = useCallback(async () => {
+        if (!token) return;
+        setIsPendingLoading(true);
+        try {
+            const response = await fetch('/api/v1/orders?status=Pending', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (response.ok) {
+                const result = await response.json();
+                setPendingOrders(result.data);
+            } else {
+                 toast({ variant: 'destructive', title: 'Could not load pending orders.' });
+            }
+        } catch (error) {
+             toast({ variant: 'destructive', title: 'Network error fetching pending orders.' });
+        } finally {
+            setIsPendingLoading(false);
+        }
+    }, [token, toast]);
+    
+    // Initial data fetch
+    useEffect(() => {
+        inputRef.current?.focus();
+        fetchPendingOrders();
+    }, [fetchPendingOrders]);
+
+
+    // Debounced search effect
     useEffect(() => {
         const handler = setTimeout(() => {
-            if (orderId) { // Only search if orderId is not empty
+            if (orderId) { 
                 handleSearch();
             }
         }, 500); // 500ms debounce delay
@@ -113,14 +150,15 @@ export default function AccessioningPage() {
                 title: 'All Samples Accessioned',
                 description: `Order ${searchedOrder.orderId} is fully accessioned. Ready for next scan.`,
             });
+            fetchPendingOrders(); // Refresh pending list
             const timer = setTimeout(() => {
-                setOrderId(''); // Only clear the input field, not the whole order
+                setOrderId(''); 
                 inputRef.current?.focus();
-            }, 1500); // Wait 1.5 seconds before clearing
+            }, 1500); 
             return () => clearTimeout(timer);
         }
 
-    }, [searchedOrder, toast]);
+    }, [searchedOrder, toast, fetchPendingOrders]);
     
     const handlePrintLabel = (accessionNumber: string, sample: SampleWithClientSideId) => {
         if (!searchedOrder) return;
@@ -227,6 +265,12 @@ export default function AccessioningPage() {
       e.preventDefault();
       handleSearch();
     }
+    
+    const selectPendingOrder = (id: string) => {
+        setOrderId(id);
+        const element = document.getElementById('search-card');
+        element?.scrollIntoView({ behavior: 'smooth' });
+    }
 
   return (
     <div className="flex flex-col gap-8">
@@ -240,11 +284,11 @@ export default function AccessioningPage() {
         </div>
       </div>
 
-      <Card>
+      <Card id="search-card">
         <CardHeader>
           <CardTitle>Scan Order Requisition</CardTitle>
           <CardDescription>
-            Scan the barcode on the sample requisition form to find the order.
+            Scan the barcode on the sample requisition form or select a pending order below.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -345,6 +389,51 @@ export default function AccessioningPage() {
               </CardContent>
           </Card>
       )}
+      
+       <Card>
+        <CardHeader>
+            <CardTitle>Recent Pending Orders</CardTitle>
+            <CardDescription>A list of newly created orders awaiting sample collection or accessioning.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Patient</TableHead>
+                        <TableHead>Date Created</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {isPendingLoading ? (
+                        Array.from({ length: 3 }).map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                            </TableRow>
+                        ))
+                    ) : pendingOrders.length > 0 ? (
+                        pendingOrders.map(order => (
+                            <TableRow key={order._id}>
+                                <TableCell className="font-medium font-code">{order.orderId}</TableCell>
+                                <TableCell>{order.patientDetails?.fullName || 'N/A'}</TableCell>
+                                <TableCell>{format(new Date(order.createdAt), 'yyyy-MM-dd HH:mm')}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="outline" size="sm" onClick={() => selectPendingOrder(order.orderId)}>
+                                        Accession
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={4} className="text-center h-24">No pending orders found.</TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

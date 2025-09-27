@@ -13,20 +13,30 @@ export async function GET(request: Request) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    // Filter orders based on user role
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get('status');
+
+    // Base query
     let query: any = {};
+
+    // Filter by status if provided
+    if (status) {
+        query.orderStatus = status;
+    }
+
+    // Filter orders based on user role
     if (user.role === 'receptionist') {
         // Receptionists can only see orders they created
-        query = { createdBy: new ObjectId(user._id) };
+        query.createdBy = new ObjectId(user._id);
     } else if (user.role === 'physician') {
         // Physicians can only see orders they are assigned to
-        query = { physicianId: new ObjectId(user._id) };
+        query.physicianId = new ObjectId(user._id);
     } else if (user.role === 'patient') {
         // Patients can only see orders linked to their patient ID.
         // This requires a separate lookup not implemented here for simplicity.
         return NextResponse.json({ data: [] });
     }
-    // Managers and Technicians can see all orders (no query filter)
+    // Managers and Technicians can see all orders based on the status filter
 
     const orders = await getOrders(query);
     return NextResponse.json({ data: orders });
