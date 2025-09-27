@@ -195,7 +195,7 @@ export default function OrderDetailsPage() {
   const [isPaymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const canEditResults = user?.role === 'technician' || user?.role === 'manager';
-  const isReceptionist = user?.role === 'receptionist';
+  const isReceptionist = user?.role === 'receptionist' || user?.role === 'manager';
 
 
   useEffect(() => {
@@ -247,13 +247,10 @@ export default function OrderDetailsPage() {
     }
 
     let printContent: string;
-    let barcodeValue: string;
     let pageTitle: string;
-    let isRequisition = type === 'requisition';
 
     if (type === 'requisition') {
         printContent = renderToString(<RequisitionForm order={orderDetails} />);
-        barcodeValue = orderDetails.orderId;
         pageTitle = `Requisition - ${orderDetails.orderId}`;
     } else {
         const sample = orderDetails.samples.find(s => s.clientId === printIdentifier);
@@ -261,9 +258,7 @@ export default function OrderDetailsPage() {
             toast({ variant: 'destructive', title: 'Sample not found for label printing.' });
             return;
         }
-        // For pre-accessioning labels, we use the Order ID on the barcode.
-        // The lab will scan this to find the order and then formally accession it.
-        barcodeValue = sample.accessionNumber || orderDetails.orderId;
+        const barcodeValue = sample.accessionNumber || orderDetails.orderId;
         pageTitle = `Label - ${barcodeValue} - ${sample.sampleType}`;
         printContent = renderToString(
             <SampleLabel
@@ -292,6 +287,16 @@ export default function OrderDetailsPage() {
             </head>
             <body class="bg-gray-100 flex items-center justify-center">
                 ${printContent}
+                 <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"><\/script>
+                 <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"><\/script>
+                 <script src="https://cdn.jsdelivr.net/npm/react-barcode@1.5.1/dist/react-barcode.min.js"><\/script>
+                 <script>
+                    // Manually trigger re-render of barcode
+                    setTimeout(() => {
+                        window.print();
+                        window.close();
+                    }, 250);
+                 <\/script>
             </body>
         </html>
     `;
@@ -299,12 +304,6 @@ export default function OrderDetailsPage() {
     printWindow.document.open();
     printWindow.document.write(html);
     printWindow.document.close();
-    
-    printWindow.onload = () => {
-        printWindow.focus();
-        printWindow.print();
-        printWindow.close();
-    };
   };
   
   const handlePaymentSuccess = (newOrderData: Partial<Order>) => {
@@ -390,13 +389,15 @@ export default function OrderDetailsPage() {
                           Accession Number: {sample.accessionNumber || 'Not yet accessioned'}
                       </CardDescription>
                     </div>
-                     <Button 
-                        variant="outline"
-                        onClick={() => handlePrint('label', sample.clientId)}
-                      >
-                        <Printer className="mr-2 h-4 w-4" /> 
-                        Print Label
-                      </Button>
+                     {isReceptionist && (
+                        <Button 
+                            variant="outline"
+                            onClick={() => handlePrint('label', sample.clientId)}
+                        >
+                            <Printer className="mr-2 h-4 w-4" /> 
+                            Print Label
+                        </Button>
+                     )}
                   </div>
                 </CardHeader>
                 <CardContent>

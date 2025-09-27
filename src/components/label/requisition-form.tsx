@@ -115,6 +115,22 @@ export const RequisitionForm: React.FC<RequisitionFormProps> = ({ order }) => {
                     ))}
                  </div>
             </section>
+            
+            <div className="mt-8 grid grid-cols-3 gap-4">
+                {order.samples.map((sample, index) => (
+                    <div key={index} className="break-inside-avoid-column">
+                        <SampleLabel 
+                            patientName={order.patientDetails.fullName}
+                            mrn={order.patientDetails.mrn}
+                            orderId={order.orderId}
+                            barcodeValue={order.orderId}
+                            sampleType={sample.sampleType}
+                            isRequisition={false}
+                        />
+                    </div>
+                ))}
+            </div>
+
 
             {/* Footer */}
             <footer className="mt-16 text-center text-xs text-gray-500 absolute bottom-8 left-8 right-8">
@@ -133,7 +149,7 @@ export const RequisitionForm: React.FC<RequisitionFormProps> = ({ order }) => {
                 }
                 .a4-page {
                     width: 210mm;
-                    height: 297mm;
+                    min-height: 297mm;
                     display: flex;
                     flex-direction: column;
                     position: relative;
