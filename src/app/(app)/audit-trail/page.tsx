@@ -54,7 +54,7 @@ const AuditDetails = ({ details, action }: { details: any, action: string }) => 
     }
     
     if (action === 'ORDER_CREATE') {
-        if(details.patientId) detailItems.push(<span key="patient">For Patient ID: <span className='font-code'>{details.patientId}</span></span>);
+        if(details.patientName) detailItems.push(<span key="patient">For Patient: {details.patientName} (MRN: <span className='font-code'>{details.patientMrn}</span>)</span>);
         if(details.testCount) detailItems.push(<span key="tests">{details.testCount} test(s) ordered</span>);
     }
 

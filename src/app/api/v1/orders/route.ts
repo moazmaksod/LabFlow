@@ -143,7 +143,8 @@ export async function POST(request: Request) {
         },
         details: {
             orderId: newOrder.orderId,
-            patientId: newOrder.patientId.toString(),
+            patientName: patient.fullName,
+            patientMrn: patient.mrn,
             testCount: newOrder.samples.reduce((acc: number, s: any) => acc + s.tests.length, 0),
         },
     });
