@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/api/utils';
+import { getAuthenticatedUser, createAuditLog } from '@/lib/api/utils';
 import { getAuditLogsCollection, getOrdersCollection, getPatientsCollection } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -16,68 +16,10 @@ export async function GET(request: Request) {
   const searchTerm = searchParams.get('searchTerm');
   const collection = await getAuditLogsCollection();
 
-  // If no search term, return the latest 50 logs
-  if (!searchTerm) {
-    const latestLogs = await collection.aggregate([
-      { $sort: { timestamp: -1 } },
-      { $limit: 50 },
-      { $addFields: { "userObjectId": { "$toObjectId": "$userId" } } },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userObjectId',
-          foreignField: '_id',
-          as: 'userDetails'
-        }
-      },
-      { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: true } },
-      {
-        $addFields: {
-          'userDetails.fullName': {
-            $ifNull: [
-              '$userDetails.fullName',
-              { $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName'] }
-            ]
-          }
-        }
-      },
-      { 
-        $project: { 
-          "userObjectId": 0, 
-          "userDetails.passwordHash": 0,
-          "userDetails.role": 0,
-          "userDetails.firstName": 0,
-          "userDetails.lastName": 0,
-        } 
-      }
-    ]).toArray();
-    return NextResponse.json({ data: latestLogs });
-  }
-  
-  // If there is a search term, proceed with search logic
-  const patientsCollection = await getPatientsCollection();
-  const ordersCollection = await getOrdersCollection();
-
-  // Find patients by MRN
-  const patient = await patientsCollection.findOne({ mrn: searchTerm });
-  // Find orders by Order ID or Accession Number
-  const order = await ordersCollection.findOne({ $or: [{ orderId: searchTerm }, { "samples.accessionNumber": searchTerm }] });
-
-  const entityIdsToSearch = [];
-  if(patient) entityIdsToSearch.push(patient._id);
-  if(order) entityIdsToSearch.push(order._id);
-  // If the search term is a valid ObjectId, search for it directly.
-  if (ObjectId.isValid(searchTerm)) {
-    entityIdsToSearch.push(new ObjectId(searchTerm));
-  }
-  
-  if (entityIdsToSearch.length === 0) {
-      return NextResponse.json({ data: [] });
-  }
-  
-  const logs = await collection.aggregate([
-    { $match: { "entity.documentId": { $in: entityIdsToSearch } } },
+  const aggregationPipeline = (matchClause: any) => [
+    matchClause,
     { $sort: { timestamp: -1 } },
+    { $limit: 50 },
     { $addFields: { "userObjectId": { "$toObjectId": "$userId" } } },
     {
       $lookup: {
@@ -107,7 +49,41 @@ export async function GET(request: Request) {
         "userDetails.lastName": 0,
       } 
     }
-  ]).limit(50).toArray();
+  ];
+
+  // If no search term, return the latest logs
+  if (!searchTerm) {
+    const latestLogs = await collection.aggregate(aggregationPipeline({ $match: {} })).toArray();
+    return NextResponse.json({ data: latestLogs });
+  }
+  
+  // If there is a search term, proceed with search logic
+  const patientsCollection = await getPatientsCollection();
+  const ordersCollection = await getOrdersCollection();
+
+  // Find patients by MRN
+  const patient = await patientsCollection.findOne({ mrn: searchTerm });
+  // Find orders by Order ID or Accession Number
+  const order = await ordersCollection.findOne({ $or: [{ orderId: searchTerm }, { "samples.accessionNumber": searchTerm }] });
+
+  const entityIdsToSearch = [];
+  if(patient) entityIdsToSearch.push(patient._id);
+  if(order) entityIdsToSearch.push(order._id);
+  
+  if (entityIdsToSearch.length === 0) {
+      // Check if it's a valid object ID string, but only if we haven't found anything yet
+      if (ObjectId.isValid(searchTerm)) {
+        entityIdsToSearch.push(new ObjectId(searchTerm));
+      } else {
+        return NextResponse.json({ data: [] });
+      }
+  }
+  
+  const logs = await collection.aggregate(aggregationPipeline({
+    $match: { "entity.documentId": { $in: entityIdsToSearch } }
+  })).toArray();
 
   return NextResponse.json({ data: logs });
 }
+
+    

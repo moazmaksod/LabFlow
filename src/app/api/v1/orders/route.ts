@@ -6,7 +6,7 @@ import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import { ObjectId } from 'mongodb';
 
 // GET /api/v1/orders
-// Retrieves all orders
+// Retrieves orders based on user role and status filters
 export async function GET(request: Request) {
     const user = await getAuthenticatedUser();
     if (!user) {
@@ -22,11 +22,7 @@ export async function GET(request: Request) {
     // Filter by status if provided. Can be a comma-separated list.
     if (statusParam) {
         const statuses = statusParam.split(',').map(s => s.trim());
-        if (statuses.length > 1) {
-            query.orderStatus = { $in: statuses };
-        } else {
-            query.orderStatus = statuses[0];
-        }
+        query.orderStatus = { $in: statuses };
     }
 
     // Filter orders based on user role
@@ -37,9 +33,11 @@ export async function GET(request: Request) {
         // Physicians can only see orders they are assigned to
         query.physicianId = new ObjectId(user._id);
     } else if (user.role === 'patient') {
-        // Patients can only see orders linked to their patient ID.
-        // This requires a separate lookup not implemented here for simplicity.
-        return NextResponse.json({ data: [] });
+        // Patients can see orders where they are the patient OR the guarantor
+        query.$or = [
+            { patientId: new ObjectId(user._id) },
+            { 'responsibleParty.patientId': new ObjectId(user._id) }
+        ];
     }
     // Managers and Technicians can see all orders based on the status filter
 

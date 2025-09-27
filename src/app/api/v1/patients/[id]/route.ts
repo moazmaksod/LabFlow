@@ -10,34 +10,32 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
    }
 
-  // Allow any authenticated user to view patient details for now.
-  // In a real app, RBAC would be stricter.
-
-  const foundPatient = await findPatientById(params.id);
-  
-  if (!foundPatient) {
-    return NextResponse.json({ message: 'Patient not found' }, { status: 404 });
-  }
-  
-  // Attach guarantor details to each order for easier frontend display
-  if (foundPatient.orders) {
-    for (const order of foundPatient.orders) {
-        if (order.responsibleParty?.patientId) {
-            const guarantor = await findPatientById(order.responsibleParty.patientId.toString());
-            if (guarantor) {
-                (order as any).guarantorDetails = {
-                    _id: guarantor._id,
-                    fullName: guarantor.fullName,
-                    mrn: guarantor.mrn
-                };
-            }
-        }
+  // --- Authorization Logic ---
+  // Managers and Receptionists can view full details of any patient.
+  if (user.role === 'manager' || user.role === 'receptionist') {
+    const fullPatientData = await findPatientById(params.id, { includeOrders: true });
+    if (!fullPatientData) {
+      return NextResponse.json({ message: 'Patient not found' }, { status: 404 });
     }
+    return NextResponse.json({ data: fullPatientData });
   }
 
+  // Other roles can only view a patient if they are that patient.
+  if (user._id === params.id) {
+    const selfPatientData = await findPatientById(params.id, { includeOrders: true });
+     if (!selfPatientData) {
+      return NextResponse.json({ message: 'Patient not found' }, { status: 404 });
+    }
+    return NextResponse.json({ data: selfPatientData });
+  }
 
-  return NextResponse.json({ data: foundPatient });
+  // For any other role trying to access a patient that is not themselves,
+  // we could return limited data or just forbid it. For now, we'll forbid.
+  // A technician, for example, gets limited patient data via the worklist, not this endpoint.
+  return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
 }
 
 // NOTE: PUT and DELETE endpoints for a specific patient would go here.
 // They are omitted for this prototype's current scope.
+
+    

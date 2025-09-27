@@ -29,9 +29,10 @@ export async function GET(request: Request, { params }: { params: { id: string }
   
   // Check for patient ownership
   if (user.role === 'patient') {
-    // This assumes the patient's user ID is the same as their patient record ID.
-    // In a real system, this link might be more complex.
-    if (foundOrder.patientId.toString() === user._id) {
+    // A patient can see an order if they are the patient OR the guarantor.
+    const isPatient = foundOrder.patientId.toString() === user._id;
+    const isGuarantor = foundOrder.responsibleParty?.patientId?.toString() === user._id;
+    if (isPatient || isGuarantor) {
        return NextResponse.json({ data: foundOrder });
     }
   }
@@ -46,3 +47,5 @@ export async function GET(request: Request, { params }: { params: { id: string }
   // If none of the above conditions are met, deny access.
   return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
 }
+
+    

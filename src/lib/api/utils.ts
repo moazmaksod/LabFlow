@@ -5,7 +5,7 @@ import type { TestCatalog } from '@/lib/schemas/test-catalog';
 import type { Patient } from '@/lib/schemas/patient';
 import type { Order } from '@/lib/schemas/order';
 import type { Appointment } from '@/lib/schemas/appointment';
-import type { AuditLog } from '@/lib/schemas/audit-log';
+import type { AuditLog, AuditLogActionSchema } from '@/lib/schemas/audit-log';
 import { headers } from 'next/headers';
 import { getAppointmentsCollection, getAuditLogsCollection, getCountersCollection, getOrdersCollection, getPatientsCollection, getUsersCollection, getTestsCollection } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
@@ -71,7 +71,7 @@ const mapUserDocument = (userDoc: any): User | null => {
         userDoc.fullName = `${userDoc.firstName} ${userDoc.lastName}`;
     }
     
-    const { _id, ...rest } = userDoc;
+    const { _id, passwordHash, ...rest } = userDoc; // Exclude passwordHash
 
     return {
         _id: _id.toString(),
@@ -144,30 +144,51 @@ export const removeTest = async (id: string): Promise<boolean> => {
 
 
 // --- Patient Data Access ---
-export const getPatients = async (query: any = {}): Promise<Patient[]> => {
+export const getPatients = async (query: any = {}, projection: any = {}): Promise<Patient[]> => {
     const collection = await getPatientsCollection();
-    return await collection.find(query).toArray() as Patient[];
+    return await collection.find(query, { projection }).toArray() as Patient[];
 };
-export const findPatientById = async (id: string): Promise<Patient | null> => {
-    const collection = await getPatientsCollection();
+export const findPatientById = async (id: string, options: { includeOrders?: boolean } = { includeOrders: false }): Promise<Patient | null> => {
     if (!ObjectId.isValid(id)) return null;
-    
-    // Find all orders where this patient is the main subject
-    const orders = await getOrders({ patientId: new ObjectId(id) });
 
-    // Find all orders where this patient is the guarantor
-    const guaranteedOrders = await getOrders({ 'responsibleParty.patientId': new ObjectId(id) });
-    
+    const collection = await getPatientsCollection();
     const patientDoc = await collection.findOne({ _id: new ObjectId(id) });
-
     if (!patientDoc) return null;
 
-    return {
+    let orders: Order[] = [];
+    let guaranteedOrders: Order[] = [];
+
+    if (options.includeOrders) {
+        // Find all orders where this patient is the main subject
+        orders = await getOrders({ patientId: new ObjectId(id) });
+
+        // Find all orders where this patient is the guarantor
+        guaranteedOrders = await getOrders({ 'responsibleParty.patientId': new ObjectId(id) });
+    }
+
+    const patientWithDetails = {
       ...patientDoc,
       _id: patientDoc._id.toString(),
       orders,
       guaranteedOrders,
     } as unknown as Patient;
+    
+    if (patientWithDetails.orders) {
+        for (const order of patientWithDetails.orders) {
+            if (order.responsibleParty?.patientId) {
+                const guarantor = await findPatientById(order.responsibleParty.patientId.toString(), { includeOrders: false });
+                if (guarantor) {
+                    (order as any).guarantorDetails = {
+                        _id: guarantor._id,
+                        fullName: guarantor.fullName,
+                        mrn: guarantor.mrn
+                    };
+                }
+            }
+        }
+    }
+
+    return patientWithDetails;
 };
 export const findPatientByMrn = async (mrn: string): Promise<Patient | null> => {
     const collection = await getPatientsCollection();

@@ -9,8 +9,7 @@ import { ObjectId } from 'mongodb';
 // Lists all patients, or searches if query params are provided
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
-  // Allow technicians to search for patients as well.
-  if (!user || !['receptionist', 'technician', 'manager'].includes(user.role)) {
+  if (!user) {
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
@@ -28,7 +27,20 @@ export async function GET(request: Request) {
     };
   }
 
-  const patients = await getPatients(query);
+  // Define which fields to return based on role
+  let projection = {};
+  if (user.role === 'technician') {
+    // Technicians only get limited, non-sensitive info
+    projection = {
+      mrn: 1,
+      fullName: 1,
+      dateOfBirth: 1,
+      gender: 1,
+    };
+  }
+  // Receptionists and Managers get all fields by default (no projection)
+
+  const patients = await getPatients(query, projection);
   return NextResponse.json({ data: patients });
 }
 
@@ -82,3 +94,5 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ data: newPatient }, { status: 201 });
 }
+
+    

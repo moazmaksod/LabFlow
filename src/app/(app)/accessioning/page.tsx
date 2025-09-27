@@ -53,9 +53,9 @@ const formatStatus = (status?: string) => {
 }
 
 const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' | 'destructive' } = {
-    'Pending': 'outline',
-    'Partially Complete': 'secondary',
-    'In-Progress': 'default',
+  'Pending': 'outline',
+  'Partially Complete': 'secondary',
+  'In-Progress': 'default',
 };
 
 export default function AccessioningPage() {

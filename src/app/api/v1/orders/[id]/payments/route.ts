@@ -29,7 +29,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const { amount, method } = validation.data;
 
   const totalCost = order.samples.reduce((total: number, sample: any) => 
-      total + sample.tests.reduce((testTotal: number, test: any) => testTotal + test.price, 0), 0);
+      total + sample.tests.reduce((testTotal: number, test: any) => testTotal + (test.price || 0), 0), 0);
   
   const totalPaid = (order.payments || []).reduce((sum: number, p: any) => sum + p.amount, 0);
 
@@ -83,3 +83,5 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   return NextResponse.json({ message: 'Payment recorded successfully', newStatus: newPaymentStatus, newPayment: newPayment });
 }
+
+    
