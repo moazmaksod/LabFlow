@@ -16,13 +16,20 @@ function PrintLabel() {
     const barcodeValue = searchParams.get('barcodeValue') || '';
     const sampleType = searchParams.get('sampleType') || '';
     const tests = searchParams.get('tests') || '';
+    const orderId = searchParams.get('orderId') || '';
     
     useEffect(() => {
         // Give a short delay for the barcode to render, then print
-        setTimeout(() => {
+        const timer = setTimeout(() => {
             window.print();
         }, 500); 
+
+        return () => clearTimeout(timer);
     }, []);
+
+    if (!barcodeValue) {
+        return <Skeleton className="w-[4cm] h-[2.5cm]" />;
+    }
 
     return (
         <div className="p-4">
@@ -31,6 +38,7 @@ function PrintLabel() {
                 mrn={mrn}
                 dob={dob}
                 gender={gender}
+                orderId={orderId}
                 barcodeValue={barcodeValue}
                 sampleType={sampleType}
                 tests={tests}
@@ -46,5 +54,3 @@ export default function PrintLabelPage() {
         </Suspense>
     )
 }
-
-    

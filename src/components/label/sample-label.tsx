@@ -1,6 +1,6 @@
 
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Barcode from 'react-barcode';
 import { format } from 'date-fns';
 
@@ -24,6 +24,14 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
     sampleType,
     tests,
 }) => {
+    const [currentTime, setCurrentTime] = useState('');
+
+    useEffect(() => {
+      // This code will only run on the client, after hydration is complete
+      setCurrentTime(format(new Date(), 'HH:mm'));
+    }, []);
+
+
     const formatDateSafe = (date: any) => {
         try {
             if (!date) return 'N/A';
@@ -38,12 +46,13 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
             width: '4cm', 
             height: '2.5cm',
             fontFamily: 'sans-serif', 
-            border: '1px solid #ccc', 
             padding: '4px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-        }} className="bg-white text-black">
+            backgroundColor: 'white',
+            color: 'black'
+        }} >
            <div className="flex justify-between items-start" style={{fontSize: '7pt', lineHeight: '1.2'}}>
                 <div className='max-w-[75%]'>
                     <p className="font-bold truncate">{patientName}</p>
@@ -68,7 +77,7 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
             </div>
             <div className='flex justify-between items-end' style={{fontSize: '6pt'}}>
                 <p className="truncate max-w-[70%]">{tests}</p>
-                <p>{format(new Date(), 'HH:mm')}</p>
+                <p>{currentTime}</p>
             </div>
         </div>
     );
