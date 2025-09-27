@@ -32,6 +32,8 @@ type OrderWithClientSideSampleIds = Omit<Order, 'samples' | 'patientDetails'> & 
     patientDetails: {
         fullName: string;
         mrn: string;
+        dateOfBirth: string; // Add DOB for age calculation
+        gender: string;
     }
 };
 
@@ -61,7 +63,7 @@ export default function AccessioningPage() {
                 const orderWithClientIds: OrderWithClientSideSampleIds = {
                     ...orderData,
                     samples: orderData.samples.map((s, i) => ({...s, clientId: `${orderData.orderId}-${i}`})),
-                    patientDetails: result.data.patientDetails || { fullName: 'N/A', mrn: 'N/A' }
+                    patientDetails: result.data.patientDetails || { fullName: 'N/A', mrn: 'N/A', dateOfBirth: '', gender: '' }
                 };
                 setSearchedOrder(orderWithClientIds);
             } else {
@@ -119,12 +121,43 @@ export default function AccessioningPage() {
         }
 
     }, [searchedOrder, toast]);
+    
+    const handlePrintLabel = (accessionNumber: string, sample: SampleWithClientSideId) => {
+        if (!searchedOrder) return;
+    
+        function calculateAge(dob: string | Date): number {
+          const birthDate = new Date(dob);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDifference = today.getMonth() - birthDate.getMonth();
+          if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          return age;
+        }
+
+        const patientAge = calculateAge(searchedOrder.patientDetails.dateOfBirth);
+
+        const params = new URLSearchParams({
+            patientName: searchedOrder.patientDetails.fullName,
+            mrn: searchedOrder.patientDetails.mrn,
+            age: patientAge.toString(),
+            gender: searchedOrder.patientDetails.gender,
+            orderId: searchedOrder.orderId,
+            barcodeValue: accessionNumber,
+            sampleType: sample.sampleType,
+            tests: sample.tests.map(t => t.testCode).join(', '),
+        });
+
+        window.open(`/print/label?${params.toString()}`, '_blank', 'width=400,height=300,noopener,noreferrer');
+    }
 
 
     const handleAccessionSample = async (clientId: string, sampleIndex: number) => {
         if (!searchedOrder?.orderId || !token) return;
 
         setAccessioningState(prev => ({ ...prev, [clientId]: 'loading' }));
+        const sampleToAccession = searchedOrder.samples[sampleIndex];
 
         try {
             const response = await fetch('/api/v1/samples/accession', {
@@ -158,6 +191,10 @@ export default function AccessioningPage() {
                     return { ...prevOrder, samples: newSamples };
                 });
                 setAccessioningState(prev => ({ ...prev, [clientId]: 'accessioned' }));
+                
+                // Trigger print
+                handlePrintLabel(result.accessionNumber, sampleToAccession);
+
 
             } else {
                 const errorData = await response.json();
@@ -304,5 +341,7 @@ export default function AccessioningPage() {
     </div>
   );
 }
+
+    
 
     

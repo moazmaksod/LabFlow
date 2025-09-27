@@ -152,94 +152,22 @@ export const findPatientById = async (id: string): Promise<Patient | null> => {
     const collection = await getPatientsCollection();
     if (!ObjectId.isValid(id)) return null;
     
-    const patientPipeline = [
-      { $match: { _id: new ObjectId(id) } },
-      // Find orders where this patient is the main patient
-      {
-        $lookup: {
-          from: 'orders',
-          localField: '_id',
-          foreignField: 'patientId',
-          as: 'orders'
-        }
-      },
-      // Find orders where this patient is the guarantor
-      {
-        $lookup: {
-          from: 'orders',
-          localField: '_id',
-          foreignField: 'responsibleParty.patientId',
-          as: 'guaranteedOrders'
-        }
-      },
-       // For guaranteed orders, we need to join the patient details for those orders
-      {
-        $unwind: {
-          path: '$guaranteedOrders',
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: 'patients',
-          localField: 'guaranteedOrders.patientId',
-          foreignField: '_id',
-          as: 'guaranteedOrders.patientDetails'
-        }
-      },
-      {
-        $unwind: {
-          path: '$guaranteedOrders.patientDetails',
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      // Group back to reconstruct the patient document
-      {
-        $group: {
-          _id: '$_id',
-          doc: { $first: '$$ROOT' },
-          guaranteedOrders: { $push: '$guaranteedOrders' }
-        }
-      },
-      {
-        $replaceRoot: {
-          newRoot: {
-            $mergeObjects: [
-              '$doc',
-              { guaranteedOrders: '$guaranteedOrders' }
-            ]
-          }
-        }
-      }
-    ];
+    // Find all orders where this patient is the main subject
+    const orders = await getOrders({ patientId: new ObjectId(id) });
 
-    const results = await collection.aggregate(patientPipeline).toArray();
+    // Find all orders where this patient is the guarantor
+    const guaranteedOrders = await getOrders({ 'responsibleParty.patientId': new ObjectId(id) });
     
-    if (results.length > 0) {
-        // Manually convert ObjectId to string for consistency
-        const patient = results[0];
-        patient._id = patient._id.toString();
-        if (patient.orders) {
-            patient.orders.forEach((o: any) => {
-              o._id = o._id.toString();
-              o.patientId = o.patientId.toString();
-            });
-        }
-        if (patient.guaranteedOrders && patient.guaranteedOrders[0]?._id) { // Check if guaranteedOrders is not just an empty object
-            patient.guaranteedOrders.forEach((o: any) => {
-              o._id = o._id.toString();
-              o.patientId = o.patientId.toString();
-              if (o.responsibleParty) {
-                o.responsibleParty.patientId = o.responsibleParty.patientId.toString();
-              }
-            });
-        } else {
-            patient.guaranteedOrders = [];
-        }
-        return patient as Patient;
-    }
-    
-    return null;
+    const patientDoc = await collection.findOne({ _id: new ObjectId(id) });
+
+    if (!patientDoc) return null;
+
+    return {
+      ...patientDoc,
+      _id: patientDoc._id.toString(),
+      orders,
+      guaranteedOrders,
+    } as unknown as Patient;
 };
 export const findPatientByMrn = async (mrn: string): Promise<Patient | null> => {
     const collection = await getPatientsCollection();
@@ -466,3 +394,5 @@ export const createAuditLog = async (entry: Omit<AuditLog, '_id' | 'timestamp' |
     const result = await collection.insertOne(finalEntry as any);
     return { ...finalEntry, _id: result.insertedId.toHexString() } as unknown as AuditLog;
 }
+
+    
