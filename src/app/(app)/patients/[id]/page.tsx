@@ -202,7 +202,7 @@ export default function PatientDetailsPage() {
             {patientData.guaranteedPatientDetails && patientData.guaranteedPatientDetails.length > 0 && (
             <Card>
                 <CardHeader>
-                    <CardTitle>Bills Responsible For</CardTitle>
+                    <CardTitle>Patients Guaranteed By {patientData.fullName}</CardTitle>
                     <CardDescription>This patient is the guarantor for the following people.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -229,7 +229,7 @@ export default function PatientDetailsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Responsible for Billing</p>
+                        <p className="text-sm font-medium text-muted-foreground">Guarantor for this Patient</p>
                         {financialSummary.guarantor ? (
                             <Link href={`/patients/${financialSummary.guarantor._id}`} className="text-primary hover:underline">
                                 {financialSummary.guarantor.fullName} (MRN: {financialSummary.guarantor.mrn})
