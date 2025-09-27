@@ -109,5 +109,3 @@ export async function POST(request: Request) {
     newOrderStatus: newOrderStatus
   });
 }
-
-    
