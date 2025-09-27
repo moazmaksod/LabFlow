@@ -197,6 +197,7 @@ export const getOrders = async (query: any = {}): Promise<any[]> => {
 
 
 export const findOrderById = async (orderId: string): Promise<any | null> => {
+    console.log(`[DEBUG] findOrderById called for orderId: ${orderId}`);
     const collection = await getOrdersCollection();
     const pipeline = [
         { $match: { orderId: orderId } },
@@ -279,7 +280,11 @@ export const findOrderById = async (orderId: string): Promise<any | null> => {
         }
     ];
     
+    console.log('[DEBUG] Aggregation Pipeline:', JSON.stringify(pipeline, null, 2));
+
     const results = await collection.aggregate(pipeline).toArray();
+
+    console.log('[DEBUG] Aggregation Results:', JSON.stringify(results, null, 2));
 
     return results[0] || null;
 };
