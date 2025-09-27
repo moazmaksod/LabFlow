@@ -204,7 +204,16 @@ export const findOrderById = async (orderId: string): Promise<any | null> => {
           $addFields: {
             "patientObjectId": { "$toObjectId": "$patientId" },
             "physicianObjectId": { "$toObjectId": "$physicianId" },
-            "guarantorObjectId": { "$toObjectId": "$responsibleParty.patientId" }
+            "guarantorObjectId": { 
+              "$cond": {
+                if: { $and: [
+                  { $ifNull: ["$responsibleParty.patientId", false] },
+                  { $ne: ["$responsibleParty.patientId", ""] }
+                ]},
+                then: { "$toObjectId": "$responsibleParty.patientId" },
+                else: null
+              }
+            }
           }
         },
         {
