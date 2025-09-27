@@ -478,16 +478,18 @@ export default function PatientsPage() {
     };
     
     const formatDateOfBirth = (dob: any): string => {
-        if (!dob) return 'N/A';
-        // Handle both Date objects from creation and object from DB
-        if (dob instanceof Date) {
-            return format(dob, 'yyyy-MM-dd');
-        }
-        if(typeof dob === 'string') {
-             return format(new Date(dob), 'yyyy-MM-dd');
-        }
-        if (dob.year && dob.month && dob.day) {
-            return format(new Date(dob.year, dob.month - 1, dob.day), 'yyyy-MM-dd');
+        try {
+            if (!dob) return 'N/A';
+            // Handle both Date objects from creation and string from DB
+            if (dob instanceof Date) {
+                return format(dob, 'yyyy-MM-dd');
+            }
+            if(typeof dob === 'string') {
+                 return format(new Date(dob), 'yyyy-MM-dd');
+            }
+        } catch (e) {
+            // If parsing fails for any reason
+            return 'Invalid Date';
         }
         return 'Invalid Date';
     };

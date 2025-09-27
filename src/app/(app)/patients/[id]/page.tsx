@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, User, PlusCircle, Users } from 'lucide-react';
+import { FileText, User, PlusCircle, Users, DollarSign } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useMemo } from 'react';
@@ -41,6 +41,12 @@ const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outlin
   'Partially Paid': 'secondary',
   'Waived': 'outline',
 };
+
+const calculateOrderBalance = (order: Order) => {
+    const total = order.samples.reduce((acc, s) => acc + s.tests.reduce((tAcc, t) => tAcc + (t.price || 0), 0), 0);
+    const paid = (order.payments || []).reduce((acc, p) => acc + p.amount, 0);
+    return total - paid;
+}
 
 export default function PatientDetailsPage() {
     const params = useParams();
@@ -85,15 +91,23 @@ export default function PatientDetailsPage() {
         fetchPatientDetails();
     }, [id, token, toast]);
 
-    const guarantor = useMemo(() => {
-        if (!patientData?.orders?.length) return null;
+    const financialSummary = useMemo(() => {
+        if (!patientData?.orders) return { totalDue: 0, ordersWithBalance: [], guarantor: null };
 
-        for (const order of patientData.orders) {
-            if (order.guarantorDetails) {
-                return order.guarantorDetails;
-            }
+        const guarantor = patientData.orders.find(o => o.guarantorDetails)?.guarantorDetails || null;
+        
+        const ordersWithBalance = patientData.orders.map(order => ({
+            ...order,
+            balance: calculateOrderBalance(order)
+        })).filter(order => order.balance > 0 && order.paymentStatus !== 'Waived');
+
+        const totalDue = ordersWithBalance.reduce((acc, order) => acc + order.balance, 0);
+
+        return {
+            totalDue,
+            ordersWithBalance,
+            guarantor,
         }
-        return null;
     }, [patientData]);
 
     const formatDateSafe = (date: any) => {
@@ -143,82 +157,117 @@ export default function PatientDetailsPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Patient Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-y-4 gap-x-8 md:grid-cols-3">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Date of Birth
-              </p>
-              <p>{formatDateSafe(patientData.dateOfBirth)}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Gender
-              </p>
-              <p>{patientData.gender}</p>
-            </div>
-             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Responsible for Billing
-              </p>
-               {guarantor ? (
-                <Link href={`/patients/${guarantor._id}`} className="text-primary hover:underline">
-                    {guarantor.fullName} (MRN: {guarantor.mrn})
-                </Link>
-               ) : (
-                <p>Self</p>
-               )}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Phone Number
-              </p>
-              <p>{patientData.contactInfo.phone}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-sm font-medium text-muted-foreground">
-                Email Address
-              </p>
-              <p>{patientData.contactInfo.email || 'N/A'}</p>
-            </div>
-            <div className="col-span-full">
-              <p className="text-sm font-medium text-muted-foreground">
-                Address
-              </p>
-              <p>{`${patientData.contactInfo.address.street}, ${patientData.contactInfo.address.city}, ${patientData.contactInfo.address.state} ${patientData.contactInfo.address.zipCode}`}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-       {patientData.guaranteedPatientDetails && patientData.guaranteedPatientDetails.length > 0 && (
-          <Card>
-            <CardHeader>
-                <CardTitle>Bills Responsible For</CardTitle>
-                <CardDescription>This patient is the guarantor for the following people.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    {patientData.guaranteedPatientDetails.map(p => (
-                         <Link key={p._id} href={`/patients/${p._id}`} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent">
-                             <Users className="h-4 w-4 text-muted-foreground" />
-                             <div>
-                                <p className="font-medium">{p.fullName}</p>
-                                <p className="text-sm text-muted-foreground">MRN: {p.mrn}</p>
-                             </div>
-                         </Link>
-                    ))}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+            <Card>
+                <CardHeader>
+                <CardTitle>Patient Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                    <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                        Date of Birth
+                    </p>
+                    <p>{formatDateSafe(patientData.dateOfBirth)}</p>
+                    </div>
+                    <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                        Gender
+                    </p>
+                    <p>{patientData.gender}</p>
+                    </div>
+                    <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                        Phone Number
+                    </p>
+                    <p>{patientData.contactInfo.phone}</p>
+                    </div>
+                    <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                        Email Address
+                    </p>
+                    <p>{patientData.contactInfo.email || 'N/A'}</p>
+                    </div>
+                    <div className="col-span-full">
+                    <p className="text-sm font-medium text-muted-foreground">
+                        Address
+                    </p>
+                    <p>{`${patientData.contactInfo.address.street}, ${patientData.contactInfo.address.city}, ${patientData.contactInfo.address.state} ${patientData.contactInfo.address.zipCode}`}</p>
+                    </div>
                 </div>
-            </CardContent>
-          </Card>
-       )}
+                </CardContent>
+            </Card>
+            
+            {patientData.guaranteedPatientDetails && patientData.guaranteedPatientDetails.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Bills Responsible For</CardTitle>
+                    <CardDescription>This patient is the guarantor for the following people.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        {patientData.guaranteedPatientDetails.map(p => (
+                            <Link key={p._id} href={`/patients/${p._id}`} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                    <p className="font-medium">{p.fullName}</p>
+                                    <p className="text-sm text-muted-foreground">MRN: {p.mrn}</p>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+            )}
+
+        </div>
+        <div className="lg:col-span-1">
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Financial Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div>
+                        <p className="text-sm font-medium text-muted-foreground">Responsible for Billing</p>
+                        {financialSummary.guarantor ? (
+                            <Link href={`/patients/${financialSummary.guarantor._id}`} className="text-primary hover:underline">
+                                {financialSummary.guarantor.fullName} (MRN: {financialSummary.guarantor.mrn})
+                            </Link>
+                        ) : (
+                            <p>Self</p>
+                        )}
+                    </div>
+                     <div>
+                        <p className="text-sm font-medium text-muted-foreground">Total Amount Due</p>
+                        <p className={`font-bold text-2xl ${financialSummary.totalDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                            ${financialSummary.totalDue.toFixed(2)}
+                        </p>
+                    </div>
+                    {financialSummary.ordersWithBalance.length > 0 && (
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Orders with Balance</p>
+                            <ul className="space-y-1 mt-1 text-sm">
+                                {financialSummary.ordersWithBalance.map(order => (
+                                    <li key={order._id} className="flex justify-between items-center">
+                                        <Link href={`/orders/${order.orderId}`} className="text-primary hover:underline font-code">
+                                            {order.orderId}
+                                        </Link>
+                                        <span className="font-medium">${order.balance.toFixed(2)}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                </CardContent>
+             </Card>
+        </div>
+      </div>
+      
 
 
-      <Card>
+      <Card className="lg:col-span-3">
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
                 <CardTitle>Order History</CardTitle>
@@ -240,35 +289,42 @@ export default function PatientDetailsPage() {
                 <TableHead># of Tests</TableHead>
                 <TableHead>Order Status</TableHead>
                 <TableHead>Payment Status</TableHead>
+                <TableHead>Balance</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {patientData.orders?.length > 0 ? (
-                patientData.orders.map((order) => (
-                  <TableRow key={order._id}>
-                    <TableCell className="font-medium font-code">{order.orderId}</TableCell>
-                    <TableCell>{formatDateSafe(order.createdAt)}</TableCell>
-                    <TableCell>{order.samples.reduce((acc, s) => acc + s.tests.length, 0)}</TableCell>
-                    <TableCell>
-                        <Badge>{order.orderStatus}</Badge>
-                    </TableCell>
-                    <TableCell>
-                        <Badge variant={paymentStatusVariant[order.paymentStatus] || 'secondary'}>{order.paymentStatus}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/orders/${order.orderId}`}>
-                          <FileText className="mr-2 h-4 w-4" />
-                          View Order
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                patientData.orders.map((order) => {
+                  const balance = calculateOrderBalance(order);
+                  return (
+                    <TableRow key={order._id}>
+                        <TableCell className="font-medium font-code">{order.orderId}</TableCell>
+                        <TableCell>{formatDateSafe(order.createdAt)}</TableCell>
+                        <TableCell>{order.samples.reduce((acc, s) => acc + s.tests.length, 0)}</TableCell>
+                        <TableCell>
+                            <Badge>{order.orderStatus}</Badge>
+                        </TableCell>
+                        <TableCell>
+                            <Badge variant={paymentStatusVariant[order.paymentStatus] || 'secondary'}>{order.paymentStatus}</Badge>
+                        </TableCell>
+                        <TableCell className={balance > 0 ? 'text-destructive font-medium' : ''}>
+                            ${balance.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/orders/${order.orderId}`}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            View Order
+                            </Link>
+                        </Button>
+                        </TableCell>
+                    </TableRow>
+                  )
+                })
               ) : (
                 <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                         No order history found for this patient.
                     </TableCell>
                 </TableRow>

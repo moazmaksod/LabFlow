@@ -431,67 +431,73 @@ export default function OrderDetailsPage() {
         <CardHeader>
             <CardTitle>Order Summary & Billing</CardTitle>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-3 gap-y-4 gap-x-8">
-             <div>
-              <p className="text-sm font-medium text-muted-foreground">Order Date</p>
-              <p>{format(new Date(orderDetails.createdAt), 'MMMM d, yyyy')}</p>
+        <CardContent className="space-y-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Order Date</p>
+                    <p>{format(new Date(orderDetails.createdAt), 'MMMM d, yyyy')}</p>
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Referring Doctor</p>
+                    <p>{orderDetails.physicianDetails?.fullName || 'N/A'}</p>
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Overall Status</p>
+                    <div><Badge variant={statusVariant[orderDetails.orderStatus] || 'default'}>{orderDetails.orderStatus}</Badge></div>
+                </div>
             </div>
-             <div>
-              <p className="text-sm font-medium text-muted-foreground">Referring Doctor</p>
-              <p>{orderDetails.physicianDetails?.fullName || 'N/A'}</p>
-            </div>
-             <div>
-              <p className="text-sm font-medium text-muted-foreground">Responsible Party</p>
-               {orderDetails.guarantorDetails ? (
-                <Link href={`/patients/${orderDetails.guarantorDetails._id}`} className="text-primary hover:underline">
-                    {orderDetails.guarantorDetails.fullName} ({orderDetails.responsibleParty?.relationship})
-                </Link>
-               ) : (
-                <p>Self (Patient)</p>
-               )}
-            </div>
-             <div>
-              <p className="text-sm font-medium text-muted-foreground">Billing Type</p>
-              <p>{orderDetails.billingType}</p>
-            </div>
-             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-              <p className="font-semibold text-lg">${totalOrderPrice.toFixed(2)}</p>
-            </div>
-             <div>
-              <p className="text-sm font-medium text-muted-foreground">Amount Paid</p>
-              <p className="font-semibold text-lg text-green-600">${totalPaid.toFixed(2)}</p>
-            </div>
-             <div>
-              <p className="text-sm font-medium text-muted-foreground">Balance Due</p>
-              <p className="font-semibold text-lg">${balanceDue.toFixed(2)}</p>
-            </div>
-             <div>
-              <p className="text-sm font-medium text-muted-foreground">Overall Status</p>
-              <div><Badge variant={statusVariant[orderDetails.orderStatus] || 'default'}>{orderDetails.orderStatus}</Badge></div>
-            </div>
-             <div className="md:col-span-2">
-              <p className="text-sm font-medium text-muted-foreground">Payment Status</p>
-              <div className="flex items-center gap-2 mt-1">
-                 <Badge variant={paymentStatusVariant[orderDetails.paymentStatus] || 'destructive'}>{orderDetails.paymentStatus}</Badge>
-                 {isReceptionist && orderDetails.paymentStatus !== 'Paid' && orderDetails.paymentStatus !== 'Waived' && (
-                     <Dialog open={isPaymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                                <CreditCard className="mr-2 h-4 w-4" /> Record Payment
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <RecordPaymentForm order={orderDetails} onPaymentSuccess={handlePaymentSuccess} />
-                        </DialogContent>
-                     </Dialog>
-                 )}
-                  {orderDetails.paymentStatus === 'Paid' && (
-                     <div className="text-sm text-green-600 flex items-center gap-1">
-                        <CheckCircle className="h-4 w-4" /> Fully Paid
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8 pt-4 border-t">
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Billing Type</p>
+                    <p>{orderDetails.billingType}</p>
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Responsible Party</p>
+                    {orderDetails.guarantorDetails ? (
+                        <Link href={`/patients/${orderDetails.guarantorDetails._id}`} className="text-primary hover:underline">
+                            {orderDetails.guarantorDetails.fullName} ({orderDetails.responsibleParty?.relationship})
+                        </Link>
+                    ) : (
+                        <p>Self (Patient)</p>
+                    )}
+                </div>
+                <div className="col-span-full">
+                     <p className="text-sm font-medium text-muted-foreground">Payment Status</p>
+                    <div className="flex items-center gap-2 mt-1">
+                        <Badge variant={paymentStatusVariant[orderDetails.paymentStatus] || 'destructive'}>{orderDetails.paymentStatus}</Badge>
+                        {isReceptionist && orderDetails.paymentStatus !== 'Paid' && orderDetails.paymentStatus !== 'Waived' && (
+                            <Dialog open={isPaymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button size="sm" variant="outline">
+                                        <CreditCard className="mr-2 h-4 w-4" /> Record Payment
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <RecordPaymentForm order={orderDetails} onPaymentSuccess={handlePaymentSuccess} />
+                                </DialogContent>
+                            </Dialog>
+                        )}
+                        {orderDetails.paymentStatus === 'Paid' && (
+                            <div className="text-sm text-green-600 flex items-center gap-1">
+                                <CheckCircle className="h-4 w-4" /> Fully Paid
+                            </div>
+                        )}
                     </div>
-                 )}
-              </div>
+                </div>
+            </div>
+             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8 pt-4 border-t">
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
+                    <p className="font-semibold text-lg">${totalOrderPrice.toFixed(2)}</p>
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Amount Paid</p>
+                    <p className="font-semibold text-lg text-green-600">${totalPaid.toFixed(2)}</p>
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Balance Due</p>
+                    <p className="font-semibold text-lg text-destructive">${balanceDue.toFixed(2)}</p>
+                </div>
             </div>
         </CardContent>
        </Card>
