@@ -154,23 +154,12 @@ export const findPatientById = async (id: string): Promise<Patient | null> => {
     
     const patientPipeline = [
       { $match: { _id: new ObjectId(id) } },
-      // Find orders where this patient is the main patient AND they are financially responsible
+      // Find orders where this patient is the main patient
       {
         $lookup: {
           from: 'orders',
-           let: { patient_id: "$_id" },
-           pipeline: [
-              { $match:
-                 { $expr:
-                    { $and:
-                       [
-                         { $eq: [ "$patientId",  "$$patient_id" ] },
-                         { $not: { $ifNull: ["$responsibleParty", false] } }
-                       ]
-                    }
-                 }
-              }
-           ],
+          localField: '_id',
+          foreignField: 'patientId',
           as: 'orders'
         }
       },
@@ -231,10 +220,19 @@ export const findPatientById = async (id: string): Promise<Patient | null> => {
         const patient = results[0];
         patient._id = patient._id.toString();
         if (patient.orders) {
-            patient.orders.forEach((o: any) => o._id = o._id.toString());
+            patient.orders.forEach((o: any) => {
+              o._id = o._id.toString();
+              o.patientId = o.patientId.toString();
+            });
         }
         if (patient.guaranteedOrders && patient.guaranteedOrders[0]?._id) { // Check if guaranteedOrders is not just an empty object
-            patient.guaranteedOrders.forEach((o: any) => o._id = o._id.toString());
+            patient.guaranteedOrders.forEach((o: any) => {
+              o._id = o._id.toString();
+              o.patientId = o.patientId.toString();
+              if (o.responsibleParty) {
+                o.responsibleParty.patientId = o.responsibleParty.patientId.toString();
+              }
+            });
         } else {
             patient.guaranteedOrders = [];
         }

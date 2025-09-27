@@ -101,24 +101,24 @@ export default function PatientDetailsPage() {
     const financialSummary = useMemo(() => {
         if (!patientData) return { totalDue: 0, ordersWithBalance: [] };
         
-        const selfOrders = patientData.orders || [];
-        const guaranteedOrders = patientData.guaranteedOrders || [];
+        // Orders where the current patient is financially responsible for themselves
+        const selfOrdersWithBalance = (patientData.orders || [])
+            .filter(order => !order.responsibleParty && order.paymentStatus !== 'Waived')
+            .map(order => ({ ...order, balance: calculateOrderBalance(order), isGuaranteed: false }))
+            .filter(order => order.balance > 0);
 
-        const allOrders = [
-            ...selfOrders.map(o => ({ ...o, isGuaranteed: false })),
-            ...guaranteedOrders.map(o => ({ ...o, isGuaranteed: true }))
-        ];
+        // Orders where the current patient is the guarantor for someone else
+        const guaranteedOrdersWithBalance = (patientData.guaranteedOrders || [])
+            .filter(order => order.paymentStatus !== 'Waived')
+            .map(order => ({ ...order, balance: calculateOrderBalance(order), isGuaranteed: true }))
+            .filter(order => order.balance > 0);
 
-        const ordersWithBalance = allOrders.map(order => ({
-            ...order,
-            balance: calculateOrderBalance(order)
-        })).filter(order => order.balance > 0 && order.paymentStatus !== 'Waived');
-
-        const totalDue = ordersWithBalance.reduce((acc, order) => acc + order.balance, 0);
+        const allOrdersWithBalance = [...selfOrdersWithBalance, ...guaranteedOrdersWithBalance];
+        const totalDue = allOrdersWithBalance.reduce((acc, order) => acc + order.balance, 0);
         
         return {
             totalDue,
-            ordersWithBalance,
+            ordersWithBalance: allOrdersWithBalance,
         }
     }, [patientData]);
 
@@ -293,7 +293,7 @@ export default function PatientDetailsPage() {
                         <TableCell>
                             <Badge variant={paymentStatusVariant[order.paymentStatus] || 'secondary'}>{order.paymentStatus}</Badge>
                         </TableCell>
-                        <TableCell className={balance > 0 ? 'text-destructive font-medium' : ''}>
+                        <TableCell className={balance > 0 && !order.responsibleParty ? 'text-destructive font-medium' : ''}>
                             ${balance.toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
