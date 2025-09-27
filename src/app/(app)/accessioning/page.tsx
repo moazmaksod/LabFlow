@@ -59,6 +59,8 @@ export default function AccessioningPage() {
     const [pendingOrders, setPendingOrders] = useState<OrderWithPatient[]>([]);
     const [isPendingLoading, setIsPendingLoading] = useState(true);
 
+    const [hasBeenPartiallyAccessioned, setHasBeenPartiallyAccessioned] = useState(false);
+
     const handleSearch = useCallback(async (idToSearch?: string) => {
         const currentId = idToSearch || orderId;
         if (!currentId || !token) return;
@@ -74,6 +76,11 @@ export default function AccessioningPage() {
             if (response.ok) {
                 const result = await response.json();
                 const orderData = result.data as Order;
+
+                // Check if any sample has already been accessioned before this interaction
+                const isAlreadyAccessioned = orderData.samples.some(s => s.status !== 'AwaitingCollection');
+                setHasBeenPartiallyAccessioned(isAlreadyAccessioned);
+
                 const orderWithClientIds: OrderWithClientSideSampleIds = {
                     ...orderData,
                     samples: orderData.samples.map((s, i) => ({...s, clientId: `${orderData.orderId}-${i}`})),
@@ -148,7 +155,7 @@ export default function AccessioningPage() {
         
         const allAccessioned = searchedOrder.samples.every(s => s.status !== 'AwaitingCollection');
 
-        if(allAccessioned) {
+        if(allAccessioned && !hasBeenPartiallyAccessioned) {
             toast({
                 title: 'All Samples Accessioned',
                 description: `Order ${searchedOrder.orderId} is fully accessioned. Ready for next scan.`,
@@ -162,7 +169,7 @@ export default function AccessioningPage() {
             return () => clearTimeout(timer);
         }
 
-    }, [searchedOrder, toast, fetchPendingOrders]);
+    }, [searchedOrder, toast, fetchPendingOrders, hasBeenPartiallyAccessioned]);
     
     const handlePrintLabel = (accessionNumber: string, sample: SampleWithClientSideId) => {
         if (!searchedOrder) return;
