@@ -47,9 +47,15 @@ const AuditDetails = ({ details, action }: { details: any, action: string }) => 
     if(details.newOrderStatus) detailItems.push(<span key="status">New Status: <Badge variant="outline">{details.newOrderStatus}</Badge></span>);
     if(details.amount) detailItems.push(<span key="amt">Amount: ${details.amount.toFixed(2)}</span>);
     if(details.method) detailItems.push(<span key="method">Method: {details.method}</span>);
+    
     if (action === 'PATIENT_CREATE') {
         if(details.fullName) detailItems.push(<span key="name">Patient: {details.fullName}</span>);
         if(details.mrn) detailItems.push(<span key="mrn">MRN: <span className='font-code'>{details.mrn}</span></span>);
+    }
+    
+    if (action === 'ORDER_CREATE') {
+        if(details.patientId) detailItems.push(<span key="patient">For Patient ID: <span className='font-code'>{details.patientId}</span></span>);
+        if(details.testCount) detailItems.push(<span key="tests">{details.testCount} test(s) ordered</span>);
     }
 
 
@@ -58,7 +64,7 @@ const AuditDetails = ({ details, action }: { details: any, action: string }) => 
     }
 
     if (detailItems.length > 0) {
-        return <div className='flex flex-col text-xs'>{detailItems}</div>;
+        return <div className='flex flex-col text-xs gap-1'>{detailItems}</div>;
     }
 
     // Fallback for any other details
