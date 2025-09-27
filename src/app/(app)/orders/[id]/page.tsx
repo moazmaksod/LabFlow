@@ -56,7 +56,8 @@ const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outlin
 };
 const statuses = ['In-Progress', 'AwaitingVerification', 'Verified', 'Cancelled'];
 
-const formatStatus = (status: string) => {
+const formatStatus = (status?: string) => {
+    if (!status) return '';
     return status.replace(/([A-Z])/g, ' $1').trim();
 }
 

@@ -55,7 +55,8 @@ const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outlin
 };
 
 
-const formatStatus = (status: string) => {
+const formatStatus = (status?: string) => {
+    if (!status) return '';
     return status.replace(/([A-Z])/g, ' $1').trim();
 }
 
