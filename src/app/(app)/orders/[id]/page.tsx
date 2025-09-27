@@ -237,37 +237,33 @@ export default function OrderDetailsPage() {
   const handlePrint = (type: 'requisition' | 'label', sampleClientId?: string) => {
     if (!orderDetails) return;
 
-    let printData;
-
     if (type === 'label' && sampleClientId) {
         const sample = orderDetails.samples.find(s => s.clientId === sampleClientId);
         if (!sample) {
             toast({variant: 'destructive', title: 'Sample not found'});
             return;
         }
-        printData = {
-            type: 'label',
+        
+        const params = new URLSearchParams({
             patientName: orderDetails.patientDetails.fullName,
             mrn: orderDetails.patientDetails.mrn,
-            dob: orderDetails.patientDetails.dateOfBirth,
+            dob: orderDetails.patientDetails.dateOfBirth.toString(),
             gender: orderDetails.patientDetails.gender,
             orderId: orderDetails.orderId,
             barcodeValue: sample.accessionNumber || orderDetails.orderId,
             sampleType: sample.sampleType,
             tests: sample.tests.map(t => t.testCode).join(', '),
-        };
+        });
+
+        window.open(`/print/label?${params.toString()}`, '_blank', 'width=400,height=300,noopener,noreferrer');
+
     } else if (type === 'requisition') {
-        printData = {
-            type: 'requisition',
-            order: orderDetails,
-        };
-    } else {
-        return;
+        const params = new URLSearchParams({
+            orderId: orderDetails.orderId,
+            token: token || '',
+        });
+        window.open(`/print/requisition?${params.toString()}`, '_blank', 'width=800,height=900,noopener,noreferrer');
     }
-    
-    sessionStorage.setItem('labflow_print_data', JSON.stringify(printData));
-    
-    window.open('/print', '_blank', 'width=800,height=900,noopener,noreferrer');
   };
   
   const handlePaymentSuccess = (newOrderData: Partial<Order>) => {
@@ -489,3 +485,5 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
+
+    
