@@ -80,6 +80,9 @@ export default function AccessioningPage() {
                     patientDetails: result.data.patientDetails || { fullName: 'N/A', mrn: 'N/A', dateOfBirth: '', gender: '' }
                 };
                 setSearchedOrder(orderWithClientIds);
+                 // Scroll to the order details card after successful search
+                const element = document.getElementById('order-details-card');
+                element?.scrollIntoView({ behavior: 'smooth' });
             } else {
                 setSearchedOrder(null);
                 const errorData = await response.json();
@@ -127,18 +130,18 @@ export default function AccessioningPage() {
     }, [fetchPendingOrders]);
 
 
-    // Debounced search effect
+    // Debounced search effect for manual input
     useEffect(() => {
         const handler = setTimeout(() => {
-            if (orderId) { 
-                handleSearch();
+            if (orderId && !searchedOrder) { // Only search if orderId is typed and no order is loaded
+                handleSearch(orderId);
             }
         }, 500); // 500ms debounce delay
 
         return () => {
             clearTimeout(handler);
         };
-    }, [orderId, handleSearch]);
+    }, [orderId, handleSearch, searchedOrder]);
     
     useEffect(() => {
         if (!searchedOrder) return;
@@ -152,6 +155,7 @@ export default function AccessioningPage() {
             });
             fetchPendingOrders(); // Refresh pending list
             const timer = setTimeout(() => {
+                setSearchedOrder(null);
                 setOrderId(''); 
                 inputRef.current?.focus();
             }, 1500); 
@@ -263,15 +267,9 @@ export default function AccessioningPage() {
     
     const onFormSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      handleSearch();
+      handleSearch(orderId);
     }
     
-    const selectPendingOrder = (id: string) => {
-        setOrderId(id);
-        const element = document.getElementById('search-card');
-        element?.scrollIntoView({ behavior: 'smooth' });
-    }
-
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center gap-4">
@@ -314,7 +312,7 @@ export default function AccessioningPage() {
       </Card>
       
       {searchedOrder && (
-         <Card>
+         <Card id="order-details-card">
             <CardHeader>
                 <CardTitle>Order Details: {searchedOrder.orderId}</CardTitle>
                 <CardDescription>
@@ -419,8 +417,8 @@ export default function AccessioningPage() {
                                 <TableCell>{order.patientDetails?.fullName || 'N/A'}</TableCell>
                                 <TableCell>{format(new Date(order.createdAt), 'yyyy-MM-dd HH:mm')}</TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="outline" size="sm" onClick={() => selectPendingOrder(order.orderId)}>
-                                        Accession
+                                    <Button variant="outline" size="sm" onClick={() => handleSearch(order.orderId)}>
+                                        Select
                                     </Button>
                                 </TableCell>
                             </TableRow>
