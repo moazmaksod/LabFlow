@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { History, Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -40,20 +40,25 @@ const AuditDetails = ({ details, action }: { details: any, action: string }) => 
         return <span className="text-muted-foreground">N/A</span>;
     }
 
-    switch (action) {
-        case 'SAMPLE_ACCESSIONED':
-            return (
-                <div className='flex flex-col text-xs'>
-                    <span className="font-medium">New Accession #: <span className='font-code'>{details.newAccessionNumber}</span></span>
-                    <span className="text-muted-foreground">For Order: <span className='font-code'>{details.orderId}</span></span>
-                </div>
-            );
-        case 'USER_LOGIN':
-             return <Badge variant="secondary">Successful Login</Badge>
-        // Add more cases for other actions as they are implemented
-        default:
-            return <pre className="text-xs font-code bg-muted p-2 rounded-md">{JSON.stringify(details, null, 2)}</pre>;
+    // Standardize display for common audit actions
+    const detailItems = [];
+    if(details.orderId) detailItems.push(<span key="oid">Order: <span className='font-code'>{details.orderId}</span></span>);
+    if(details.newAccessionNumber) detailItems.push(<span key="acc">Accession #: <span className='font-code'>{details.newAccessionNumber}</span></span>);
+    if(details.newOrderStatus) detailItems.push(<span key="status">New Status: <Badge variant="outline">{details.newOrderStatus}</Badge></span>);
+    if(details.amount) detailItems.push(<span key="amt">Amount: ${details.amount.toFixed(2)}</span>);
+    if(details.method) detailItems.push(<span key="method">Method: {details.method}</span>);
+
+
+    if (action === 'USER_LOGIN') {
+        return <Badge variant="secondary">Successful Login</Badge>
     }
+
+    if (detailItems.length > 0) {
+        return <div className='flex flex-col text-xs'>{detailItems}</div>;
+    }
+
+    // Fallback for any other details
+    return <pre className="text-xs font-code bg-muted p-2 rounded-md">{JSON.stringify(details, null, 2)}</pre>;
 };
 
 
@@ -63,24 +68,54 @@ export default function AuditTrailPage() {
   const { toast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [logs, setLogs] = useState<AuditLogWithUser[]>([]);
 
+  // If the user is not a manager, render a skeleton while the redirect happens.
   React.useEffect(() => {
-    // This is the client-side equivalent of RBAC middleware.
-    // If a non-manager tries to access this page, redirect them.
     if (user && user.role !== 'manager') {
       router.push('/dashboard');
     }
   }, [user, router]);
+  
+  const fetchLatestLogs = useCallback(async () => {
+    if (!token) return;
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/v1/audit-logs', {
+         headers: { Authorization: `Bearer ${token}` },
+      });
+      if(response.ok) {
+        const result = await response.json();
+        setLogs(result.data);
+      } else {
+        toast({ variant: 'destructive', title: "Fetch failed", description: "Could not retrieve latest audit logs."});
+      }
+    } catch (error) {
+       toast({ variant: 'destructive', title: "Network Error", description: "Could not connect to the server."});
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, toast]);
+
+  // Fetch latest logs on component mount
+  React.useEffect(() => {
+    fetchLatestLogs();
+  }, [fetchLatestLogs]);
+
 
   const handleSearch = async () => {
-    if (!searchTerm || !token) return;
+    if (!searchTerm) {
+      // If search is cleared, fetch latest logs again
+      fetchLatestLogs();
+      return;
+    }
+
+    if (!token) return;
 
     setIsLoading(true);
     setLogs([]);
     try {
-      // The API supports searching by MRN, Order ID, or Accession Number
       const response = await fetch(`/api/v1/audit-logs?searchTerm=${searchTerm}`, {
          headers: { Authorization: `Bearer ${token}` },
       });
@@ -105,7 +140,6 @@ export default function AuditTrailPage() {
     }
   }
 
-  // If the user is not a manager, render a skeleton while the redirect happens.
   if (user?.role !== 'manager') {
     return (
        <div className="flex min-h-screen items-center justify-center">
@@ -129,18 +163,18 @@ export default function AuditTrailPage() {
         <CardHeader>
           <CardTitle>Search Audit Logs</CardTitle>
           <CardDescription>
-            Enter a Patient MRN, Order ID, or Accession Number to find all related activity.
+            Enter a Patient MRN, Order ID, or Accession Number to find related activity. Clear the search to see the latest activity.
           </CardDescription>
         </CardHeader>
         <CardContent>
            <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="flex w-full max-w-lg items-center space-x-2">
               <Input 
-                  placeholder="e.g., ACC-2024-00001" 
+                  placeholder="e.g., ACC-2024-00001 or leave blank for latest" 
                   className="h-11"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Button type="submit" size="lg" disabled={isLoading || !searchTerm}>
+              <Button type="submit" size="lg" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <Search className="mr-2 h-4 w-4" />
                   Search
@@ -151,7 +185,10 @@ export default function AuditTrailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Search Results</CardTitle>
+          <CardTitle>Activity Log</CardTitle>
+           <CardDescription>
+            {searchTerm ? `Showing results for "${searchTerm}"` : "Showing the 50 most recent system events."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
            <Table>
@@ -165,7 +202,7 @@ export default function AuditTrailPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                 Array.from({ length: 3 }).map((_, i) => (
+                 Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
                         <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
                     </TableRow>
@@ -176,7 +213,7 @@ export default function AuditTrailPage() {
                       <TableCell className="text-sm">{format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm:ss')}</TableCell>
                       <TableCell>{log.userDetails?.fullName || log.userId}</TableCell>
                       <TableCell>
-                        <Badge variant='outline'>{log.action}</Badge>
+                        <Badge variant='outline'>{log.action.replace(/_/g, ' ')}</Badge>
                       </TableCell>
                       <TableCell>
                         <AuditDetails details={log.details} action={log.action} />
@@ -186,7 +223,7 @@ export default function AuditTrailPage() {
               ) : (
                  <TableRow>
                     <TableCell colSpan={4} className="text-center h-24">
-                       Please enter a search term to view audit logs.
+                       No activity logs found.
                     </TableCell>
                 </TableRow>
               )}

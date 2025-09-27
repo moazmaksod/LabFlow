@@ -5,7 +5,7 @@ import { getAuditLogsCollection, getOrdersCollection, getPatientsCollection } fr
 import { ObjectId } from 'mongodb';
 
 // GET /api/v1/audit-logs
-// Searches audit logs (Manager only)
+// Searches audit logs or gets the latest logs if no search term is provided (Manager only)
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
   if (!user || user.role !== 'manager') {
@@ -14,15 +14,47 @@ export async function GET(request: Request) {
   
   const { searchParams } = new URL(request.url);
   const searchTerm = searchParams.get('searchTerm');
+  const collection = await getAuditLogsCollection();
 
+  // If no search term, return the latest 50 logs
   if (!searchTerm) {
-    return NextResponse.json({ message: 'A search term is required.' }, { status: 400 });
+    const latestLogs = await collection.aggregate([
+      { $sort: { timestamp: -1 } },
+      { $limit: 50 },
+      { $addFields: { "userObjectId": { "$toObjectId": "$userId" } } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userObjectId',
+          foreignField: '_id',
+          as: 'userDetails'
+        }
+      },
+      { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          'userDetails.fullName': {
+            $ifNull: [
+              '$userDetails.fullName',
+              { $concat: ['$userDetails.firstName', ' ', '$userDetails.lastName'] }
+            ]
+          }
+        }
+      },
+      { 
+        $project: { 
+          "userObjectId": 0, 
+          "userDetails.passwordHash": 0,
+          "userDetails.role": 0,
+          "userDetails.firstName": 0,
+          "userDetails.lastName": 0,
+        } 
+      }
+    ]).toArray();
+    return NextResponse.json({ data: latestLogs });
   }
   
-  const collection = await getAuditLogsCollection();
-  
-  // This search is designed to find logs related to a patient, order, or sample.
-  // We first find the document IDs related to the search term, then find logs for those IDs.
+  // If there is a search term, proceed with search logic
   const patientsCollection = await getPatientsCollection();
   const ordersCollection = await getOrdersCollection();
 
