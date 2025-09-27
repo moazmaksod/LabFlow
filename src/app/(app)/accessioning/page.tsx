@@ -91,7 +91,7 @@ export default function AccessioningPage() {
 
     useEffect(() => {
         const handler = setTimeout(() => {
-            if (orderId) {
+            if (orderId) { // Only search if orderId is not empty
                 handleSearch();
             }
         }, 500); // 500ms debounce delay
@@ -304,7 +304,5 @@ export default function AccessioningPage() {
     </div>
   );
 }
-
-    
 
     
