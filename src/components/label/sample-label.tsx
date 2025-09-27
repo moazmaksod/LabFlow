@@ -2,51 +2,74 @@
 'use client';
 import React from 'react';
 import Barcode from 'react-barcode';
+import { format } from 'date-fns';
 
 interface SampleLabelProps {
     patientName: string;
     mrn: string;
+    dob: string | Date;
+    gender: string;
     orderId: string;
     barcodeValue: string;
     sampleType: string;
+    tests: string;
 }
 
 export const SampleLabel: React.FC<SampleLabelProps> = ({
     patientName,
     mrn,
-    orderId,
+    dob,
+    gender,
     barcodeValue,
     sampleType,
+    tests,
 }) => {
+    const formatDateSafe = (date: any) => {
+        try {
+            if (!date) return 'N/A';
+            return format(new Date(date), 'yyyy-MM-dd');
+        } catch {
+            return 'Invalid Date';
+        }
+    }
+
     return (
-        <div style={{ width: '4in', height: '2.5in', fontFamily: 'sans-serif', fontSize: '12pt', border: '1px solid #ccc', padding: '0.2in' }} className="flex flex-col justify-between bg-white text-black">
-            <div className="flex justify-between items-start">
-                <div className='max-w-64'>
-                    <p className="font-bold truncate text-lg">{patientName}</p>
-                    <p className="text-base">MRN: {mrn}</p>
+        <div style={{ 
+            width: '4cm', 
+            height: '2.5cm',
+            fontFamily: 'sans-serif', 
+            border: '1px solid #ccc', 
+            padding: '4px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+        }} className="bg-white text-black">
+           <div className="flex justify-between items-start" style={{fontSize: '7pt', lineHeight: '1.2'}}>
+                <div className='max-w-[75%]'>
+                    <p className="font-bold truncate">{patientName}</p>
+                    <p>MRN: {mrn}</p>
+                    <p>DOB: {formatDateSafe(dob)} ({gender.charAt(0)})</p>
                 </div>
-                <div>
-                     <p className='text-right font-semibold text-lg'>SAMPLE</p>
-                     <p className='text-right text-base'>{sampleType}</p>
+                <div className='text-right'>
+                     <p className='font-semibold'>{sampleType}</p>
                 </div>
             </div>
-            <div className="text-center -mt-4">
+            <div className="text-center -my-1">
                  <Barcode 
                     value={barcodeValue} 
                     format="CODE128"
-                    width={2}
-                    height={60}
-                    fontSize={14}
-                    margin={2}
-                    textMargin={2}
+                    width={1}
+                    height={25}
+                    fontSize={10}
+                    margin={0}
+                    textMargin={0}
+                    displayValue={true}
                 />
             </div>
-            <div className='flex justify-between text-sm'>
-                <p>Order: {orderId}</p>
-                <p>{new Date().toLocaleDateString()}</p>
+            <div className='flex justify-between items-end' style={{fontSize: '6pt'}}>
+                <p className="truncate max-w-[70%]">{tests}</p>
+                <p>{format(new Date(), 'HH:mm')}</p>
             </div>
         </div>
     );
 };
-
-    

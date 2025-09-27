@@ -235,10 +235,39 @@ export default function OrderDetailsPage() {
   }, [id, token, toast]);
 
   const handlePrint = (type: 'requisition' | 'label', sampleClientId?: string) => {
-    if (!orderDetails || !token) return;
+    if (!orderDetails) return;
 
-    const url = `/print/orders/${orderDetails.orderId}?token=${token}&type=${type}${sampleClientId ? `&sampleClientId=${sampleClientId}` : ''}`;
-    const printWindow = window.open(url, '_blank', 'width=800,height=900,noopener,noreferrer');
+    let printData;
+
+    if (type === 'label' && sampleClientId) {
+        const sample = orderDetails.samples.find(s => s.clientId === sampleClientId);
+        if (!sample) {
+            toast({variant: 'destructive', title: 'Sample not found'});
+            return;
+        }
+        printData = {
+            type: 'label',
+            patientName: orderDetails.patientDetails.fullName,
+            mrn: orderDetails.patientDetails.mrn,
+            dob: orderDetails.patientDetails.dateOfBirth,
+            gender: orderDetails.patientDetails.gender,
+            orderId: orderDetails.orderId,
+            barcodeValue: sample.accessionNumber || orderDetails.orderId,
+            sampleType: sample.sampleType,
+            tests: sample.tests.map(t => t.testCode).join(', '),
+        };
+    } else if (type === 'requisition') {
+        printData = {
+            type: 'requisition',
+            order: orderDetails,
+        };
+    } else {
+        return;
+    }
+    
+    sessionStorage.setItem('labflow_print_data', JSON.stringify(printData));
+    
+    const printWindow = window.open('/print', '_blank', 'width=800,height=900,noopener,noreferrer');
   };
   
   const handlePaymentSuccess = (newOrderData: Partial<Order>) => {
