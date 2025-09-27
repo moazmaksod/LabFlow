@@ -154,12 +154,23 @@ export const findPatientById = async (id: string): Promise<Patient | null> => {
     
     const patientPipeline = [
       { $match: { _id: new ObjectId(id) } },
-      // Find orders where this patient is the main patient
+      // Find orders where this patient is the main patient AND they are financially responsible
       {
         $lookup: {
           from: 'orders',
-          localField: '_id',
-          foreignField: 'patientId',
+           let: { patient_id: "$_id" },
+           pipeline: [
+              { $match:
+                 { $expr:
+                    { $and:
+                       [
+                         { $eq: [ "$patientId",  "$$patient_id" ] },
+                         { $not: { $ifNull: ["$responsibleParty", false] } }
+                       ]
+                    }
+                 }
+              }
+           ],
           as: 'orders'
         }
       },
