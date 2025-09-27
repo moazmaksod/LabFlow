@@ -21,27 +21,29 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
     isRequisition,
 }) => {
     return (
-        <div style={{ width: '3.5in', height: '2in', fontFamily: 'sans-serif', fontSize: '10pt', border: '1px solid #ccc', padding: '0.1in' }} className="flex flex-col justify-between bg-white text-black">
+        <div style={{ width: '4in', height: '2.5in', fontFamily: 'sans-serif', fontSize: '12pt', border: '1px solid #ccc', padding: '0.2in' }} className="flex flex-col justify-between bg-white text-black">
             <div className="flex justify-between items-start">
-                <div className='max-w-48'>
-                    <p className="font-bold truncate text-base">{patientName}</p>
-                    <p>MRN: {mrn}</p>
+                <div className='max-w-64'>
+                    <p className="font-bold truncate text-lg">{patientName}</p>
+                    <p className="text-base">MRN: {mrn}</p>
                 </div>
                 <div>
-                     <p className='text-right font-semibold'>{isRequisition ? 'REQUISITION' : 'SAMPLE'}</p>
-                     <p className='text-right'>{sampleType}</p>
+                     <p className='text-right font-semibold text-lg'>{isRequisition ? 'REQUISITION' : 'SAMPLE'}</p>
+                     <p className='text-right text-base'>{sampleType}</p>
                 </div>
             </div>
-            <div className="text-center">
+            <div className="text-center -mt-4">
                 <Barcode 
                     value={barcodeValue} 
-                    width={1.5}
-                    height={40}
-                    fontSize={12}
-                    margin={0}
+                    format="CODE128"
+                    width={2}
+                    height={60}
+                    fontSize={14}
+                    margin={2}
+                    textMargin={2}
                 />
             </div>
-            <div className='flex justify-between text-xs'>
+            <div className='flex justify-between text-sm'>
                 <p>Order: {orderId}</p>
                 <p>{new Date().toLocaleDateString()}</p>
             </div>

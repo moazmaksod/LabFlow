@@ -54,6 +54,7 @@ export const RequisitionForm: React.FC<RequisitionFormProps> = ({ order }) => {
                     <p className="text-lg font-bold">Laboratory Requisition</p>
                     <Barcode 
                         value={order.orderId} 
+                        format="CODE128"
                         width={1.5}
                         height={50}
                         fontSize={14}
