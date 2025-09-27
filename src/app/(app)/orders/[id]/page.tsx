@@ -59,6 +59,8 @@ const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outlin
 };
 const statuses = ['In-Progress', 'AwaitingVerification', 'Verified', 'Cancelled'];
 
+type SampleWithClientId = Order['samples'][0] & { clientId: string };
+
 type OrderWithDetails = Order & {
     patientDetails: {
         _id: string;
@@ -76,6 +78,7 @@ type OrderWithDetails = Order & {
         fullName: string;
         mrn: string;
     }
+    samples: SampleWithClientId[];
 }
 
 const RecordPaymentForm = ({ order, onPaymentSuccess }: { order: OrderWithDetails; onPaymentSuccess: (newOrderData: Partial<Order>) => void }) => {
@@ -207,7 +210,12 @@ export default function OrderDetailsPage() {
 
         if (response.ok) {
           const result = await response.json();
-          setOrderDetails(result.data);
+           // Add a temporary unique identifier to each sample for UI key and printing logic
+          const orderWithClientIds: OrderWithDetails = {
+              ...result.data,
+              samples: result.data.samples.map((s: Order['samples'][0], i: number) => ({...s, clientId: `${result.data.orderId}-S${i}`})),
+          };
+          setOrderDetails(orderWithClientIds);
         } else {
           toast({
             variant: 'destructive',
@@ -229,24 +237,34 @@ export default function OrderDetailsPage() {
     fetchOrder();
   }, [id, token, toast]);
 
-  const handlePrint = (type: 'requisition' | 'label', barcodeValue: string) => {
+  const handlePrint = (type: 'requisition' | 'label', printIdentifier: string) => {
     if (!orderDetails) return;
 
-    const printWindow = window.open('/print/orders/[id]/print', '_blank', 'width=800,height=900');
+    const printWindow = window.open('', '_blank', 'width=800,height=900');
     if (!printWindow) {
       toast({ variant: 'destructive', title: 'Could not open print window. Please disable pop-up blockers.' });
       return;
     }
 
     let printContent: string;
+    let barcodeValue: string;
+    let pageTitle: string;
+    let isRequisition = type === 'requisition';
+
     if (type === 'requisition') {
         printContent = renderToString(<RequisitionForm order={orderDetails} />);
+        barcodeValue = orderDetails.orderId;
+        pageTitle = `Requisition - ${orderDetails.orderId}`;
     } else {
-        const sample = orderDetails.samples.find(s => s.accessionNumber === barcodeValue);
+        const sample = orderDetails.samples.find(s => s.clientId === printIdentifier);
         if (!sample) {
             toast({ variant: 'destructive', title: 'Sample not found for label printing.' });
             return;
         }
+        // For pre-accessioning labels, we use the Order ID on the barcode.
+        // The lab will scan this to find the order and then formally accession it.
+        barcodeValue = sample.accessionNumber || orderDetails.orderId;
+        pageTitle = `Label - ${barcodeValue} - ${sample.sampleType}`;
         printContent = renderToString(
             <SampleLabel
                 patientName={orderDetails.patientDetails.fullName}
@@ -254,11 +272,10 @@ export default function OrderDetailsPage() {
                 orderId={orderDetails.orderId}
                 barcodeValue={barcodeValue}
                 sampleType={sample.sampleType}
+                isRequisition={false}
             />
         );
     }
-    
-    const pageTitle = type === 'requisition' ? `Requisition - ${orderDetails.orderId}` : `Label - ${barcodeValue}`;
     
     const html = `
         <html>
@@ -268,7 +285,7 @@ export default function OrderDetailsPage() {
                 <style>
                     body { font-family: sans-serif; }
                     @media print {
-                        @page { size: A4; margin: 0; }
+                        @page { size: auto; margin: 0; }
                         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     }
                 </style>
@@ -291,7 +308,7 @@ export default function OrderDetailsPage() {
   };
   
   const handlePaymentSuccess = (newOrderData: Partial<Order>) => {
-      setOrderDetails(prev => prev ? { ...prev, ...newOrderData } : null);
+      setOrderDetails(prev => prev ? { ...prev, ...newOrderData } as OrderWithDetails : null);
       setPaymentDialogOpen(false);
   }
 
@@ -359,12 +376,12 @@ export default function OrderDetailsPage() {
                 <Printer className="mr-2 h-4 w-4" /> Print Requisition
               </Button>
             )}
-             {!isReceptionist && <Button><Save className="mr-2 h-4 w-4" /> Save Changes</Button>}
+             {canEditResults && <Button><Save className="mr-2 h-4 w-4" /> Save Changes</Button>}
         </div>
       </div>
 
         {orderDetails.samples.map((sample, index) => (
-            <Card key={sample.accessionNumber || index}>
+            <Card key={sample.clientId}>
                 <CardHeader>
                   <div className='flex justify-between items-start'>
                     <div>
@@ -373,16 +390,13 @@ export default function OrderDetailsPage() {
                           Accession Number: {sample.accessionNumber || 'Not yet accessioned'}
                       </CardDescription>
                     </div>
-                    {!isReceptionist && (
-                      <Button 
+                     <Button 
                         variant="outline"
-                        disabled={!sample.accessionNumber}
-                        onClick={() => handlePrint('label', sample.accessionNumber!)}
+                        onClick={() => handlePrint('label', sample.clientId)}
                       >
                         <Printer className="mr-2 h-4 w-4" /> 
                         Print Label
                       </Button>
-                    )}
                   </div>
                 </CardHeader>
                 <CardContent>

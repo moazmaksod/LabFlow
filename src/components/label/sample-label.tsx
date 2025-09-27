@@ -42,8 +42,8 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
                 />
             </div>
             <div className='flex justify-between text-xs'>
-                <p>LabFlow Diagnostics</p>
-                <p>{new Date().toLocaleString()}</p>
+                <p>Order: {orderId}</p>
+                <p>{new Date().toLocaleDateString()}</p>
             </div>
         </div>
     );
