@@ -53,14 +53,14 @@ export const SampleLabel: React.FC<SampleLabelProps> = ({
             backgroundColor: 'white',
             color: 'black'
         }} >
-           <div className="flex justify-between items-start" style={{fontSize: '6pt', lineHeight: '1.2'}}>
-                <div className='max-w-[75%]'>
+           <div style={{fontSize: '6pt', lineHeight: '1.2'}}>
+                <div className="flex justify-between items-start">
                     <p className="font-bold truncate">{patientName}</p>
+                    <p className='font-semibold'>{sampleType}</p>
+                </div>
+                <div>
                     <p>MRN: {mrn}</p>
                     <p>DOB: {formatDateSafe(dob)} ({gender.charAt(0)})</p>
-                </div>
-                <div className='text-right'>
-                     <p className='font-semibold'>{sampleType}</p>
                 </div>
             </div>
             <div className="text-center -my-2">
