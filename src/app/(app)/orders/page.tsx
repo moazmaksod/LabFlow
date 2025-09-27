@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Order } from '@/lib/schemas/order';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 type OrderWithPatient = Order & {
     patientDetails: {
@@ -45,6 +46,18 @@ const statusVariant: { [key: string]: 'default' | 'secondary' | 'outline' | 'des
     'Awaiting Validation': 'outline',
     'Partially Complete': 'secondary'
 };
+
+const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outline' | 'secondary' } = {
+  'Paid': 'default',
+  'Unpaid': 'destructive',
+  'Partially Paid': 'secondary',
+  'Waived': 'outline',
+};
+
+
+const formatStatus = (status: string) => {
+    return status.replace(/([A-Z])/g, ' $1').trim();
+}
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderWithPatient[]>([]);
@@ -116,14 +129,15 @@ export default function OrdersPage() {
                 <TableHead>Order ID</TableHead>
                 <TableHead>Patient</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Order Status</TableHead>
+                <TableHead>Billing Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                  Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
-                        <TableCell colSpan={4}><Skeleton className="h-6 w-full" /></TableCell>
+                        <TableCell colSpan={5}><Skeleton className="h-6 w-full" /></TableCell>
                     </TableRow>
                   ))
               ) : orders.length > 0 ? (
@@ -137,13 +151,18 @@ export default function OrdersPage() {
                       <TableCell>{order.patientDetails?.fullName || 'N/A'}</TableCell>
                       <TableCell>{format(new Date(order.createdAt), 'yyyy-MM-dd')}</TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant[order.orderStatus] || 'default'}>{order.orderStatus}</Badge>
+                        <Badge variant={statusVariant[order.orderStatus] || 'default'}>{formatStatus(order.orderStatus)}</Badge>
+                      </TableCell>
+                       <TableCell>
+                        <Badge variant={paymentStatusVariant[order.paymentStatus] || 'default'} className={cn(order.paymentStatus === 'Paid' && 'bg-green-500/80')}>
+                          {formatStatus(order.paymentStatus)}
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))
               ) : (
                  <TableRow>
-                    <TableCell colSpan={4} className="text-center h-24">
+                    <TableCell colSpan={5} className="text-center h-24">
                         No orders found.
                     </TableCell>
                 </TableRow>

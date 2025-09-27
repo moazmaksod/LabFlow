@@ -56,6 +56,10 @@ const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outlin
 };
 const statuses = ['In-Progress', 'AwaitingVerification', 'Verified', 'Cancelled'];
 
+const formatStatus = (status: string) => {
+    return status.replace(/([A-Z])/g, ' $1').trim();
+}
+
 type SampleWithClientId = Order['samples'][0] & { clientId: string };
 
 type OrderWithDetails = Order & {
@@ -410,13 +414,13 @@ export default function OrderDetailsPage() {
                                         <SelectContent>
                                             {statuses.map((status) => (
                                             <SelectItem key={status} value={status}>
-                                                {status}
+                                                {formatStatus(status)}
                                             </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
                                 ) : (
-                                     <Badge variant={statusVariant[test.status] || 'secondary'}>{test.status}</Badge>
+                                     <Badge variant={statusVariant[test.status] || 'secondary'}>{formatStatus(test.status)}</Badge>
                                 )}
                             </TableCell>
                             </TableRow>
@@ -443,13 +447,13 @@ export default function OrderDetailsPage() {
                 </div>
                 <div>
                     <p className="text-sm font-medium text-muted-foreground">Overall Status</p>
-                    <div><Badge variant={statusVariant[orderDetails.orderStatus] || 'default'}>{orderDetails.orderStatus}</Badge></div>
+                    <div><Badge variant={statusVariant[orderDetails.orderStatus] || 'default'}>{formatStatus(orderDetails.orderStatus)}</Badge></div>
                 </div>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8 pt-4 border-t">
                 <div>
                     <p className="text-sm font-medium text-muted-foreground">Billing Type</p>
-                    <p>{orderDetails.billingType}</p>
+                    <p>{formatStatus(orderDetails.billingType)}</p>
                 </div>
                 <div>
                     <p className="text-sm font-medium text-muted-foreground">Responsible Party</p>
@@ -464,7 +468,7 @@ export default function OrderDetailsPage() {
                 <div className="col-span-full">
                      <p className="text-sm font-medium text-muted-foreground">Payment Status</p>
                     <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={paymentStatusVariant[orderDetails.paymentStatus] || 'destructive'}>{orderDetails.paymentStatus}</Badge>
+                        <Badge variant={paymentStatusVariant[orderDetails.paymentStatus] || 'destructive'}>{formatStatus(orderDetails.paymentStatus)}</Badge>
                         {isReceptionist && orderDetails.paymentStatus !== 'Paid' && orderDetails.paymentStatus !== 'Waived' && (
                             <Dialog open={isPaymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
                                 <DialogTrigger asChild>
