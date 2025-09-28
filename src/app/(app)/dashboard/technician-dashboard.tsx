@@ -42,6 +42,7 @@ interface WorklistItem {
         fullName: string;
         mrn: string;
     };
+    isOverdue?: boolean; // Placeholder for overdue logic
 }
 
 const priorityVariant: { [key: string]: 'default' | 'destructive' } = {
@@ -115,18 +116,40 @@ export function TechnicianDashboard() {
                 ))
               ) : worklist.length > 0 ? (
                 worklist.map(item => (
-                    <TableRow key={item.sample.accessionNumber} className={cn(item.priority === 'STAT' && 'bg-destructive/10 hover:bg-destructive/20')}>
+                    <TableRow 
+                        key={item.sample.accessionNumber} 
+                        className={cn(
+                            item.priority === 'STAT' && 'bg-destructive/20 text-destructive-foreground hover:bg-destructive/30',
+                            item.isOverdue && 'bg-amber-500/20' // Placeholder for overdue styling as per design system (#F0AD4E)
+                        )}
+                    >
                         <TableCell>
-                            <Badge variant={priorityVariant[item.priority]}>{item.priority}</Badge>
+                            <Badge 
+                                variant={item.priority === 'STAT' ? 'destructive' : 'default'}
+                                className={cn(item.priority === 'STAT' && 'bg-destructive text-destructive-foreground')}
+                            >
+                                {item.priority}
+                            </Badge>
                         </TableCell>
                         <TableCell className="font-medium font-code">
-                             <Link href={`/orders/${item.orderId}`} className="text-primary hover:underline">
+                             <Link 
+                                href={`/orders/${item.orderId}`} 
+                                className={cn(
+                                    'text-primary hover:underline',
+                                    item.priority === 'STAT' && 'text-destructive-foreground/90 hover:text-destructive-foreground font-semibold'
+                                )}
+                            >
                                 {item.sample.accessionNumber}
                             </Link>
                         </TableCell>
                         <TableCell>
                             <div className="font-medium">{item.patientDetails?.fullName || 'N/A'}</div>
-                            <div className="text-sm text-muted-foreground font-code">{item.patientDetails?.mrn || 'N/A'}</div>
+                            <div className={cn(
+                                "text-sm text-muted-foreground font-code",
+                                item.priority === 'STAT' && 'text-destructive-foreground/70'
+                            )}>
+                                {item.patientDetails?.mrn || 'N/A'}
+                            </div>
                         </TableCell>
                         <TableCell>{item.sample.tests.map(t => t.name).join(', ')}</TableCell>
                         <TableCell>
@@ -136,7 +159,12 @@ export function TechnicianDashboard() {
                             }
                         </TableCell>
                         <TableCell>
-                            <Badge variant="secondary">{item.sample.status}</Badge>
+                            <Badge 
+                                variant="secondary"
+                                className={cn(item.priority === 'STAT' && 'bg-destructive-foreground/20 text-destructive-foreground')}
+                            >
+                                {item.sample.status}
+                            </Badge>
                         </TableCell>
                     </TableRow>
                 ))
