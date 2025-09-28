@@ -16,16 +16,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
-import { ArrowDown, ArrowUp, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, CheckCircle, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WorklistItem {
@@ -49,6 +50,23 @@ interface WorklistItem {
 }
 
 type SortableColumns = 'patient' | 'accession' | 'received';
+
+interface AutoVerifiedItem {
+    accessionNumber: string;
+    patientName: string;
+    mrn: string;
+    testName: string;
+    result: string;
+    verifiedAt: Date;
+    orderId: string;
+}
+
+
+const placeholderAutoVerified: AutoVerifiedItem[] = [
+    { accessionNumber: 'ACC-2024-00102', patientName: 'Emily Davis', mrn: 'ED-0003', testName: 'Sodium', result: '140 mmol/L', verifiedAt: new Date(new Date().setHours(new Date().getHours() - 1)), orderId: 'ORD-2025-00003' },
+    { accessionNumber: 'ACC-2024-00102', patientName: 'Emily Davis', mrn: 'ED-0003', testName: 'Potassium', result: '4.1 mmol/L', verifiedAt: new Date(new Date().setHours(new Date().getHours() - 1)), orderId: 'ORD-2025-00003' },
+    { accessionNumber: 'ACC-2024-00101', patientName: 'Brian Williams', mrn: 'BW-0002', testName: 'Glucose', result: '92 mg/dL', verifiedAt: new Date(new Date().setHours(new Date().getHours() - 2)), orderId: 'ORD-2025-00002' },
+];
 
 export function TechnicianDashboard() {
   const { token } = useAuth();
@@ -165,107 +183,156 @@ export function TechnicianDashboard() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="font-headline text-3xl font-semibold">Technician Worklist</h1>
-       <Card>
-        <CardHeader>
-          <CardTitle>Active Samples</CardTitle>
-          <CardDescription>
-            Dynamic, prioritized list of all samples currently in the lab.
-          </CardDescription>
-            <div className="relative pt-4">
-                <Search className="absolute left-2.5 top-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                placeholder="Filter by patient, accession #, or test..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Priority</TableHead>
-                <SortableHeader column="accession" title="Accession #" />
-                <SortableHeader column="patient" title="Patient" />
-                <TableHead>Tests</TableHead>
-                <SortableHeader column="received" title="Received" />
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                        <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
-                    </TableRow>
-                ))
-              ) : filteredAndSortedWorklist.length > 0 ? (
-                filteredAndSortedWorklist.map(item => (
-                    <TableRow 
-                        key={item.sample.accessionNumber} 
-                        className={cn(
-                            item.priority === 'STAT' && 'bg-destructive/20 text-destructive-foreground hover:bg-destructive/30',
-                            item.isOverdue && 'bg-amber-500/20' // Placeholder for overdue styling as per design system (#F0AD4E)
+      <h1 className="font-headline text-3xl font-semibold">Technician Dashboard</h1>
+        <Tabs defaultValue="worklist">
+            <TabsList>
+                <TabsTrigger value="worklist">Active Worklist ({isLoading ? '...' : filteredAndSortedWorklist.length})</TabsTrigger>
+                <TabsTrigger value="auto-verified">Auto-Verified Log</TabsTrigger>
+            </TabsList>
+            <TabsContent value="worklist">
+                 <Card>
+                    <CardHeader>
+                    <CardTitle>Active Samples</CardTitle>
+                    <CardDescription>
+                        Dynamic, prioritized list of all samples currently in the lab.
+                    </CardDescription>
+                        <div className="relative pt-4">
+                            <Search className="absolute left-2.5 top-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                            placeholder="Filter by patient, accession #, or test..."
+                            className="pl-8"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>Priority</TableHead>
+                            <SortableHeader column="accession" title="Accession #" />
+                            <SortableHeader column="patient" title="Patient" />
+                            <TableHead>Tests</TableHead>
+                            <SortableHeader column="received" title="Received" />
+                            <TableHead>Status</TableHead>
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {isLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : filteredAndSortedWorklist.length > 0 ? (
+                            filteredAndSortedWorklist.map(item => (
+                                <TableRow 
+                                    key={item.sample.accessionNumber} 
+                                    className={cn(
+                                        item.priority === 'STAT' && 'bg-destructive/20 text-destructive-foreground hover:bg-destructive/30',
+                                        item.isOverdue && 'bg-amber-500/20' // Placeholder for overdue styling as per design system (#F0AD4E)
+                                    )}
+                                >
+                                    <TableCell>
+                                        <Badge 
+                                            variant={item.priority === 'STAT' ? 'destructive' : 'default'}
+                                            className={cn(item.priority === 'STAT' && 'bg-destructive text-destructive-foreground')}
+                                        >
+                                            {item.priority}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="font-medium font-code">
+                                        <Link 
+                                            href={`/orders/${item.orderId}`} 
+                                            className={cn(
+                                                'text-primary hover:underline',
+                                                item.priority === 'STAT' && 'text-destructive-foreground/90 hover:text-destructive-foreground font-semibold'
+                                            )}
+                                        >
+                                            {item.sample.accessionNumber}
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="font-medium">{item.patientDetails?.fullName || 'N/A'}</div>
+                                        <div className={cn(
+                                            "text-sm text-muted-foreground font-code",
+                                            item.priority === 'STAT' && 'text-destructive-foreground/70'
+                                        )}>
+                                            {item.patientDetails?.mrn || 'N/A'}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{item.sample.tests.map(t => t.name).join(', ')}</TableCell>
+                                    <TableCell>
+                                        {item.sample.receivedTimestamp ? 
+                                            formatDistanceToNow(new Date(item.sample.receivedTimestamp), { addSuffix: true })
+                                            : 'N/A'
+                                        }
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge 
+                                            variant="secondary"
+                                            className={cn(item.priority === 'STAT' && 'bg-destructive-foreground/20 text-destructive-foreground')}
+                                        >
+                                            {item.sample.status}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center h-24">
+                                    No active samples match your search criteria.
+                                </TableCell>
+                            </TableRow>
                         )}
-                    >
-                        <TableCell>
-                            <Badge 
-                                variant={item.priority === 'STAT' ? 'destructive' : 'default'}
-                                className={cn(item.priority === 'STAT' && 'bg-destructive text-destructive-foreground')}
-                            >
-                                {item.priority}
-                            </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium font-code">
-                             <Link 
-                                href={`/orders/${item.orderId}`} 
-                                className={cn(
-                                    'text-primary hover:underline',
-                                    item.priority === 'STAT' && 'text-destructive-foreground/90 hover:text-destructive-foreground font-semibold'
-                                )}
-                            >
-                                {item.sample.accessionNumber}
-                            </Link>
-                        </TableCell>
-                        <TableCell>
-                            <div className="font-medium">{item.patientDetails?.fullName || 'N/A'}</div>
-                            <div className={cn(
-                                "text-sm text-muted-foreground font-code",
-                                item.priority === 'STAT' && 'text-destructive-foreground/70'
-                            )}>
-                                {item.patientDetails?.mrn || 'N/A'}
-                            </div>
-                        </TableCell>
-                        <TableCell>{item.sample.tests.map(t => t.name).join(', ')}</TableCell>
-                        <TableCell>
-                            {item.sample.receivedTimestamp ? 
-                                formatDistanceToNow(new Date(item.sample.receivedTimestamp), { addSuffix: true })
-                                : 'N/A'
-                            }
-                        </TableCell>
-                        <TableCell>
-                            <Badge 
-                                variant="secondary"
-                                className={cn(item.priority === 'STAT' && 'bg-destructive-foreground/20 text-destructive-foreground')}
-                            >
-                                {item.sample.status}
-                            </Badge>
-                        </TableCell>
-                    </TableRow>
-                ))
-              ) : (
-                 <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">
-                        No active samples match your search criteria.
-                    </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                        </TableBody>
+                    </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+             <TabsContent value="auto-verified">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Auto-Verified Results Log</CardTitle>
+                        <CardDescription>
+                            A log of recent results that were automatically verified and released by the system.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Accession #</TableHead>
+                                    <TableHead>Patient</TableHead>
+                                    <TableHead>Test</TableHead>
+                                    <TableHead>Result</TableHead>
+                                    <TableHead>Verified At</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                             <TableBody>
+                                {placeholderAutoVerified.map(item => (
+                                    <TableRow key={`${item.accessionNumber}-${item.testName}`}>
+                                        <TableCell className="font-code">
+                                            <Link href={`/orders/${item.orderId}`} className="text-primary hover:underline">
+                                                {item.accessionNumber}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="font-medium">{item.patientName}</div>
+                                            <div className="text-sm text-muted-foreground font-code">{item.mrn}</div>
+                                        </TableCell>
+                                        <TableCell>{item.testName}</TableCell>
+                                        <TableCell>{item.result}</TableCell>
+                                        <TableCell>{format(item.verifiedAt, 'HH:mm:ss')}</TableCell>
+                                    </TableRow>
+                                ))}
+                             </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
     </div>
   );
 }
