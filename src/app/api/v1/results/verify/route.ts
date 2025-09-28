@@ -113,20 +113,11 @@ export async function POST(request: Request) {
             }
         }
     }
-
-    // --- Auto-Verification Logic ---
-    // A true auto-verification would happen on results from an instrument.
-    // Since this endpoint is for manual UI submission, we will set the status to Verified
-    // but the logic for checking flags and abnormality is here.
-    let newStatus = 'AwaitingVerification';
-    if (flags.length === 0 && !isAbnormal) {
-        // Condition for auto-verification: No flags, not abnormal, and (implicitly) QC passed.
-        newStatus = 'Verified';
-    }
     
-    // However, since this is a manual submission by a technician, we override to Verified.
-    // The flags still serve as a warning on the final report.
-    newStatus = 'Verified';
+    // Auto-verification rules would run here for instrument results.
+    // Since this endpoint handles manual UI verification, we directly set the status
+    // to 'Verified' and record the user and timestamp.
+    const newStatus = 'Verified';
     
     return {
       ...test,
