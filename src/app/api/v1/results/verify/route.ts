@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   // In a real app, you would check the sample status precondition here.
   // For example: if (sampleToUpdate.status !== 'Testing' && sampleToUpdate.status !== 'AwaitingVerification') ...
 
-  // Find the patient's previous orders to perform delta checks
+  // Find the patient's most recent orders to perform delta checks
   const previousOrders = await ordersCollection.find({ 
       patientId: order.patientId, 
       orderStatus: 'Complete', 
@@ -115,14 +115,16 @@ export async function POST(request: Request) {
     // --- Auto-Verification Logic ---
     let newStatus = test.status;
     if (flags.length === 0 && !isAbnormal) {
-        // Condition for auto-verification: No flags, not abnormal
-        newStatus = 'Verified';
+        // Condition for auto-verification: No flags, not abnormal.
+        // In a real system, this would be for instrument results, not UI ones.
+        // newStatus = 'Verified';
     } else {
         // Requires manual review
         newStatus = 'AwaitingVerification';
     }
     
-    // If results are being submitted from the UI, it's a manual verification, so we override the status.
+    // For this endpoint, results are submitted from the UI by a technician,
+    // so it's a manual verification. We override the status to 'Verified'.
     newStatus = 'Verified';
     
     return {
@@ -147,7 +149,7 @@ export async function POST(request: Request) {
   }
   
   const allSamplesComplete = updatedSamples.every((s: any) => s.status === 'Verified' || s.status === 'Rejected' || s.status === 'Cancelled');
-  const newOrderStatus = allSamplesComplete ? 'Complete' : order.orderStatus;
+  const newOrderStatus = allSamplesComplete ? 'Complete' : (order.orderStatus === 'Pending' ? 'In-Progress' : order.orderStatus);
   
   // --- Update Database ---
   await ordersCollection.updateOne(
