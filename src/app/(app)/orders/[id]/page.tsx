@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ClipboardList, Printer, Save, CreditCard, CheckCircle, Loader2 } from 'lucide-react';
+import { ClipboardList, Printer, Save, CreditCard, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -391,9 +391,49 @@ export default function OrderDetailsPage() {
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {sample.tests.map((test) => (
+                        {sample.tests.map((test) => {
+                            const isDeltaFlagged = test.flags?.includes('DELTA_CHECK_FAILED');
+                            
+                            return (
                             <TableRow key={test.testCode}>
-                            <TableCell className="font-medium">{test.name}</TableCell>
+                                <TableCell className="font-medium flex items-center gap-2">
+                                     {isDeltaFlagged && (
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-amber-500 hover:bg-amber-500/10 hover:text-amber-600">
+                                                    <AlertTriangle className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-amber-500" /> Delta Check Failed</DialogTitle>
+                                                    <DialogDescription>
+                                                        This result shows a significant variation from the patient's previous result. Please review and confirm.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="grid grid-cols-2 gap-4 py-4 text-center">
+                                                    <div>
+                                                        <p className="text-sm font-bold text-muted-foreground">Previous Result</p>
+                                                        <p className="text-2xl font-bold">4.1</p>
+                                                        <p className="text-xs text-muted-foreground">mmol/L</p>
+                                                        <p className="text-xs text-muted-foreground">{format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd HH:mm')}</p>
+                                                    </div>
+                                                    <div className="bg-amber-500/10 p-4 rounded-md">
+                                                        <p className="text-sm font-bold text-muted-foreground">Current Result</p>
+                                                        <p className="text-2xl font-bold text-amber-600">{test.resultValue}</p>
+                                                        <p className="text-xs text-muted-foreground">{test.resultUnits}</p>
+                                                        <p className="text-xs text-muted-foreground">{format(new Date(), 'yyyy-MM-dd HH:mm')}</p>
+                                                    </div>
+                                                </div>
+                                                <DialogFooter>
+                                                    <Button variant="secondary">Acknowledge & Comment</Button>
+                                                    <Button>Verify Result</Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                     )}
+                                    {test.name}
+                                </TableCell>
                             <TableCell>
                                 {canEditResults ? (
                                     <Input
@@ -425,7 +465,7 @@ export default function OrderDetailsPage() {
                                 )}
                             </TableCell>
                             </TableRow>
-                        ))}
+                        )})}
                         </TableBody>
                     </Table>
                 </CardContent>
