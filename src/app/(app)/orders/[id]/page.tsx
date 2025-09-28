@@ -54,7 +54,7 @@ const paymentStatusVariant: { [key: string]: 'default' | 'destructive' | 'outlin
   'Partially Paid': 'secondary',
   'Waived': 'outline',
 };
-const statuses = ['In-Progress', 'AwaitingVerification', 'Verified', 'Cancelled'];
+const statuses = ['Pending', 'In-Progress', 'AwaitingVerification', 'Verified', 'Cancelled'];
 
 const formatStatus = (status?: string) => {
     if (!status) return '';
@@ -510,3 +510,5 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
+
+    
