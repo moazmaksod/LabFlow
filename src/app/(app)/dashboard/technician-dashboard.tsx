@@ -18,12 +18,15 @@ import {
 } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { ArrowDown, ArrowUp, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface WorklistItem {
     sample: {
@@ -45,22 +48,23 @@ interface WorklistItem {
     isOverdue?: boolean; // Placeholder for overdue logic
 }
 
-const priorityVariant: { [key: string]: 'default' | 'destructive' } = {
-  'STAT': 'destructive',
-  'Routine': 'default',
-};
+type SortableColumns = 'patient' | 'accession' | 'received';
 
 export function TechnicianDashboard() {
   const { token } = useAuth();
   const { toast } = useToast();
   const [worklist, setWorklist] = useState<WorklistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortColumn, setSortColumn] = useState<SortableColumns | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
 
   useEffect(() => {
     if (!token) return;
 
     const fetchWorklist = async () => {
-        setIsLoading(true);
+        if (!isLoading) setIsLoading(true); // Only set loading on subsequent fetches
         try {
             const response = await fetch('/api/v1/worklist', {
                 headers: { Authorization: `Bearer ${token}` },
@@ -85,6 +89,80 @@ export function TechnicianDashboard() {
 
   }, [token, toast]);
 
+  const handleSort = (column: SortableColumns) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const filteredAndSortedWorklist = useMemo(() => {
+    let filtered = [...worklist];
+
+    if (searchTerm) {
+      const lowercasedFilter = searchTerm.toLowerCase();
+      filtered = filtered.filter(item => {
+        return (
+          item.patientDetails?.fullName.toLowerCase().includes(lowercasedFilter) ||
+          item.patientDetails?.mrn.toLowerCase().includes(lowercasedFilter) ||
+          item.sample.accessionNumber?.toLowerCase().includes(lowercasedFilter) ||
+          item.sample.tests.some(t => t.name.toLowerCase().includes(lowercasedFilter))
+        );
+      });
+    }
+
+    if (sortColumn) {
+        filtered.sort((a, b) => {
+            let valA: string | number | Date = '';
+            let valB: string | number | Date = '';
+
+            switch (sortColumn) {
+                case 'patient':
+                    valA = a.patientDetails?.fullName || '';
+                    valB = b.patientDetails?.fullName || '';
+                    break;
+                case 'accession':
+                    valA = a.sample.accessionNumber || '';
+                    valB = b.sample.accessionNumber || '';
+                    break;
+                case 'received':
+                    valA = new Date(a.sample.receivedTimestamp || 0);
+                    valB = new Date(b.sample.receivedTimestamp || 0);
+                    break;
+            }
+            
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+    
+    // Always keep STAT at the top if no primary sort is active or as a secondary sort
+    if (sortColumn !== 'accession' && sortColumn !== 'received' && sortColumn !== 'patient') {
+        filtered.sort((a, b) => {
+            if (a.priority === 'STAT' && b.priority !== 'STAT') return -1;
+            if (a.priority !== 'STAT' && b.priority === 'STAT') return 1;
+            return 0;
+        });
+    }
+
+
+    return filtered;
+  }, [worklist, searchTerm, sortColumn, sortDirection]);
+
+  const SortableHeader = ({ column, title }: { column: SortableColumns; title: string }) => (
+    <TableHead>
+        <Button variant="ghost" onClick={() => handleSort(column)} className="px-0 hover:bg-transparent">
+            {title}
+            {sortColumn === column && (
+                sortDirection === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+            )}
+        </Button>
+    </TableHead>
+  );
+
   return (
     <div className="flex flex-col gap-8">
       <h1 className="font-headline text-3xl font-semibold">Technician Worklist</h1>
@@ -94,16 +172,25 @@ export function TechnicianDashboard() {
           <CardDescription>
             Dynamic, prioritized list of all samples currently in the lab.
           </CardDescription>
+            <div className="relative pt-4">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                placeholder="Filter by patient, accession #, or test..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Priority</TableHead>
-                <TableHead>Accession #</TableHead>
-                <TableHead>Patient</TableHead>
+                <SortableHeader column="accession" title="Accession #" />
+                <SortableHeader column="patient" title="Patient" />
                 <TableHead>Tests</TableHead>
-                <TableHead>Received</TableHead>
+                <SortableHeader column="received" title="Received" />
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -114,8 +201,8 @@ export function TechnicianDashboard() {
                         <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
                     </TableRow>
                 ))
-              ) : worklist.length > 0 ? (
-                worklist.map(item => (
+              ) : filteredAndSortedWorklist.length > 0 ? (
+                filteredAndSortedWorklist.map(item => (
                     <TableRow 
                         key={item.sample.accessionNumber} 
                         className={cn(
@@ -171,7 +258,7 @@ export function TechnicianDashboard() {
               ) : (
                  <TableRow>
                     <TableCell colSpan={6} className="text-center h-24">
-                        No active samples in the worklist.
+                        No active samples match your search criteria.
                     </TableCell>
                 </TableRow>
               )}
