@@ -20,6 +20,15 @@ export async function GET(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ data: fullPatientData });
   }
 
+  // Technicians can view limited, non-sensitive patient data.
+  if (user.role === 'technician') {
+    const limitedPatientData = await findPatientById(params.id, { includeOrders: true, isLimitedView: true });
+     if (!limitedPatientData) {
+      return NextResponse.json({ message: 'Patient not found' }, { status: 404 });
+    }
+    return NextResponse.json({ data: limitedPatientData });
+  }
+
   // Other roles can only view a patient if they are that patient.
   if (user._id === params.id) {
     const selfPatientData = await findPatientById(params.id, { includeOrders: true });
@@ -31,7 +40,6 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   // For any other role trying to access a patient that is not themselves,
   // we could return limited data or just forbid it. For now, we'll forbid.
-  // A technician, for example, gets limited patient data via the worklist, not this endpoint.
   return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
 }
 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -26,8 +27,9 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
-import { ArrowDown, ArrowUp, CheckCircle, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, CheckCircle, Search, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 interface WorklistItem {
     sample: {
@@ -43,6 +45,7 @@ interface WorklistItem {
     orderId: string;
     priority: 'Routine' | 'STAT';
     patientDetails?: {
+        _id: string;
         fullName: string;
         mrn: string;
     };
@@ -71,6 +74,7 @@ const placeholderAutoVerified: AutoVerifiedItem[] = [
 export function TechnicianDashboard() {
   const { token } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const [worklist, setWorklist] = useState<WorklistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -230,9 +234,11 @@ export function TechnicianDashboard() {
                                 <TableRow 
                                     key={item.sample.accessionNumber} 
                                     className={cn(
+                                        'cursor-pointer',
                                         item.priority === 'STAT' && 'bg-destructive/20 text-destructive-foreground hover:bg-destructive/30',
                                         item.isOverdue && 'bg-amber-500/20' // Placeholder for overdue styling as per design system (#F0AD4E)
                                     )}
+                                    onClick={() => router.push(`/orders/${item.orderId}`)}
                                 >
                                     <TableCell>
                                         <Badge 
@@ -245,6 +251,7 @@ export function TechnicianDashboard() {
                                     <TableCell className="font-medium font-code">
                                         <Link 
                                             href={`/orders/${item.orderId}`} 
+                                            onClick={(e) => e.stopPropagation()}
                                             className={cn(
                                                 'text-primary hover:underline',
                                                 item.priority === 'STAT' && 'text-destructive-foreground/90 hover:text-destructive-foreground font-semibold'
@@ -254,7 +261,12 @@ export function TechnicianDashboard() {
                                         </Link>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="font-medium">{item.patientDetails?.fullName || 'N/A'}</div>
+                                        <div className="font-medium flex items-center gap-2">
+                                            {item.patientDetails?.fullName || 'N/A'}
+                                            <Link href={`/patients/${item.patientDetails?._id}`} onClick={(e) => e.stopPropagation()}>
+                                                <User className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                            </Link>
+                                        </div>
                                         <div className={cn(
                                             "text-sm text-muted-foreground font-code",
                                             item.priority === 'STAT' && 'text-destructive-foreground/70'

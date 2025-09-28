@@ -148,11 +148,21 @@ export const getPatients = async (query: any = {}, projection: any = {}): Promis
     const collection = await getPatientsCollection();
     return await collection.find(query, { projection }).toArray() as Patient[];
 };
-export const findPatientById = async (id: string, options: { includeOrders?: boolean } = { includeOrders: false }): Promise<Patient | null> => {
+export const findPatientById = async (id: string, options: { includeOrders?: boolean, isLimitedView?: boolean } = { includeOrders: false, isLimitedView: false }): Promise<Patient | null> => {
     if (!ObjectId.isValid(id)) return null;
 
     const collection = await getPatientsCollection();
-    const patientDoc = await collection.findOne({ _id: new ObjectId(id) });
+    
+    // Define the projection for a limited view
+    const limitedProjection = {
+        fullName: 1,
+        mrn: 1,
+        dateOfBirth: 1,
+        gender: 1,
+    };
+    const projection = options.isLimitedView ? limitedProjection : {};
+    
+    const patientDoc = await collection.findOne({ _id: new ObjectId(id) }, { projection });
     if (!patientDoc) return null;
 
     let orders: Order[] = [];
@@ -162,8 +172,11 @@ export const findPatientById = async (id: string, options: { includeOrders?: boo
         // Find all orders where this patient is the main subject
         orders = await getOrders({ patientId: new ObjectId(id) });
 
-        // Find all orders where this patient is the guarantor
-        guaranteedOrders = await getOrders({ 'responsibleParty.patientId': new ObjectId(id) });
+        // Don't fetch guaranteed orders for a limited view to save resources
+        if (!options.isLimitedView) {
+             // Find all orders where this patient is the guarantor
+            guaranteedOrders = await getOrders({ 'responsibleParty.patientId': new ObjectId(id) });
+        }
     }
 
     const patientWithDetails = {
@@ -173,7 +186,7 @@ export const findPatientById = async (id: string, options: { includeOrders?: boo
       guaranteedOrders,
     } as unknown as Patient;
     
-    if (patientWithDetails.orders) {
+    if (patientWithDetails.orders && !options.isLimitedView) {
         for (const order of patientWithDetails.orders) {
             if (order.responsibleParty?.patientId) {
                 const guarantor = await findPatientById(order.responsibleParty.patientId.toString(), { includeOrders: false });

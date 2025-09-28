@@ -59,12 +59,14 @@ const calculateOrderBalance = (order: Order) => {
 export default function PatientDetailsPage() {
     const params = useParams();
     const id = params.id as string;
-    const { token } = useAuth();
+    const { user, token } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
 
     const [patientData, setPatientData] = useState<PatientWithOrders | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    
+    const isTechnicianView = user?.role === 'technician';
     
     useEffect(() => {
         if (!id || !token) return;
@@ -78,7 +80,15 @@ export default function PatientDetailsPage() {
                 if (response.ok) {
                     const result = await response.json();
                     setPatientData(result.data);
-                } else {
+                } else if (response.status === 403) {
+                     toast({
+                        variant: 'destructive',
+                        title: 'Access Denied',
+                        description: "You don't have permission to view full patient details."
+                    });
+                     router.push('/dashboard');
+                }
+                else {
                     toast({
                         variant: 'destructive',
                         title: 'Failed to fetch patient data',
@@ -97,10 +107,10 @@ export default function PatientDetailsPage() {
         };
 
         fetchPatientDetails();
-    }, [id, token, toast]);
+    }, [id, token, toast, router]);
 
     const financialSummary = useMemo(() => {
-        if (!patientData) return { totalDue: 0, ordersWithBalance: [] };
+        if (!patientData || isTechnicianView) return { totalDue: 0, ordersWithBalance: [] };
         
         // Orders where the current patient is financially responsible for themselves
         const selfOrdersWithBalance = (patientData.orders || [])
@@ -121,7 +131,7 @@ export default function PatientDetailsPage() {
             totalDue,
             ordersWithBalance: allOrdersWithBalance,
         }
-    }, [patientData]);
+    }, [patientData, isTechnicianView]);
 
     const formatDateSafe = (date: any) => {
         try {
@@ -191,69 +201,73 @@ export default function PatientDetailsPage() {
                     </p>
                     <p>{patientData.gender}</p>
                     </div>
-                    <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                        Phone Number
-                    </p>
-                    <p>{patientData.contactInfo.phone}</p>
-                    </div>
-                    <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                        Email Address
-                    </p>
-                    <p>{patientData.contactInfo.email || 'N/A'}</p>
-                    </div>
-                    <div className="col-span-full">
-                    <p className="text-sm font-medium text-muted-foreground">
-                        Address
-                    </p>
-                    <p>{`${patientData.contactInfo.address.street}, ${patientData.contactInfo.address.city}, ${patientData.contactInfo.address.state} ${patientData.contactInfo.address.zipCode}`}</p>
-                    </div>
+                    
+                    {!isTechnicianView && (
+                        <>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Phone Number
+                                </p>
+                                <p>{patientData.contactInfo.phone}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Email Address
+                                </p>
+                                <p>{patientData.contactInfo.email || 'N/A'}</p>
+                            </div>
+                            <div className="col-span-full">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Address
+                                </p>
+                                <p>{`${patientData.contactInfo.address.street}, ${patientData.contactInfo.address.city}, ${patientData.contactInfo.address.state} ${patientData.contactInfo.address.zipCode}`}</p>
+                            </div>
+                        </>
+                    )}
                 </div>
                 </CardContent>
             </Card>
         </div>
-        <div className="lg:col-span-1">
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Financial Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">Total Amount Due</p>
-                        <p className={`font-bold text-2xl ${financialSummary.totalDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                            ${financialSummary.totalDue.toFixed(2)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Includes balance for self and guaranteed accounts.</p>
-                    </div>
-                    {financialSummary.ordersWithBalance.length > 0 && (
+        {!isTechnicianView && (
+            <div className="lg:col-span-1">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Financial Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Orders with Balance</p>
-                            <ul className="space-y-1 mt-1 text-sm">
-                                {financialSummary.ordersWithBalance.map(order => (
-                                    <li key={order._id} className="flex justify-between items-center">
-                                        <Link href={`/orders/${order.orderId}`} className="text-primary hover:underline font-code">
-                                            {order.orderId}
-                                        </Link>
-                                        <div className='text-right'>
-                                            <span className="font-medium">${order.balance.toFixed(2)}</span>
-                                            {order.isGuaranteed && order.patientDetails && (
-                                                <p className='text-xs text-muted-foreground truncate max-w-28'>For {order.patientDetails.fullName}</p>
-                                            )}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
+                            <p className="text-sm font-medium text-muted-foreground">Total Amount Due</p>
+                            <p className={`font-bold text-2xl ${financialSummary.totalDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                                ${financialSummary.totalDue.toFixed(2)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Includes balance for self and guaranteed accounts.</p>
                         </div>
-                    )}
-
-                </CardContent>
-             </Card>
-        </div>
+                        {financialSummary.ordersWithBalance.length > 0 && (
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">Orders with Balance</p>
+                                <ul className="space-y-1 mt-1 text-sm">
+                                    {financialSummary.ordersWithBalance.map(order => (
+                                        <li key={order._id} className="flex justify-between items-center">
+                                            <Link href={`/orders/${order.orderId}`} className="text-primary hover:underline font-code">
+                                                {order.orderId}
+                                            </Link>
+                                            <div className='text-right'>
+                                                <span className="font-medium">${order.balance.toFixed(2)}</span>
+                                                {order.isGuaranteed && order.patientDetails && (
+                                                    <p className='text-xs text-muted-foreground truncate max-w-28'>For {order.patientDetails.fullName}</p>
+                                                )}
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+        )}
       </div>
       
-
-
       <Card className="lg:col-span-3">
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -262,10 +276,12 @@ export default function PatientDetailsPage() {
                     A list of all past lab orders for this patient.
                 </CardDescription>
             </div>
-            <Button onClick={() => router.push(`/orders/new?patientId=${id}`)}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Order for Patient
-            </Button>
+            {!isTechnicianView && (
+                <Button onClick={() => router.push(`/orders/new?patientId=${id}`)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    New Order for Patient
+                </Button>
+            )}
         </CardHeader>
         <CardContent>
           <Table>
@@ -275,8 +291,8 @@ export default function PatientDetailsPage() {
                 <TableHead>Date</TableHead>
                 <TableHead># of Tests</TableHead>
                 <TableHead>Order Status</TableHead>
-                <TableHead>Payment Status</TableHead>
-                <TableHead>Balance</TableHead>
+                {!isTechnicianView && <TableHead>Payment Status</TableHead>}
+                {!isTechnicianView && <TableHead>Balance</TableHead>}
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -292,12 +308,16 @@ export default function PatientDetailsPage() {
                         <TableCell>
                             <Badge>{order.orderStatus}</Badge>
                         </TableCell>
-                        <TableCell>
-                            <Badge variant={paymentStatusVariant[order.paymentStatus] || 'secondary'}>{order.paymentStatus}</Badge>
-                        </TableCell>
-                        <TableCell className={balance > 0 && !order.responsibleParty ? 'text-destructive font-medium' : ''}>
-                            ${balance.toFixed(2)}
-                        </TableCell>
+                         {!isTechnicianView && (
+                            <>
+                                <TableCell>
+                                    <Badge variant={paymentStatusVariant[order.paymentStatus] || 'secondary'}>{order.paymentStatus}</Badge>
+                                </TableCell>
+                                <TableCell className={balance > 0 && !order.responsibleParty ? 'text-destructive font-medium' : ''}>
+                                    ${balance.toFixed(2)}
+                                </TableCell>
+                            </>
+                         )}
                         <TableCell className="text-right">
                         <Button asChild variant="outline" size="sm">
                             <Link href={`/orders/${order.orderId}`}>
@@ -311,7 +331,7 @@ export default function PatientDetailsPage() {
                 })
               ) : (
                 <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={isTechnicianView ? 5 : 7} className="h-24 text-center">
                         No order history found for this patient.
                     </TableCell>
                 </TableRow>
@@ -323,4 +343,3 @@ export default function PatientDetailsPage() {
     </div>
   );
 }
-
