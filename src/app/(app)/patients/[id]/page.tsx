@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, User, PlusCircle, Users, DollarSign } from 'lucide-react';
+import { FileText, User, PlusCircle, Users, DollarSign, Frown } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useMemo } from 'react';
@@ -149,10 +150,11 @@ export default function PatientDetailsPage() {
 
   if (!patientData) {
      return (
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">Patient Not Found</h1>
+      <div className="h-full flex flex-col items-center justify-center text-center">
+        <Frown className="w-16 h-16 text-muted-foreground" />
+        <h1 className="text-2xl font-bold mt-4">Patient Not Found</h1>
         <p className="text-muted-foreground">The patient with ID {id} could not be found.</p>
-        <Button asChild className="mt-4">
+        <Button asChild className="mt-6">
             <Link href="/patients">Back to Patient List</Link>
         </Button>
       </div>
@@ -321,3 +323,4 @@ export default function PatientDetailsPage() {
     </div>
   );
 }
+
