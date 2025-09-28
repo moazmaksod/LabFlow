@@ -106,7 +106,7 @@ function AppSidebar() {
      <>
       <SidebarMenuItem>
         <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip="KPI Dashboard">
-          <Link href="/dashboard"><LayoutDashboard /><span>KPI Dashboard</span></Link>
+          <Link href="/dashboard"><LayoutDashboard /><span>Worklist</span></Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
