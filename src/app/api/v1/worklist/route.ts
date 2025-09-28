@@ -12,6 +12,8 @@ export async function GET(request: Request) {
   
   const { searchParams } = new URL(request.url);
   const statusParam = searchParams.get('status') || 'InLab,Testing';
+  const limit = parseInt(searchParams.get('limit') || '50', 10);
+  const offset = parseInt(searchParams.get('offset') || '0', 10);
   
   const statuses = statusParam.split(',').map(s => s.trim());
 
@@ -47,6 +49,7 @@ export async function GET(request: Request) {
       return timeA - timeB;
   });
 
+  const paginatedWorklist = worklist.slice(offset, offset + limit);
 
-  return NextResponse.json({ data: worklist });
+  return NextResponse.json({ data: paginatedWorklist, total: worklist.length });
 }
