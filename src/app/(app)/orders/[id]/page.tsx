@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ClipboardList, Printer, Save, CreditCard, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { ClipboardList, Printer, Save, CreditCard, CheckCircle, Loader2, AlertTriangle, FlaskConical } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -354,7 +354,7 @@ export default function OrderDetailsPage() {
                 <Printer className="mr-2 h-4 w-4" /> Print Requisition
               </Button>
             )}
-             {canEditResults && <Button><Save className="mr-2 h-4 w-4" /> Save Changes</Button>}
+             {canEditResults && <Button><FlaskConical className="mr-2 h-4 w-4" /> Verify All Results</Button>}
         </div>
       </div>
 
