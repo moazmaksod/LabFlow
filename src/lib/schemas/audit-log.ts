@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const AuditLogActionSchema = z.enum([
     'USER_LOGIN',
     'PATIENT_CREATE',
+    'PATIENT_VIEW',
     'ORDER_CREATE',
     'ORDER_VIEW',
     'SAMPLE_ACCESSIONED',

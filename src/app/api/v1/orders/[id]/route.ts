@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, findOrderById } from '@/lib/api/utils';
+import { getAuthenticatedUser, findOrderById, createAuditLog } from '@/lib/api/utils';
 import { ObjectId } from 'mongodb';
 
 // GET /api/v1/orders/[id]
@@ -17,14 +17,30 @@ export async function GET(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ message: 'Order not found' }, { status: 404 });
   }
 
-  // --- Authorization Logic ---
+  // --- Authorization & Auditing Logic ---
   const isManager = user.role === 'manager';
   const isTechnician = user.role === 'technician';
   const isReceptionist = user.role === 'receptionist';
 
+  const logAndView = async () => {
+    await createAuditLog({
+        action: 'ORDER_VIEW',
+        userId: user._id,
+        entity: {
+            collectionName: 'orders',
+            documentId: foundOrder._id,
+        },
+        details: {
+            orderId: foundOrder.orderId,
+            patientMrn: foundOrder.patientDetails.mrn
+        }
+    });
+    return NextResponse.json({ data: foundOrder });
+  }
+
   // Allow internal lab staff to view any order
   if (isManager || isTechnician || isReceptionist) {
-    return NextResponse.json({ data: foundOrder });
+    return await logAndView();
   }
   
   // Check for patient ownership
@@ -33,14 +49,14 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const isPatient = foundOrder.patientId.toString() === user._id;
     const isGuarantor = foundOrder.responsibleParty?.patientId?.toString() === user._id;
     if (isPatient || isGuarantor) {
-       return NextResponse.json({ data: foundOrder });
+       return await logAndView();
     }
   }
 
   // Check for physician ownership
   if (user.role === 'physician') {
     if (foundOrder.physicianId && foundOrder.physicianId.toString() === user._id) {
-       return NextResponse.json({ data: foundOrder });
+       return await logAndView();
     }
   }
 

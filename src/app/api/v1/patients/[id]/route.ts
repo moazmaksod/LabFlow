@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, findPatientById } from '@/lib/api/utils';
+import { getAuthenticatedUser, findPatientById, createAuditLog } from '@/lib/api/utils';
 
 // GET /api/v1/patients/[id]
 // Retrieves a single patient by their database ID, and includes their order history.
@@ -10,6 +10,22 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
    }
 
+   const logAndView = async (patientData: any) => {
+        await createAuditLog({
+            action: 'PATIENT_VIEW',
+            userId: user._id,
+            entity: {
+                collectionName: 'patients',
+                documentId: patientData._id,
+            },
+            details: {
+                patientMrn: patientData.mrn,
+                patientName: patientData.fullName
+            }
+        });
+        return NextResponse.json({ data: patientData });
+   }
+
   // --- Authorization Logic ---
   // Managers and Receptionists can view full details of any patient.
   if (user.role === 'manager' || user.role === 'receptionist') {
@@ -17,7 +33,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     if (!fullPatientData) {
       return NextResponse.json({ message: 'Patient not found' }, { status: 404 });
     }
-    return NextResponse.json({ data: fullPatientData });
+    return await logAndView(fullPatientData);
   }
 
   // Technicians can view limited, non-sensitive patient data.
@@ -26,7 +42,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
      if (!limitedPatientData) {
       return NextResponse.json({ message: 'Patient not found' }, { status: 404 });
     }
-    return NextResponse.json({ data: limitedPatientData });
+    return await logAndView(limitedPatientData);
   }
 
   // Other roles can only view a patient if they are that patient.
@@ -35,15 +51,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
      if (!selfPatientData) {
       return NextResponse.json({ message: 'Patient not found' }, { status: 404 });
     }
-    return NextResponse.json({ data: selfPatientData });
+    return await logAndView(selfPatientData);
   }
 
-  // For any other role trying to access a patient that is not themselves,
-  // we could return limited data or just forbid it. For now, we'll forbid.
+  // For any other role trying to access a patient that is not themselves, forbid it.
   return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
 }
 
 // NOTE: PUT and DELETE endpoints for a specific patient would go here.
 // They are omitted for this prototype's current scope.
-
-    
