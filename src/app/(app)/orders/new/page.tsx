@@ -66,6 +66,8 @@ export default function NewOrderPage() {
         }
     });
 
+    const watchedPriority = form.watch('priority');
+
     // Handle pre-selecting a patient from query params
     useEffect(() => {
         const patientId = searchParams.get('patientId');
@@ -311,13 +313,65 @@ export default function NewOrderPage() {
                     )}
                 />
 
+                <Separator />
+                
+                {/* Priority */}
+                <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3">
+                        <FormLabel>Priority</FormLabel>
+                        <FormControl>
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex items-center space-x-4"
+                            >
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                <RadioGroupItem value="Routine" />
+                                </FormControl>
+                                <FormLabel className="font-normal">Routine</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                <RadioGroupItem value="STAT" />
+                                </FormControl>
+                                <FormLabel className="font-normal">STAT</FormLabel>
+                            </FormItem>
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* Clinical Justification for STAT */}
+                {watchedPriority === 'STAT' && (
+                    <FormField
+                        control={form.control}
+                        name="clinicalJustification"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Clinical Justification (Required for STAT)</FormLabel>
+                            <FormControl>
+                                <Textarea placeholder="e.g., Patient in ER with chest pain." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                )}
+
+
                  {/* Billing Type */}
                 <FormField
                     control={form.control}
                     name="billingType"
                     render={({ field }) => (
                         <FormItem className="space-y-3">
-                        <FormLabel>Billing Type for this Order</FormLabel>
+                        <FormLabel>Billing Type</FormLabel>
                         <FormControl>
                             <RadioGroup
                             onValueChange={field.onChange}
@@ -347,12 +401,11 @@ export default function NewOrderPage() {
                     )}
                 />
 
-                <Separator />
                  <div className="space-y-4">
                     <div className="flex items-center space-x-2">
                         <Checkbox id="hasResponsibleParty" checked={hasResponsibleParty} onCheckedChange={(checked) => handleResponsiblePartyToggle(!!checked)} disabled={!selectedPatient} />
                         <label htmlFor="hasResponsibleParty" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Assign a different person as financially responsible for this order.
+                            Assign a different person as financially responsible.
                         </label>
                     </div>
                     {hasResponsibleParty && (
@@ -395,7 +448,7 @@ export default function NewOrderPage() {
                     <FormItem>
                         <FormLabel>Referring Doctor (Optional)</FormLabel>
                          <FormControl>
-                            <Input placeholder="Search for doctor..." {...field} />
+                            <Input placeholder="Search for doctor by NPI or Name..." {...field} />
                          </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -502,6 +555,10 @@ export default function NewOrderPage() {
                             <span className="text-muted-foreground">Patient</span>
                             <span className="truncate max-w-40">{selectedPatient?.fullName || 'Not selected'}</span>
                         </div>
+                         <div className="flex justify-between">
+                            <span className="text-muted-foreground">Priority</span>
+                            <Badge variant={watchedPriority === 'STAT' ? 'destructive' : 'secondary'}>{watchedPriority}</Badge>
+                        </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Tests</span>
                             <span>{selectedTests.length}</span>
@@ -536,5 +593,3 @@ export default function NewOrderPage() {
     </div>
   );
 }
-
-    

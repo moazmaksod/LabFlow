@@ -86,10 +86,19 @@ export const CreateOrderInputSchema = z.object({
     physicianId: z.string().optional(),
     icd10Code: z.string().min(1, 'ICD-10 code is required'),
     priority: z.enum(['Routine', 'STAT']).default('Routine'),
+    clinicalJustification: z.string().optional(),
     billingType: z.enum(['Insurance', 'Self-Pay']).default('Insurance'),
     testCodes: z.array(z.string()).min(1, 'At least one test must be selected'),
     responsibleParty: ResponsiblePartySchema.optional().default(undefined),
     notes: z.string().optional(),
+}).refine((data) => {
+    if (data.priority === 'STAT') {
+        return !!data.clinicalJustification && data.clinicalJustification.length > 0;
+    }
+    return true;
+}, {
+    message: 'Clinical justification is required for STAT orders.',
+    path: ['clinicalJustification'],
 });
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;
 
