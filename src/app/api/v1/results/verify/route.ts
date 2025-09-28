@@ -21,8 +21,8 @@ const performDeltaCheck = (currentValue: number, previousValue: number | undefin
     if (previousValue === undefined) {
         return false; // No previous result to compare against
     }
-    if (typeof currentValue !== 'number' || typeof previousValue !== 'number') {
-        return false; // Cannot perform delta check on non-numeric results
+    if (typeof currentValue !== 'number' || typeof previousValue !== 'number' || previousValue === 0) {
+        return false; // Cannot perform delta check on non-numeric results or divide by zero
     }
 
     const difference = Math.abs(currentValue - previousValue);
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   // In a real app, you would check the sample status precondition here.
   // For example: if (sampleToUpdate.status !== 'Testing' && sampleToUpdate.status !== 'AwaitingVerification') ...
 
-  // Find the patient's most recent orders to perform delta checks
+  // Find the patient's most recent completed order to perform delta checks
   const previousOrders = await ordersCollection.find({ 
       patientId: order.patientId, 
       orderStatus: 'Complete', 
@@ -92,10 +92,12 @@ export async function POST(request: Request) {
     // --- Delta Check Logic ---
     if (previousOrder) {
         const previousTest = previousOrder.samples.flatMap((s: any) => s.tests).find((t: any) => t.testCode === test.testCode);
-        if (previousTest?.resultValue) {
+        if (previousTest?.resultValue !== undefined) {
              const deltaFailed = performDeltaCheck(newResultValue, previousTest.resultValue);
              if (deltaFailed) {
-                 flags.push('DELTA_CHECK_FAILED');
+                 if (!flags.includes('DELTA_CHECK_FAILED')) {
+                    flags.push('DELTA_CHECK_FAILED');
+                 }
              }
         }
     }
@@ -117,14 +119,15 @@ export async function POST(request: Request) {
     if (flags.length === 0 && !isAbnormal) {
         // Condition for auto-verification: No flags, not abnormal.
         // In a real system, this would be for instrument results, not UI ones.
-        // newStatus = 'Verified';
+        // For this endpoint, results are submitted from the UI by a technician,
+        // so it's a manual verification. We override the status to 'Verified'.
+        newStatus = 'Verified';
     } else {
         // Requires manual review
         newStatus = 'AwaitingVerification';
     }
     
-    // For this endpoint, results are submitted from the UI by a technician,
-    // so it's a manual verification. We override the status to 'Verified'.
+    // As per the user story, if submitted via UI, it is considered a manual verification
     newStatus = 'Verified';
     
     return {
